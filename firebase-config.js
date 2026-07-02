@@ -1,7 +1,7 @@
 // Configuração pública do Firebase Web App do OAB Simula.
 // Não colocar senhas, tokens privados ou service account neste arquivo.
 window.OAB_FIREBASE_CONFIG = {
-  apiKey: "AIzaSyA9YQbD_uD2a_V_9wDLhJtVYL5UyCgHs",
+  apiKey: "AIzaSyA9YoQBB_duP2a_V_9wOLhJtVYL5UyCgHs",
   authDomain: "oabsimula-5c31b.firebaseapp.com",
   projectId: "oabsimula-5c31b",
   storageBucket: "oabsimula-5c31b.firebasestorage.app",
