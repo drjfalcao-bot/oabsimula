@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OAB Simula | Tutor IA</title>
+  <style>
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#f3efe6;color:#162033}.wrap{max-width:980px;margin:0 auto;padding:28px}.card{background:#fffdf8;border:1px solid #e5dcc8;border-radius:24px;padding:24px;box-shadow:0 22px 60px #10203318}.top{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:18px}.brand{font-weight:900;font-size:24px}.muted{color:#687386}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}button,select,textarea,input{font:inherit}button{border:0;border-radius:14px;padding:12px 16px;font-weight:850;cursor:pointer}.primary{background:#17324d;color:#fff}.light{background:#fff;border:1px solid #e5dcc8;color:#162033}label{display:grid;gap:8px;font-weight:800;margin:12px 0}select,textarea,input{border:1px solid #d8ccb5;border-radius:14px;padding:12px;background:#fffdf8;box-sizing:border-box;width:100%}.answer{white-space:pre-wrap;min-height:240px;background:#fff7e6;border:1px solid #ead9b8;border-radius:18px;padding:16px}.row{display:flex;gap:10px;flex-wrap:wrap}.status{font-weight:800;color:#17324d}@media(max-width:800px){.grid{grid-template-columns:1fr}.top{display:block}.row{margin-top:12px}}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="top">
+      <div><div class="brand">OAB Simula · Tutor IA</div><p class="muted">Explique erros, peça revisão de temas e gere roteiro de estudo.</p></div>
+      <div class="row"><a class="light" style="text-decoration:none" href="index.html">Voltar</a><button class="light" id="login">Entrar com Google</button><button class="light" id="logout">Sair</button></div>
+    </div>
+    <section class="grid">
+      <article class="card">
+        <p class="status" id="status">Desconectado</p>
+        <label>Matéria<select id="subject"><option>Ética</option><option>Constitucional</option><option>Administrativo</option><option>Civil</option><option>Processo Civil</option><option>Penal</option><option>Processo Penal</option><option>Trabalho</option><option>Processo do Trabalho</option><option>Tributário</option><option>Empresarial</option><option>Consumidor</option><option>ECA</option><option>Ambiental</option><option>Internacional</option><option>Filosofia</option><option>Direitos Humanos</option></select></label>
+        <label>Pergunta<textarea id="question" rows="7" placeholder="Ex.: explica prescrição e decadência do jeito que cai na OAB"></textarea></label>
+        <button class="primary" id="ask">Perguntar ao tutor</button>
+      </article>
+      <article class="card">
+        <h2>Resposta</h2>
+        <div class="answer" id="answer">Entre com Google e faça uma pergunta.</div>
+      </article>
+    </section>
+  </main>
+  <script src="firebase-config.js"></script>
+  <script type="module" src="ia.js"></script>
+</body>
+</html>
