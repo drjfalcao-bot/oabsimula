@@ -90,3 +90,16 @@ export const gradeSecondPhase = onCall({ region:'southamerica-east1', secrets:[o
   const r=await client().responses.create({model:'gpt-5.6-terra',input:[{role:'system',content:'Você corrige treino da 2ª fase da OAB com severidade semelhante a espelho FGV. Não atribua ponto por mera citação sem desenvolvimento quando o item exige fundamentação. Não invente exigências fora do espelho fornecido. Retorne somente JSON.'},{role:'user',content:`Área: ${AREAS[area]}\nCASO E ESPELHO: ${JSON.stringify(safeCase)}\nRESPOSTA DO ALUNO:\n${answer}\n\nAvalie item por item respeitando os máximos do espelho. Identifique se a peça foi correta. Retorne {"score":0.0,"pieceIdentification":"...","summary":"...","priorityFix":"...","items":[{"item":"...","score":0.0,"max":0.0,"feedback":"..."}]}. Nota total entre 0 e 5.`}],max_output_tokens:4200});
   const data=cleanJson(r.output_text);data.score=Math.max(0,Math.min(5,Number(data.score||0)));return data;
 });
+
+export const gradeSecondPhaseDiscursives = onCall({ region:'southamerica-east1', secrets:[openaiKey], timeoutSeconds:120 }, async request => {
+  const uid=requireAuth(request), area=boundedText(request.data?.area,40);
+  if(!AREAS[area]) throw new HttpsError('invalid-argument','Área inválida.');
+  const questions=Array.isArray(request.data?.questions)?request.data.questions.slice(0,4):[];
+  const answers=Array.isArray(request.data?.answers)?request.data.answers.slice(0,4):[];
+  if(questions.length!==4 || answers.length!==4) throw new HttpsError('invalid-argument','Envie as quatro questões e respostas.');
+  if(answers.some(a=>boundedText(a,6000).length<40)) throw new HttpsError('invalid-argument','Responda as quatro discursivas antes da correção.');
+  await consume(uid,'secondPhaseDiscursiveGrades',1,60);
+  const safe=questions.map((q,i)=>({question:boundedText(q?.question||q,2500),answerGuide:boundedText(q?.answerGuide,3000),keyAuthorities:Array.isArray(q?.keyAuthorities)?q.keyAuthorities.slice(0,12).map(x=>boundedText(x,150)):[],answer:boundedText(answers[i],6000)}));
+  const r=await client().responses.create({model:'gpt-5.6-terra',input:[{role:'system',content:'Você corrige quatro questões discursivas da 2ª fase da OAB. Cada questão vale 1,25. Seja estrito: pontue conclusão juridicamente correta, fundamento desenvolvido e dispositivo/súmula quando realmente aplicável. Não invente fundamento ausente do guia. Retorne somente JSON.'},{role:'user',content:`Área: ${AREAS[area]}\nITENS: ${JSON.stringify(safe)}\nRetorne {"score":0.0,"items":[{"number":1,"score":0.0,"max":1.25,"feedback":"...","missing":["..."]}],"summary":"...","priorityFix":"..."}. A soma deve estar entre 0 e 5.`}],max_output_tokens:4200});
+  const data=cleanJson(r.output_text); data.score=Math.max(0,Math.min(5,Number(data.score||0))); return data;
+});
