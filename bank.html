@@ -74,30 +74,34 @@
     const subjects=window.OAB_SUBJECTS;
     const validSubjects=new Set(subjects.map(s=>s.id));
     const subjectName=id=>subjects.find(s=>s.id===id)?.name||id;
+    const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
     let bank=[];
 
-    function alertBox(text,kind='ok'){$('importAlert').innerHTML=`<div class="alert ${kind}">${text}</div>`}
+    function alertBox(text,kind='ok'){
+      const host=$('importAlert');host.replaceChildren();const div=document.createElement('div');div.className=`alert ${kind}`;div.textContent=String(text);host.appendChild(div);
+    }
     function sanitize(q,i){
       if(!q||typeof q!=='object')throw new Error(`Item ${i+1}: objeto inválido.`);
       const id=String(q.id||'').trim(); const subject=String(q.subject||'').trim(); const topic=String(q.topic||'').trim(); const text=String(q.text||'').trim();
-      if(id.length<3)throw new Error(`Item ${i+1}: id ausente ou muito curto.`);
+      if(!/^[A-Za-z0-9._:-]{3,120}$/.test(id))throw new Error(`Item ${i+1}: id inválido. Use apenas letras, números, ponto, hífen, sublinhado ou dois-pontos.`);
       if(!validSubjects.has(subject))throw new Error(`Item ${i+1} (${id}): matéria "${subject}" não reconhecida.`);
-      if(topic.length<2)throw new Error(`Item ${i+1} (${id}): topic ausente.`);
-      if(text.length<10)throw new Error(`Item ${i+1} (${id}): enunciado muito curto.`);
-      if(!Array.isArray(q.options)||q.options.length!==4||q.options.some(x=>String(x).trim().length<1))throw new Error(`Item ${i+1} (${id}): options deve conter exatamente 4 alternativas.`);
+      if(topic.length<2||topic.length>180)throw new Error(`Item ${i+1} (${id}): topic inválido.`);
+      if(text.length<10||text.length>15000)throw new Error(`Item ${i+1} (${id}): enunciado inválido.`);
+      if(!Array.isArray(q.options)||q.options.length!==4||q.options.some(x=>String(x).trim().length<1||String(x).length>5000))throw new Error(`Item ${i+1} (${id}): options deve conter exatamente 4 alternativas válidas.`);
       const correct=Number(q.correct); if(!Number.isInteger(correct)||correct<0||correct>3)throw new Error(`Item ${i+1} (${id}): correct deve ser 0, 1, 2 ou 3.`);
-      const explanation=String(q.explanation||'').trim(); if(explanation.length<5)throw new Error(`Item ${i+1} (${id}): explanation ausente.`);
-      return {id,subject,topic,text,options:q.options.map(x=>String(x).trim()),correct,explanation,source:String(q.source||'Importado').trim(),exam:q.exam?String(q.exam):null,year:q.year?Number(q.year):null,official:Boolean(q.official),difficulty:q.difficulty?String(q.difficulty):null,tags:Array.isArray(q.tags)?q.tags.map(String):[],importedAt:Date.now()};
+      const explanation=String(q.explanation||'').trim(); if(explanation.length<5||explanation.length>15000)throw new Error(`Item ${i+1} (${id}): explanation inválida.`);
+      return {id,subject,topic,text,options:q.options.map(x=>String(x).trim()),correct,explanation,source:String(q.source||'Importado').trim().slice(0,240),exam:q.exam?String(q.exam).slice(0,40):null,year:q.year?Number(q.year):null,official:Boolean(q.official),difficulty:q.difficulty?String(q.difficulty).slice(0,40):null,tags:Array.isArray(q.tags)?q.tags.slice(0,30).map(x=>String(x).slice(0,80)):[],importedAt:Date.now()};
     }
     function parsePackage(raw){
       const obj=JSON.parse(raw); const arr=Array.isArray(obj)?obj:obj.questions;
       if(!Array.isArray(arr)||!arr.length)throw new Error('O JSON precisa ser uma lista de questões ou conter a chave "questions".');
+      if(arr.length>10000)throw new Error('Pacote muito grande: limite de 10.000 questões por importação.');
       const clean=arr.map(sanitize); const ids=clean.map(q=>q.id); if(new Set(ids).size!==ids.length)throw new Error('O pacote contém IDs duplicados.'); return clean;
     }
     async function refresh(){
       bank=await getAllQuestions(); $('builtinCount').textContent=window.OAB_QUESTIONS.length; $('importedCount').textContent=bank.length; $('totalCount').textContent=window.OAB_QUESTIONS.length+bank.length; $('bankStatus').textContent=`${bank.length} importadas`;
-      const counts={}; bank.forEach(q=>counts[q.subject]=(counts[q.subject]||0)+1); $('subjectSummary').innerHTML=subjects.filter(s=>counts[s.id]).sort((a,b)=>counts[b.id]-counts[a.id]).map(s=>`<div><strong>${s.name}</strong><span>${counts[s.id]} questões</span></div>`).join('')||'<span class="muted">Nenhuma questão importada ainda.</span>';
-      $('bankBody').innerHTML=bank.length?bank.slice().sort((a,b)=>a.subject.localeCompare(b.subject)||a.id.localeCompare(b.id)).map(q=>`<tr><td><strong>${q.id}</strong><small>${q.official?'oficial':'autoral/importada'}</small></td><td>${subjectName(q.subject)}</td><td>${q.topic}</td><td>${q.source||'—'}</td><td><button class="text-btn danger" data-delete="${q.id}">Excluir</button></td></tr>`).join(''):'<tr><td colspan="5" class="muted">Nenhuma questão importada.</td></tr>';
+      const counts={}; bank.forEach(q=>counts[q.subject]=(counts[q.subject]||0)+1); $('subjectSummary').innerHTML=subjects.filter(s=>counts[s.id]).sort((a,b)=>counts[b.id]-counts[a.id]).map(s=>`<div><strong>${escapeHtml(s.name)}</strong><span>${counts[s.id]} questões</span></div>`).join('')||'<span class="muted">Nenhuma questão importada ainda.</span>';
+      $('bankBody').innerHTML=bank.length?bank.slice().sort((a,b)=>a.subject.localeCompare(b.subject)||a.id.localeCompare(b.id)).map(q=>`<tr><td><strong>${escapeHtml(q.id)}</strong><small>${q.official?'oficial':'autoral/importada'}</small></td><td>${escapeHtml(subjectName(q.subject))}</td><td>${escapeHtml(q.topic)}</td><td>${escapeHtml(q.source||'—')}</td><td><button class="text-btn danger" data-delete="${q.id}">Excluir</button></td></tr>`).join(''):'<tr><td colspan="5" class="muted">Nenhuma questão importada.</td></tr>';
       document.querySelectorAll('[data-delete]').forEach(b=>b.onclick=async()=>{await deleteQuestion(b.dataset.delete);await refresh()});
     }
     function download(filename,data){const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
