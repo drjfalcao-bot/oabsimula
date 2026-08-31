@@ -13,41 +13,27 @@ const subjectEl = document.getElementById('subject');
 const questionEl = document.getElementById('question');
 
 onAuthStateChanged(auth, (user) => {
-  if (user) {
-    statusEl.textContent = 'Conectado: ' + (user.displayName || user.email);
-  } else {
-    statusEl.textContent = 'Desconectado. Entre com Google para usar o tutor.';
-  }
+  if (user) statusEl.textContent = 'Conectado: ' + (user.displayName || user.email);
+  else statusEl.textContent = 'Desconectado. Entre com Google para usar o tutor.';
 });
 
 document.getElementById('login').onclick = async () => {
-  try {
-    await signInWithPopup(auth, new GoogleAuthProvider());
-  } catch (error) {
-    answerEl.textContent = 'Erro no login: ' + (error.message || error);
-  }
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch (error) { answerEl.textContent = 'Erro no login: ' + (error.message || error); }
 };
 
-document.getElementById('logout').onclick = async () => {
-  await signOut(auth);
-};
+document.getElementById('logout').onclick = async () => { await signOut(auth); };
 
 document.getElementById('ask').onclick = async () => {
   const question = questionEl.value.trim();
-  if (!auth.currentUser) {
-    answerEl.textContent = 'Entre com Google antes de perguntar.';
-    return;
-  }
-  if (question.length < 3) {
-    answerEl.textContent = 'Escreva uma pergunta.';
-    return;
-  }
+  if (!auth.currentUser) { answerEl.textContent = 'Entre com Google antes de perguntar.'; return; }
+  if (question.length < 3) { answerEl.textContent = 'Escreva uma pergunta.'; return; }
   answerEl.textContent = 'Pensando...';
   try {
     const result = await tutorOab({
       subject: subjectEl.value,
       question,
-      context: 'Aluno estudando para a 1ª fase da OAB no OAB Simula.'
+      context: 'Aluno usando o OAB APROVA Premium para preparação da 1ª ou 2ª fase. Priorize regra, exceção, pegadilha FGV, identificação de peça e estrutura de resposta quando forem relevantes.'
     });
     answerEl.textContent = result.data.answer || 'Sem resposta.';
   } catch (error) {

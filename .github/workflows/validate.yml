@@ -1,0 +1,56 @@
+name: Validate OAB APROVA
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Check JavaScript syntax
+        run: |
+          node --check app.js
+          node --check data.js
+          node --check question-bank.js
+          node --check ia.js
+          node --check second-phase-data.js
+          node --check segunda-fase.js
+          node --check fabrica.js
+          node --check functions/index.js
+      - name: Validate HTML IDs
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re, sys
+          failed=False
+          for name in ['index.html','ia.html','bank.html','segunda-fase.html','fabrica.html']:
+              text=Path(name).read_text(encoding='utf-8')
+              ids=re.findall(r'\bid=["\']([^"\']+)["\']', text)
+              dup=sorted({x for x in ids if ids.count(x)>1})
+              if dup:
+                  print(name, 'IDs duplicados:', dup)
+                  failed=True
+          if failed: sys.exit(1)
+          PY
+      - name: Validate 1st phase distribution and 2nd phase rubrics
+        run: |
+          node - <<'NODE'
+          global.window={}; require('./data.js');
+          const total=window.OAB_SUBJECTS.reduce((a,s)=>a+s.q,0);
+          const core=window.OAB_SUBJECTS.filter(s=>s.core).reduce((a,s)=>a+s.q,0);
+          if(total!==80) throw new Error(`Distribuição inválida: ${total}`);
+          if(core!==62) throw new Error(`Núcleo inválido: ${core}`);
+          global.window={}; require('./second-phase-data.js');
+          for(const c of window.OAB_SECOND_PHASE.seedCases){
+            const sum=c.rubric.reduce((a,x)=>a+Number(x[1]||0),0);
+            if(Math.abs(sum-5)>0.001) throw new Error(`${c.id}: espelho soma ${sum}`);
+          }
+          console.log('Distribuição 80/62 e espelhos 5,00 válidos.');
+          NODE
