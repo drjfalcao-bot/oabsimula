@@ -1,1 +1,277 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OAB Simula | Plataforma de Estudos</title><meta name="description" content="Plataforma de estudos para OAB com todas as matérias, simulados, caderno de erros e login Google."><style>:root{--bg:#f3f0e8;--ink:#1d2633;--muted:#6b7280;--paper:#fffdf8;--card:#fffaf0;--line:#e6dcc8;--blue:#17324d;--blue2:#244c73;--gold:#c08a2c;--green:#2f6f5e;--red:#b0443e;--shadow:0 24px 70px rgba(23,50,77,.14);--r:24px}*{box-sizing:border-box;margin:0;padding:0}body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(circle at top left,#d8e7f3 0,transparent 28%),linear-gradient(135deg,#f8f3e8,#eef3f7 58%,#f3f0e8);color:var(--ink);line-height:1.45}button,input,select{font:inherit}button{cursor:pointer}a{text-decoration:none;color:inherit}.app{display:grid;grid-template-columns:292px 1fr;min-height:100vh}.side{position:sticky;top:0;height:100vh;padding:22px;background:linear-gradient(180deg,#12263d,#0d1a2b);color:#e9f2fb;display:flex;flex-direction:column;gap:20px}.brand{display:flex;align-items:center;gap:12px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.1)}.mark{width:48px;height:48px;border-radius:18px;display:grid;place-items:center;background:linear-gradient(135deg,#f7d28b,#c08a2c);color:#102033;font-weight:1000;box-shadow:0 16px 40px rgba(192,138,44,.24)}.brand b{font-size:18px}.brand small{display:block;color:#a9bad0;font-size:12px}.nav{display:grid;gap:8px}.nav button{border:0;background:transparent;color:#bfd0e3;text-align:left;border-radius:16px;padding:13px 14px;font-weight:850}.nav button.active,.nav button:hover{background:rgba(255,255,255,.1);color:#fff}.profile{margin-top:auto;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.07);border-radius:20px;padding:15px}.profile small{display:block;color:#a9bad0}.main{padding:26px;max-width:1480px;width:100%}.top{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:22px}.title h1{font-size:32px;letter-spacing:-.04em}.title p{color:var(--muted);font-size:14px}.actions{display:flex;gap:10px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:var(--paper);border-radius:14px;min-height:44px;padding:0 15px;font-weight:900;color:var(--ink);box-shadow:0 5px 16px rgba(23,50,77,.05)}.btn.primary{background:linear-gradient(135deg,var(--blue),var(--blue2));border-color:#17324d;color:#fff}.btn.gold{background:linear-gradient(135deg,#f2cf87,#c08a2c);border-color:#c08a2c;color:#1f2937}.btn.google{background:#fff;color:#1f2937}.btn.full{width:100%}.notice{border:1px solid #cfe0ef;background:#eef7ff;color:#17324d;border-radius:16px;padding:13px 15px;font-weight:800;margin-bottom:18px}.page{display:none}.page.active{display:block}.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;margin-bottom:18px}.card{background:rgba(255,253,248,.88);backdrop-filter:blur(18px);border:1px solid rgba(230,220,200,.85);border-radius:var(--r);padding:20px;box-shadow:var(--shadow)}.hero-card{min-height:280px;background:linear-gradient(135deg,rgba(255,253,248,.95),rgba(240,247,252,.86));position:relative;overflow:hidden}.hero-card:after{content:"";position:absolute;right:-120px;top:-120px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(192,138,44,.24),transparent 65%)}.k{display:block;color:var(--gold);text-transform:uppercase;letter-spacing:.13em;font-size:12px;font-weight:1000;margin-bottom:8px}.hero h2{font-size:46px;line-height:.96;letter-spacing:-.06em;max-width:780px}.hero p{color:var(--muted);max-width:620px;margin:14px 0 18px}.quick{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:16px}.quick button{text-align:left;min-height:76px;justify-content:flex-start}.desk{display:grid;gap:12px}.desk-row{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--line);background:#fffaf0;border-radius:18px;padding:13px}.desk-row small{color:var(--muted)}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}.metric span{display:block;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-size:12px;font-weight:1000}.metric strong{display:block;font-size:34px;letter-spacing:-.045em;margin-top:5px}.bar{height:10px;border-radius:99px;background:#eadfca;overflow:hidden;margin-top:12px}.bar div{height:100%;background:linear-gradient(90deg,var(--green),var(--gold));width:0}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.gridStudy{display:grid;grid-template-columns:360px 1fr;gap:16px}.head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}.head h2{font-size:25px;letter-spacing:-.04em}.list{display:grid;gap:9px}.subject{border:1px solid var(--line);background:#fffdf8;border-radius:17px;padding:13px;text-align:left}.subject.active,.subject:hover{border-color:#c08a2c;background:#fff5dc}.subject b{display:block}.subject small{color:var(--muted)}.pill{display:inline-flex;border-radius:99px;padding:7px 10px;background:#f6ead2;color:#7c5316;font-size:12px;font-weight:1000}.chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.chip{border:1px solid var(--line);background:#fffdf8;border-radius:99px;padding:8px 10px;color:#495566;font-size:13px;font-weight:800}.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.box{border:1px solid var(--line);background:#fffaf0;border-radius:18px;padding:13px}.box span{display:block;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em;font-weight:1000}.box b{display:block;margin-top:5px;font-size:18px}.study-note{border:1px solid #d8c393;background:#fff5dc;border-radius:18px;padding:14px;color:#4f3b17;margin:14px 0}.questionLayout{display:grid;grid-template-columns:340px 1fr;gap:16px}label{display:grid;gap:7px;color:#354052;font-size:13px;font-weight:900;margin-bottom:11px}select,input{border:1px solid var(--line);border-radius:14px;background:#fffdf8;color:var(--ink);padding:12px;outline:none}.qcard{min-height:520px}.empty{border:1px dashed #d8c393;background:#fff8e7;border-radius:18px;padding:24px;color:#776448;font-weight:800}.qtop{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}.qnav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}.qdot{width:34px;height:32px;border-radius:10px;border:1px solid var(--line);background:#fffdf8;font-weight:900}.qdot.active{background:#17324d;color:#fff}.qdot.done{background:#e6f4ee;border-color:#99c9b8;color:#23634f}.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.tag{border-radius:99px;padding:7px 10px;background:#eaf2f8;color:#17324d;font-weight:1000;font-size:12px}.qtext{font-size:24px;letter-spacing:-.03em;margin-bottom:16px}.answers{display:grid;gap:10px}.answer{border:1px solid var(--line);background:#fffdf8;border-radius:17px;padding:14px;text-align:left}.answer:hover{border-color:#c08a2c}.answer.ok{border-color:#6db899;background:#eaf8f1}.answer.no{border-color:#d58a85;background:#fff0ee}.answer.sel{border-color:#17324d;background:#eef5fb}.feedback{border-radius:17px;padding:14px;margin:14px 0;background:#eaf8f1;border:1px solid #99c9b8;color:#205544}.feedback.bad{background:#fff0ee;border-color:#d58a85;color:#7a2e29}.errorList{display:grid;gap:12px}.err{border:1px solid var(--line);background:#fffdf8;border-radius:18px;padding:15px}.errTop{display:flex;justify-content:space-between;gap:12px;margin-bottom:8px}.examGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.exam{background:#fffdf8;border:1px solid var(--line);border-radius:20px;padding:18px}.exam p{color:var(--muted);margin:8px 0 12px}.exam a{color:#17324d;font-weight:1000}.loginBox{display:grid;grid-template-columns:1fr 1fr;gap:16px}.authBig{background:linear-gradient(135deg,#17324d,#244c73);color:#fff}.authBig p{color:#cfe0ef;margin:8px 0 15px}.authBig .btn{box-shadow:none}.hide{display:none}@media(max-width:1100px){.app{grid-template-columns:1fr}.side{position:static;height:auto}.nav{grid-template-columns:repeat(3,1fr)}.hero,.metrics,.grid2,.gridStudy,.questionLayout,.examGrid,.loginBox{grid-template-columns:1fr}.main{padding:18px}.top{display:block}.actions{margin-top:12px}.hero h2{font-size:34px}}@media(max-width:640px){.nav{grid-template-columns:1fr 1fr}.quick,.stats3{grid-template-columns:1fr}.hero h2{font-size:30px}}</style></head><body><div class="app"><aside class="side"><div class="brand"><div class="mark">OS</div><div><b>OAB Simula</b><small>mesa de estudos</small></div></div><nav class="nav"><button class="active" data-page="painel">Painel</button><button data-page="materias">Matérias</button><button data-page="questoes">Questões</button><button data-page="erros">Erros</button><button data-page="provas">Provas</button><button data-page="perfil">Perfil</button></nav><div class="profile"><b id="sideName">Usuário local</b><small id="sideHint">login Google disponível no topo</small></div></aside><main class="main"><header class="top"><div class="title"><h1 id="pageTitle">Painel</h1><p id="pageSub">Seu ambiente de estudo para a 1ª fase da OAB.</p></div><div class="actions"><button class="btn google" id="loginTop">Entrar com Google</button><button class="btn" id="logoutTop">Sair</button><button class="btn gold" id="startTop">Estudar agora</button></div></header><div class="notice hide" id="notice"></div><section class="page active" id="painel"><div class="hero"><article class="card hero-card"><span class="k">plano de hoje</span><h2>Estude, resolva, erre, revise. Sem tela de venda.</h2><p>O painel prioriza ação: bloco de questões, revisão de erros, matéria pendente e desempenho. O erro não some; ele vira revisão.</p><div class="quick"><button class="btn primary" id="heroTrain">Começar bloco</button><button class="btn" id="heroReview">Revisar erros</button></div></article><article class="card"><span class="k">mesa</span><div class="desk"><div class="desk-row"><div><b>Próxima ação</b><small id="nextAction">Resolver questões</small></div><span class="pill">agora</span></div><div class="desk-row"><div><b>Conta</b><small id="loginState">Modo local</small></div><span class="pill">Google</span></div><div class="desk-row"><div><b>Meta</b><small>47º Exame de Ordem</small></div><span class="pill">OAB</span></div></div></article></div><div class="metrics"><article class="card metric"><span>Questões</span><strong id="mQuestions">0</strong><small>respondidas</small></article><article class="card metric"><span>Aproveitamento</span><strong id="mAccuracy">0%</strong><small>geral</small></article><article class="card metric"><span>Erros abertos</span><strong id="mErrors">0</strong><small>para revisar</small></article><article class="card metric"><span>Matérias</span><strong id="mProgress">0%</strong><div class="bar"><div id="mBar"></div></div></article></div><div class="grid2"><article class="card"><div class="head"><div><span class="k">fila</span><h2>Próximas ações</h2></div></div><div class="list" id="actionsList"></div></article><article class="card"><div class="head"><div><span class="k">resultado</span><h2>Último bloco</h2></div></div><div id="lastBox" class="empty">Nenhum simulado finalizado.</div></article></div></section><section class="page" id="materias"><div class="gridStudy"><aside class="card"><div class="head"><div><span class="k">17 matérias</span><h2>Trilha completa</h2></div></div><div class="list" id="subjectList"></div></aside><article class="card"><div class="head"><div><span class="k" id="subjectPriority">prioridade</span><h2 id="subjectName">Ética</h2></div><button class="btn" id="toggleDone">Marcar estudada</button></div><div class="stats3"><div class="box"><span>Meta</span><b id="subjectTarget">40 questões</b></div><div class="box"><span>Status</span><b id="subjectStatus">Pendente</b></div><div class="box"><span>Desempenho</span><b id="subjectScore">Sem dados</b></div></div><div class="study-note" id="subjectNote"></div><h3>Temas de revisão</h3><div class="chips" id="subjectTopics"></div><div class="actions"><button class="btn primary" id="trainSubject">Treinar matéria</button><a class="btn" id="videoSubject" target="_blank" rel="noopener">Buscar aulas</a></div></article></div></section><section class="page" id="questoes"><div class="questionLayout"><aside class="card"><div class="head"><div><span class="k">central</span><h2>Bloco de questões</h2></div></div><label>Modo<select id="mode"><option value="treino">Treino com correção imediata</option><option value="prova">Simulado sem correção até o final</option><option value="revisao">Revisar erros</option></select></label><label>Matéria<select id="subjectSelect"></select></label><label>Quantidade<input id="limit" type="number" min="1" max="80" value="10"></label><button class="btn primary full" id="startSession">Iniciar bloco</button><button class="btn full" id="clearSession">Limpar tela</button></aside><article class="card qcard"><div id="emptySession" class="empty">Escolha um modo e inicie. No modo prova a correção aparece só no final.</div><div id="session" class="hide"><div class="qtop"><div><span class="k" id="qMode">treino</span><h2 id="qCount">Questão 1</h2></div><div><b id="qScore">0/0</b><br><small>respondidas</small></div></div><div class="qnav" id="qNav"></div><div class="tags"><span class="tag" id="qSubject">Matéria</span><span class="tag" id="qTopic">Tema</span></div><h3 class="qtext" id="qText"></h3><div class="answers" id="answers"></div><div id="feed" class="feedback hide"></div><div class="actions"><button class="btn" id="prevQ">Anterior</button><button class="btn" id="nextQ">Próxima</button><button class="btn gold" id="finishQ">Finalizar</button></div></div><div id="result" class="hide"></div></article></div></section><section class="page" id="erros"><article class="card"><div class="head"><div><span class="k">revisão</span><h2>Caderno de erros</h2></div><button class="btn primary" id="reviewAll">Revisar todos</button></div><div id="errorList" class="errorList"></div></article></section><section class="page" id="provas"><article class="card"><div class="head"><div><span class="k">oficial</span><h2>Provas e calendário</h2></div></div><div class="examGrid"><div class="exam"><span class="pill">FGV</span><h3>Banco oficial</h3><p>Use a página da FGV para baixar provas, gabaritos e comunicados.</p><a href="https://oab.fgv.br/" target="_blank" rel="noopener">Abrir FGV</a></div><div class="exam"><span class="pill">OAB</span><h3>Editais e provas</h3><p>Acervo oficial do Exame de Ordem.</p><a href="https://examedeordem.oab.org.br/EditaisProvas?NumeroExame=0" target="_blank" rel="noopener">Abrir OAB</a></div><div class="exam"><span class="pill">Calendário</span><h3>Próximas datas</h3><p>Consulte o calendário oficial antes de planejar ciclos longos.</p><a href="https://examedeordem.oab.org.br/Calendario" target="_blank" rel="noopener">Ver calendário</a></div></div></article></section><section class="page" id="perfil"><div class="loginBox"><article class="card authBig"><span class="k">conta</span><h2>Entrar com Google</h2><p>O login fica visível e identifica o usuário. O progresso ainda salva neste navegador até ligarmos Firestore.</p><button class="btn google" id="loginProfile">Entrar com Google</button><button class="btn" id="logoutProfile">Sair</button><p id="authMsg"></p></article><article class="card"><span class="k">perfil local</span><h2>Dados de estudo</h2><label>Nome<input id="profileName" placeholder="Seu nome"></label><label>Meta<input id="profileGoal" placeholder="Ex.: 47º EOU"></label><button class="btn primary" id="saveProfile">Salvar perfil</button></article></div></section></main></div><script src="firebase-config.js"></script><script>const subjects=[['etica','Ética','Alta',40,'Publicidade,Honorários,Sigilo,Mandato,Processo disciplinar'],['constitucional','Constitucional','Alta',35,'Direitos fundamentais,Competências,Controle de constitucionalidade,Remédios constitucionais'],['administrativo','Administrativo','Alta',35,'Atos administrativos,Poderes administrativos,Licitações,Responsabilidade do Estado'],['civil','Civil','Alta',45,'Prescrição,Contratos,Responsabilidade civil,Família,Sucessões'],['processo-civil','Processo Civil','Alta',45,'Tutelas,Recursos,Execução,Competência,Provas'],['penal','Penal','Média',30,'Legalidade,Teoria do crime,Penas,Crimes patrimoniais,Administração pública'],['processo-penal','Processo Penal','Média',30,'Inquérito,Ação penal,Provas,Prisões,Recursos'],['trabalho','Trabalho','Alta',35,'Vínculo,Jornada,Verbas,Férias,Rescisão'],['processo-trabalho','Processo do Trabalho','Alta',35,'Audiência,Recursos,Execução,Competência,Ritos'],['tributario','Tributário','Alta',35,'Crédito tributário,Lançamento,Responsabilidade,Suspensão,Execução fiscal'],['empresarial','Empresarial','Média',25,'Sociedades,Títulos de crédito,Recuperação judicial,Falência,Estabelecimento'],['consumidor','Consumidor','Média',25,'Vício,Fato do produto,Publicidade,Práticas abusivas,Contratos'],['eca','ECA','Média',20,'Proteção integral,Adoção,Ato infracional,Medidas socioeducativas,Convivência familiar'],['ambiental','Ambiental','Baixa',15,'Licenciamento,Responsabilidade,Dano ambiental,Unidades de conservação,Crimes ambientais'],['internacional','Internacional','Baixa',15,'Tratados,Nacionalidade,Estrangeiro,Cooperação jurídica,Homologação'],['filosofia','Filosofia','Baixa',15,'Positivismo,Jusnaturalismo,Hermenêutica,Justiça,Teoria da norma'],['humanos','Direitos Humanos','Baixa',15,'Tratados,Sistema interamericano,Dignidade,Proteção internacional,Direitos sociais']].map(x=>({id:x[0],name:x[1],priority:x[2],target:x[3],topics:x[4].split(',')}));const questions=subjects.flatMap(s=>s.topics.map((t,i)=>({id:s.id+'-'+i,subject:s.id,topic:t,text:'Em '+s.name+', sobre '+t+', qual postura melhora mais o desempenho em prova objetiva?',options:['Ler o resumo uma vez e seguir','Resolver questão, conferir fundamento e registrar o erro por tema','Ignorar erros se a média geral parecer boa','Trocar de matéria antes de revisar'],correct:1,explain:'O ciclo mais eficiente é resolver, corrigir, registrar o erro e revisar o tema depois.'})));let data=JSON.parse(localStorage.getItem('oabPremium')||'{"attempts":[],"wrongs":[],"done":[],"profile":{"name":"Usuário local","goal":"47º EOU"},"last":null}'),active='etica',session=null;const $=id=>document.getElementById(id);function save(){localStorage.setItem('oabPremium',JSON.stringify(data))}function name(id){return subjects.find(s=>s.id===id)?.name||id}function show(id){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));$('pageTitle').textContent={painel:'Painel',materias:'Matérias',questoes:'Questões',erros:'Caderno de erros',provas:'Provas oficiais',perfil:'Perfil'}[id];$('pageSub').textContent={painel:'Seu ambiente de estudo para a 1ª fase da OAB.',materias:'Trilha completa com as 17 disciplinas.',questoes:'Treino, simulado e revisão em uma central.',erros:'Tudo que você erra volta para revisão.',provas:'Links para fontes oficiais.',perfil:'Login Google e perfil de estudo.'}[id]}function stats(subject){let a=subject?data.attempts.filter(x=>x.subject===subject):data.attempts,c=a.filter(x=>x.ok).length;return{total:a.length,correct:c,pct:a.length?Math.round(c/a.length*100):0}}function dash(){let s=stats(),open=data.wrongs.filter(w=>!w.done);$('mQuestions').textContent=s.total;$('mAccuracy').textContent=s.pct+'%';$('mErrors').textContent=open.length;let p=Math.round(data.done.length/subjects.length*100);$('mProgress').textContent=p+'%';$('mBar').style.width=p+'%';$('sideName').textContent=data.profile.name||'Usuário local';$('loginState').textContent=data.profile.google?'Google conectado':'Modo local';$('lastBox').innerHTML=data.last?'<b>'+data.last+'</b>':'Nenhum simulado finalizado.';let first=open.length?['Revisar '+open.length+' erro(s)','Caderno de erros']:['Resolver bloco de questões','Treino imediato'];$('nextAction').textContent=first[0];$('actionsList').innerHTML='<div class="desk-row"><div><b>'+first[0]+'</b><small>'+first[1]+'</small></div><button class="btn" id="a1">Abrir</button></div><div class="desk-row"><div><b>Matéria pendente</b><small>'+((subjects.find(s=>!data.done.includes(s.id))||subjects[0]).name)+'</small></div><button class="btn" id="a2">Abrir</button></div>';$('a1').onclick=()=>open.length?start('revisao','todas',open.length):start('treino','todas',10);$('a2').onclick=()=>{active=(subjects.find(s=>!data.done.includes(s.id))||subjects[0]).id;renderSubjects();show('materias')}}function renderSubjects(){let list=$('subjectList');list.innerHTML=subjects.map(s=>{let st=stats(s.id),done=data.done.includes(s.id);return'<button class="subject '+(s.id===active?'active':'')+'" data-sub="'+s.id+'"><b>'+s.name+'</b><small>'+s.priority+' · '+(done?'estudada':'pendente')+' · '+st.pct+'%</small></button>'}).join('');document.querySelectorAll('[data-sub]').forEach(b=>b.onclick=()=>{active=b.dataset.sub;renderSubjects()});let s=subjects.find(x=>x.id===active),st=stats(s.id);$('subjectPriority').textContent='prioridade '+s.priority;$('subjectName').textContent=s.name;$('subjectTarget').textContent=s.target+' questões';$('subjectStatus').textContent=data.done.includes(s.id)?'Estudada':'Pendente';$('subjectScore').textContent=st.total?st.pct+'%':'Sem dados';$('subjectNote').textContent='Use a matéria como estação de treino: faça questões, registre erros e volte ao caderno antes de trocar de assunto.';$('subjectTopics').innerHTML=s.topics.map(t=>'<span class="chip">'+t+'</span>').join('');$('videoSubject').href='https://www.youtube.com/results?search_query='+encodeURIComponent(s.name+' OAB FGV questões comentadas');$('toggleDone').textContent=data.done.includes(s.id)?'Desmarcar':'Marcar estudada'}function fillSelect(){let html='<option value="todas">Todas</option>'+subjects.map(s=>'<option value="'+s.id+'">'+s.name+'</option>').join('');$('subjectSelect').innerHTML=html}function pool(mode,sub,limit){if(mode==='revisao'){return data.wrongs.filter(w=>!w.done).map(w=>questions.find(q=>q.id===w.qid)).filter(Boolean).slice(0,limit)}let base=sub==='todas'?questions:questions.filter(q=>q.subject===sub);return base.sort(()=>Math.random()-.5).slice(0,limit)}function start(mode=$('mode').value,sub=$('subjectSelect').value,limit=+$('limit').value||10){let qs=pool(mode,sub,limit);if(!qs.length){note('Não há questões neste filtro.');return}session={mode,qs,i:0,ans:{}};$('emptySession').classList.add('hide');$('result').classList.add('hide');$('session').classList.remove('hide');show('questoes');renderQ()}function renderQ(){let q=session.qs[session.i],a=session.ans[q.id],done=Object.keys(session.ans).length,score=Object.values(session.ans).filter(x=>x.ok).length;$('qMode').textContent=session.mode;$('qCount').textContent='Questão '+(session.i+1)+' de '+session.qs.length;$('qScore').textContent=session.mode==='prova'?done+'/'+session.qs.length:score+'/'+(done||session.qs.length);$('qSubject').textContent=name(q.subject);$('qTopic').textContent=q.topic;$('qText').textContent=q.text;$('qNav').innerHTML=session.qs.map((x,i)=>'<button class="qdot '+(i===session.i?'active':'')+' '+(session.ans[x.id]?'done':'')+'" data-go="'+i+'">'+(i+1)+'</button>').join('');document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{session.i=+b.dataset.go;renderQ()});$('answers').innerHTML=q.options.map((o,i)=>{let cls='answer';if(a){if(session.mode==='prova'&&a.pick===i)cls+=' sel';if(session.mode!=='prova'&&i===q.correct)cls+=' ok';if(session.mode!=='prova'&&a.pick===i&&!a.ok)cls+=' no'}return'<button class="'+cls+'" data-pick="'+i+'">'+String.fromCharCode(65+i)+') '+o+'</button>'}).join('');document.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>pick(+b.dataset.pick));$('feed').classList.toggle('hide',!(a&&session.mode!=='prova'));if(a&&session.mode!=='prova'){$('feed').className='feedback '+(a.ok?'':'bad');$('feed').innerHTML='<b>'+(a.ok?'Correto.':'Errado.')+'</b> '+q.explain}$('prevQ').disabled=session.i===0;$('nextQ').disabled=session.i===session.qs.length-1;$('finishQ').disabled=!done}function pick(i){let q=session.qs[session.i],ok=i===q.correct;session.ans[q.id]={pick:i,ok};if(session.mode!=='prova'){data.attempts.push({qid:q.id,subject:q.subject,ok});if(!ok)data.wrongs.push({qid:q.id,subject:q.subject,topic:q.topic,done:false});if(ok&&session.mode==='revisao')data.wrongs.filter(w=>w.qid===q.id).forEach(w=>w.done=true);save();dash();renderErrors()}renderQ()}function finish(){if(!session)return;if(session.mode==='prova'){session.qs.forEach(q=>{let a=session.ans[q.id];if(a){data.attempts.push({qid:q.id,subject:q.subject,ok:a.ok});if(!a.ok)data.wrongs.push({qid:q.id,subject:q.subject,topic:q.topic,done:false})}})}let total=Object.keys(session.ans).length,score=Object.values(session.ans).filter(a=>a.ok).length,pct=total?Math.round(score/total*100):0;data.last=score+'/'+total+' · '+pct+'%';save();$('session').classList.add('hide');$('result').classList.remove('hide');$('result').innerHTML='<div class="stats3"><div class="box"><span>Resultado</span><b>'+score+'/'+total+'</b></div><div class="box"><span>Aproveitamento</span><b>'+pct+'%</b></div><div class="box"><span>Erros abertos</span><b>'+data.wrongs.filter(w=>!w.done).length+'</b></div></div><div class="actions"><button class="btn primary" id="again">Novo bloco</button><button class="btn" id="goErr">Caderno de erros</button></div>';$('again').onclick=()=>start();$('goErr').onclick=()=>show('erros');dash();renderErrors()}function renderErrors(){let open=data.wrongs.filter(w=>!w.done);$('errorList').innerHTML=open.length?open.map((w,i)=>{let q=questions.find(x=>x.id===w.qid);return'<article class="err"><div class="errTop"><div><b>'+name(w.subject)+' · '+w.topic+'</b><p>'+(q?q.text:'Questão')+'</p></div><span class="pill">aberto</span></div><button class="btn" data-fix="'+i+'">Marcar dominado</button></article>'}).join(''):'<div class="empty">Nenhum erro aberto.</div>';document.querySelectorAll('[data-fix]').forEach(b=>b.onclick=()=>{open[+b.dataset.fix].done=true;save();renderErrors();dash()})}function note(t){$('notice').textContent=t;$('notice').classList.remove('hide');setTimeout(()=>$('notice').classList.add('hide'),3500)}async function login(){try{if(!window.OAB_FIREBASE_CONFIG){note('Firebase não configurado.');return}const{initializeApp}=await import('https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js');const{getAuth,GoogleAuthProvider,signInWithPopup}=await import('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js');let r=await signInWithPopup(getAuth(initializeApp(window.OAB_FIREBASE_CONFIG)),new GoogleAuthProvider());data.profile.name=r.user.displayName||r.user.email;data.profile.google=true;save();dash();$('authMsg').textContent='Google conectado.'}catch(e){$('authMsg').textContent='Erro no login: '+(e.message||e)}}function bind(){document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>show(b.dataset.page));$('loginTop').onclick=login;$('loginProfile').onclick=login;$('logoutTop').onclick=$('logoutProfile').onclick=()=>{data.profile.google=false;save();dash();$('authMsg').textContent='Sessão encerrada.'};$('startTop').onclick=$('heroTrain').onclick=()=>start('treino','todas',10);$('heroReview').onclick=$('reviewAll').onclick=()=>start('revisao','todas',data.wrongs.filter(w=>!w.done).length||1);$('trainSubject').onclick=()=>start('treino',active,10);$('toggleDone').onclick=()=>{data.done=data.done.includes(active)?data.done.filter(x=>x!==active):[...data.done,active];save();renderSubjects();dash()};$('startSession').onclick=()=>start();$('clearSession').onclick=()=>{$('session').classList.add('hide');$('result').classList.add('hide');$('emptySession').classList.remove('hide')};$('prevQ').onclick=()=>{if(session&&session.i>0){session.i--;renderQ()}};$('nextQ').onclick=()=>{if(session&&session.i<session.qs.length-1){session.i++;renderQ()}};$('finishQ').onclick=finish;$('saveProfile').onclick=()=>{data.profile.name=$('profileName').value||'Usuário local';data.profile.goal=$('profileGoal').value||'47º EOU';save();dash();note('Perfil salvo.')}}function init(){fillSelect();bind();renderSubjects();renderErrors();dash();$('profileName').value=data.profile.name==='Usuário local'?'':data.profile.name;$('profileGoal').value=data.profile.goal||'47º EOU'}init();</script></body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b1726" />
+  <title>OAB Simula Premium | 48º Exame</title>
+  <meta name="description" content="Sistema adaptativo de preparação para a 1ª fase da OAB: diagnóstico, priorização por peso, revisão espaçada, caderno de erros e projeção de pontos." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Libre+Caslon+Display&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">OA</div>
+        <div>
+          <strong>OAB APROVA</strong>
+          <span>48º Exame • 1ª fase</span>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="Navegação principal">
+        <button class="nav-item active" data-page="dashboard"><span>◫</span>Painel</button>
+        <button class="nav-item" data-page="plan"><span>◎</span>Plano adaptativo</button>
+        <button class="nav-item" data-page="study"><span>▤</span>Matérias</button>
+        <button class="nav-item" data-page="questions"><span>✓</span>Questões</button>
+        <button class="nav-item" data-page="errors"><span>↺</span>Revisões</button>
+        <button class="nav-item" data-page="analytics"><span>⌁</span>Desempenho</button>
+        <a class="nav-item nav-link" href="ia.html"><span>✦</span>Tutor IA</a>
+      </nav>
+
+      <div class="sidebar-foot">
+        <div class="user-card">
+          <div class="avatar" id="userAvatar">U</div>
+          <div>
+            <strong id="userName">Usuário local</strong>
+            <span id="syncStatus">Dados salvos neste navegador</span>
+          </div>
+        </div>
+        <button class="ghost-btn full" id="loginGoogle">Entrar com Google</button>
+        <button class="ghost-btn full hidden" id="logoutGoogle">Sair da conta</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow" id="pageEyebrow">CENTRAL DE APROVAÇÃO</p>
+          <h1 id="pageTitle">Painel de aprovação</h1>
+        </div>
+        <div class="top-actions">
+          <span class="exam-chip"><b id="daysToExam">—</b> dias para a prova</span>
+          <button class="btn secondary" id="quickReview">Revisar vencidas</button>
+          <button class="btn primary" id="quickStudy">Estudar agora</button>
+        </div>
+      </header>
+
+      <div class="notice hidden" id="notice"></div>
+
+      <section class="page active" data-view="dashboard">
+        <div class="hero-grid">
+          <article class="hero-card">
+            <div class="hero-copy">
+              <p class="eyebrow light">MÉTODO 62 PONTOS</p>
+              <h2>Priorize o que mais cai. Transforme erro em ponto.</h2>
+              <p>O núcleo estratégico concentra as 11 matérias de maior peso, responsáveis por 62 das 80 questões. O algoritmo direciona seu tempo para a maior expectativa de ganho.</p>
+              <div class="hero-actions">
+                <button class="btn light" id="heroAdaptive">Iniciar bloco adaptativo</button>
+                <button class="btn hero-outline" id="heroDiagnostic">Diagnóstico rápido</button>
+              </div>
+            </div>
+            <div class="score-orbit">
+              <div class="score-ring" id="scoreRing">
+                <div>
+                  <span>projeção</span>
+                  <strong id="projectedScore">—</strong>
+                  <small>/ 80</small>
+                </div>
+              </div>
+              <p id="projectionConfidence">Aguardando dados</p>
+            </div>
+          </article>
+
+          <article class="card status-card">
+            <div class="card-head">
+              <div>
+                <p class="eyebrow">STATUS</p>
+                <h3 id="riskLabel">Sem diagnóstico</h3>
+              </div>
+              <span class="status-dot neutral" id="riskDot"></span>
+            </div>
+            <p class="muted" id="riskText">Responda ao menos 20 questões para gerar uma leitura inicial de risco.</p>
+            <div class="threshold">
+              <div class="threshold-track">
+                <span class="pass-line" style="left:50%"></span>
+                <div id="scoreBar"></div>
+              </div>
+              <div class="threshold-labels"><span>0</span><span>40 = aprovação</span><span>80</span></div>
+            </div>
+            <div class="mini-grid">
+              <div><span>Meta segura</span><strong id="safeTarget">45</strong></div>
+              <div><span>Margem atual</span><strong id="scoreMargin">—</strong></div>
+            </div>
+          </article>
+        </div>
+
+        <div class="metric-grid">
+          <article class="metric-card"><span>Questões resolvidas</span><strong id="metricAttempts">0</strong><small id="metricSessions">0 sessões</small></article>
+          <article class="metric-card"><span>Aproveitamento</span><strong id="metricAccuracy">0%</strong><small>acerto bruto</small></article>
+          <article class="metric-card"><span>Revisões vencidas</span><strong id="metricDue">0</strong><small id="metricOpenErrors">0 erros abertos</small></article>
+          <article class="metric-card"><span>Núcleo 62</span><strong id="metricCore">0%</strong><small>domínio estimado</small></article>
+        </div>
+
+        <div class="content-grid two-thirds">
+          <article class="card">
+            <div class="card-head">
+              <div><p class="eyebrow">PRIORIDADE DE HOJE</p><h3>Onde está o próximo ponto</h3></div>
+              <button class="text-btn" data-go-page="plan">Ver plano</button>
+            </div>
+            <div class="priority-list" id="priorityList"></div>
+          </article>
+
+          <article class="card">
+            <div class="card-head"><div><p class="eyebrow">ROTINA</p><h3>Bloco recomendado</h3></div><span class="badge">30–45 min</span></div>
+            <div class="routine" id="routineBox"></div>
+            <button class="btn primary full" id="routineStart">Executar bloco</button>
+          </article>
+        </div>
+
+        <article class="card">
+          <div class="card-head">
+            <div><p class="eyebrow">MAPA DO NÚCLEO</p><h3>11 matérias que concentram 62 questões</h3></div>
+            <span class="badge dark">77,5% da prova</span>
+          </div>
+          <div class="subject-heatmap" id="coreHeatmap"></div>
+        </article>
+      </section>
+
+      <section class="page" data-view="plan">
+        <div class="section-intro">
+          <div><p class="eyebrow">ALGORITMO DE GANHO</p><h2>Plano adaptativo</h2></div>
+          <p>Prioridade = peso na prova × déficit de domínio × pressão de erros/revisões. Quanto maior o potencial de converter estudo em ponto, mais cedo a matéria aparece.</p>
+        </div>
+        <div class="content-grid two-thirds">
+          <article class="card">
+            <div class="card-head"><div><p class="eyebrow">RANKING</p><h3>Fila inteligente</h3></div><span class="badge" id="planDataQuality">dados iniciais</span></div>
+            <div id="planRanking" class="ranking-list"></div>
+          </article>
+          <article class="card">
+            <div class="card-head"><div><p class="eyebrow">CONFIGURAÇÃO</p><h3>Meta pessoal</h3></div></div>
+            <label>Data da prova<input type="date" id="targetDate" value="2027-01-10"></label>
+            <label>Meta segura de pontos<input type="number" id="targetScore" min="40" max="70" value="45"></label>
+            <label>Tempo diário disponível<input type="number" id="dailyMinutes" min="20" max="300" step="10" value="60"></label>
+            <label>Estratégia<select id="strategy"><option value="core">Núcleo 62 — foco máximo</option><option value="balanced">Núcleo 62 + matérias leves</option></select></label>
+            <button class="btn primary full" id="savePlan">Salvar estratégia</button>
+          </article>
+        </div>
+        <article class="card">
+          <div class="card-head"><div><p class="eyebrow">CICLO</p><h3>Sequência de aprendizagem rápida</h3></div></div>
+          <div class="method-grid">
+            <div><b>1</b><strong>Recuperação ativa</strong><span>Questão antes de teoria para medir o que realmente sabe.</span></div>
+            <div><b>2</b><strong>Correção causal</strong><span>Registrar se errou por desconhecimento, confusão ou leitura.</span></div>
+            <div><b>3</b><strong>Repetição espaçada</strong><span>Erro volta em 1, 3, 7, 14 e 30 dias conforme domínio.</span></div>
+            <div><b>4</b><strong>Intercalação</strong><span>Blocos misturam matérias para reduzir falsa sensação de domínio.</span></div>
+          </div>
+        </article>
+      </section>
+
+      <section class="page" data-view="study">
+        <div class="study-layout">
+          <aside class="card subject-list-card">
+            <div class="card-head"><div><p class="eyebrow">MATÉRIAS</p><h3>Mapa completo</h3></div></div>
+            <div class="filter-tabs"><button class="active" data-subject-filter="core">Núcleo 62</button><button data-subject-filter="all">Todas</button></div>
+            <div id="subjectList" class="subject-list"></div>
+          </aside>
+          <article class="card subject-detail">
+            <div class="card-head">
+              <div><p class="eyebrow" id="subjectTier">ALTA PRIORIDADE</p><h2 id="subjectName">Ética</h2></div>
+              <span class="question-weight" id="subjectWeight">8 questões</span>
+            </div>
+            <div class="metric-grid compact">
+              <div><span>Estimativa</span><strong id="subjectEstimated">—</strong></div>
+              <div><span>Amostra</span><strong id="subjectSample">0</strong></div>
+              <div><span>Erros abertos</span><strong id="subjectErrors">0</strong></div>
+              <div><span>Ganho potencial</span><strong id="subjectGain">—</strong></div>
+            </div>
+            <div class="subject-meter"><div id="subjectMeterBar"></div></div>
+            <div class="subject-advice" id="subjectAdvice"></div>
+            <h4>Temas essenciais</h4>
+            <div class="chips" id="subjectTopics"></div>
+            <div class="actions-row">
+              <button class="btn primary" id="trainSubject">Treinar esta matéria</button>
+              <button class="btn secondary" id="diagnoseSubject">Diagnóstico de 5</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="page" data-view="questions">
+        <div id="sessionSetup" class="session-setup">
+          <article class="card setup-main">
+            <p class="eyebrow">SESSÃO</p>
+            <h2>Escolha o tipo de bloco</h2>
+            <div class="mode-grid" id="modeGrid">
+              <button class="mode-card active" data-mode="adaptive"><strong>Adaptativo</strong><span>O algoritmo escolhe onde há mais ganho.</span></button>
+              <button class="mode-card" data-mode="core"><strong>Núcleo 62</strong><span>Mistura as matérias de maior peso.</span></button>
+              <button class="mode-card" data-mode="review"><strong>Revisão SRS</strong><span>Somente itens vencidos do caderno.</span></button>
+              <button class="mode-card" data-mode="exam"><strong>Mini-simulado</strong><span>Distribuição proporcional à prova.</span></button>
+            </div>
+          </article>
+          <article class="card setup-side">
+            <label>Quantidade<select id="questionLimit"><option>5</option><option selected>10</option><option>15</option><option>20</option></select></label>
+            <label>Matéria<select id="questionSubject"><option value="all">Todas do núcleo</option></select></label>
+            <button class="btn primary full" id="startSession">Começar</button>
+          </article>
+        </div>
+
+        <div id="sessionArea" class="session-area hidden">
+          <aside class="card session-sidebar">
+            <p class="eyebrow" id="sessionModeLabel">ADAPTATIVO</p>
+            <h3 id="sessionProgress">Questão 1 de 10</h3>
+            <div class="session-dots" id="sessionDots"></div>
+            <div class="timer-box"><span>Tempo</span><strong id="sessionTimer">00:00</strong></div>
+            <button class="btn secondary full" id="finishSession">Finalizar bloco</button>
+          </aside>
+          <article class="card question-card">
+            <div class="question-meta"><span id="questionSubjectLabel">Ética</span><span id="questionTopicLabel">Publicidade</span></div>
+            <h2 id="questionText"></h2>
+            <div class="answer-list" id="answerList"></div>
+            <div class="feedback-box hidden" id="feedbackBox"></div>
+            <div class="error-cause hidden" id="errorCauseBox">
+              <p>Qual foi a causa principal do erro?</p>
+              <div><button data-cause="knowledge">Não sabia a regra</button><button data-cause="confusion">Confundi conceitos</button><button data-cause="reading">Leitura/atenção</button></div>
+            </div>
+            <div class="question-actions">
+              <button class="text-btn" id="prevQuestion">← Anterior</button>
+              <button class="btn primary" id="nextQuestion">Próxima →</button>
+            </div>
+          </article>
+        </div>
+
+        <article id="sessionResult" class="card result-card hidden"></article>
+      </section>
+
+      <section class="page" data-view="errors">
+        <div class="section-intro"><div><p class="eyebrow">MEMÓRIA</p><h2>Revisão espaçada</h2></div><p>O erro só é encerrado depois de reaparecer e ser acertado. Marcar manualmente como “visto” não produz domínio.</p></div>
+        <div class="metric-grid">
+          <article class="metric-card"><span>Vencidas hoje</span><strong id="reviewDue">0</strong><small>prioridade máxima</small></article>
+          <article class="metric-card"><span>Próximas 7 dias</span><strong id="reviewWeek">0</strong><small>fila programada</small></article>
+          <article class="metric-card"><span>Erros de conhecimento</span><strong id="errorKnowledge">0</strong><small>exigem teoria curta</small></article>
+          <article class="metric-card"><span>Erros de leitura</span><strong id="errorReading">0</strong><small>exigem técnica de prova</small></article>
+        </div>
+        <article class="card"><div class="card-head"><div><p class="eyebrow">FILA</p><h3>Itens para revisar</h3></div><button class="btn primary" id="startDueReview">Revisar vencidas</button></div><div id="reviewList" class="review-list"></div></article>
+      </section>
+
+      <section class="page" data-view="analytics">
+        <div class="section-intro"><div><p class="eyebrow">MÉTRICAS</p><h2>Desempenho por matéria</h2></div><p>A estimativa usa suavização bayesiana para evitar conclusões fortes com poucas respostas. A amostra bruta continua visível.</p></div>
+        <article class="card"><div class="analytics-table-wrap"><table class="analytics-table"><thead><tr><th>Matéria</th><th>Peso</th><th>Amostra</th><th>Acerto bruto</th><th>Domínio estimado</th><th>Ganho potencial</th><th>Prioridade</th></tr></thead><tbody id="analyticsBody"></tbody></table></div></article>
+        <div class="content-grid two-thirds">
+          <article class="card"><div class="card-head"><div><p class="eyebrow">ERROS</p><h3>Causa raiz</h3></div></div><div id="causeBreakdown" class="cause-grid"></div></article>
+          <article class="card"><div class="card-head"><div><p class="eyebrow">HISTÓRICO</p><h3>Últimos blocos</h3></div></div><div id="sessionHistory" class="history-list"></div></article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
