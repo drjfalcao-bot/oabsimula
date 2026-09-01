@@ -25,6 +25,26 @@ jobs:
           node --check segunda-fase.js
           node --check fabrica.js
           node --check functions/index.js
+      - name: Validate calibrated first-phase bank
+        run: |
+          node - <<'NODE'
+          const fs=require('fs'),zlib=require('zlib');
+          const source=fs.readFileSync('fgv-bank.js','utf8');
+          const match=source.match(/const DATA = '([^']+)'/);
+          if(!match) throw new Error('Payload do banco calibrado ausente');
+          const questions=JSON.parse(zlib.gunzipSync(Buffer.from(match[1],'base64')).toString('utf8'));
+          if(questions.length!==33) throw new Error(`Banco calibrado deveria ter 33 questões, recebeu ${questions.length}`);
+          const ids=new Set();
+          for(const q of questions){
+            if(!q.id || ids.has(q.id)) throw new Error(`ID inválido/duplicado: ${q.id}`);
+            ids.add(q.id);
+            if(!Array.isArray(q.options)||q.options.length!==4) throw new Error(`${q.id}: alternativas inválidas`);
+            if(!Number.isInteger(q.correct)||q.correct<0||q.correct>3) throw new Error(`${q.id}: gabarito inválido`);
+            if(String(q.text||'').length<150) throw new Error(`${q.id}: enunciado curto para o banco calibrado`);
+            if(String(q.explanation||'').length<100) throw new Error(`${q.id}: explicação insuficiente`);
+          }
+          console.log(`Banco calibrado íntegro: ${questions.length} questões, ${ids.size} IDs únicos.`);
+          NODE
       - name: Validate HTML IDs
         run: |
           python - <<'PY'
