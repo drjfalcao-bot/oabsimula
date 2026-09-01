@@ -122,12 +122,15 @@ export async function getAllQuestions() {
     tx.oncomplete = () => db.close();
   });
 
-  // O app mescla este retorno sobre a base embutida. Ao devolver também as
-  // questões legadas já normalizadas, eliminamos o viés histórico de gabarito B
-  // sem precisar alterar o conteúdo jurídico de cada ID individualmente.
-  const merged = new Map((window.OAB_QUESTIONS || []).map(q => [q.id, q]));
-  stored.forEach(q => merged.set(q.id, q));
-  return prepareBank([...merged.values()]);
+  // app.js captura referências rasas da base embutida antes deste import.
+  // Mutar os objetos em lugar preserva a semântica do banco IndexedDB e,
+  // ao mesmo tempo, corrige a base legada que o simulador já carregou.
+  const builtins = Array.isArray(window.OAB_QUESTIONS) ? window.OAB_QUESTIONS : [];
+  const preparedBuiltins = prepareBank(builtins);
+  const byId = new Map(preparedBuiltins.map(q => [q.id, q]));
+  builtins.forEach(q => { const prepared = byId.get(q.id); if (prepared) Object.assign(q, prepared); });
+
+  return prepareBank(stored);
 }
 
 export async function countQuestions() {
