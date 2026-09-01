@@ -1,3 +1,5 @@
+import { getCalibratedQuestions } from './fgv-bank.js';
+
 const DB_NAME = 'oab-aprova-question-bank';
 const DB_VERSION = 1;
 const STORE = 'questions';
@@ -29,41 +31,6 @@ function balancedTargets(n) {
   return targets;
 }
 
-const NEUTRAL_QUALIFIERS = [
-  'consideradas as circunstâncias descritas no enunciado',
-  'à luz do regime jurídico aplicável à hipótese narrada',
-  'considerando apenas os dados expressamente informados no caso',
-  'diante dos elementos jurídicos apresentados na situação concreta'
-];
-
-function padDistractor(text, minLength, salt) {
-  let out = String(text || '').trim().replace(/[.;:,]\s*$/, '');
-  let i = 0;
-  while (out.length < minLength && i < 2) {
-    out += `, ${NEUTRAL_QUALIFIERS[(salt + i) % NEUTRAL_QUALIFIERS.length]}`;
-    i++;
-  }
-  return `${out}.`;
-}
-
-function normalizeLengthCue(question) {
-  if (!Array.isArray(question.options) || question.options.length !== 4) return question;
-  const correct = Number(question.correct);
-  if (!Number.isInteger(correct) || correct < 0 || correct > 3) return question;
-
-  const lens = question.options.map(x => String(x || '').trim().length);
-  const correctLen = lens[correct];
-  const otherLens = lens.filter((_, i) => i !== correct);
-  const maxOther = Math.max(...otherLens);
-  const avg = lens.reduce((a, b) => a + b, 0) / 4;
-  const cueRisk = correctLen > maxOther * 1.22 && correctLen > avg * 1.16;
-  if (!cueRisk) return { ...question, cueRisk: false };
-
-  const floor = Math.max(24, Math.floor(correctLen * 0.78));
-  const options = question.options.map((opt, i) => i === correct ? String(opt).trim() : padDistractor(opt, floor, i + correct));
-  return { ...question, options, cueRisk: true, lengthNormalized: true };
-}
-
 function rebalanceQuestion(question, target) {
   if (!Array.isArray(question.options) || question.options.length !== 4) return question;
   const correct = Number(question.correct);
@@ -80,7 +47,7 @@ function rebalanceQuestion(question, target) {
 function prepareBank(questions) {
   const clean = questions.filter(q => q && q.id && Array.isArray(q.options) && q.options.length === 4);
   const targets = balancedTargets(clean.length);
-  return clean.map((q, i) => rebalanceQuestion(normalizeLengthCue(q), targets[i]));
+  return clean.map((q, i) => rebalanceQuestion(q, targets[i]));
 }
 
 function openDb() {
@@ -122,14 +89,29 @@ export async function getAllQuestions() {
     tx.oncomplete = () => db.close();
   });
 
-  // app.js captura referências rasas da base embutida antes deste import.
-  // Mutar os objetos em lugar preserva a semântica do banco IndexedDB e,
-  // ao mesmo tempo, corrige a base legada que o simulador já carregou.
+  // Substitui o antigo banco-semente por versões casuísticas de dificuldade
+  // calibrada. Os IDs são preservados para não quebrar histórico e revisões.
+  const calibrated = await getCalibratedQuestions();
+  const upgrades = new Map(calibrated.map(q => [q.id, q]));
   const builtins = Array.isArray(window.OAB_QUESTIONS) ? window.OAB_QUESTIONS : [];
-  const preparedBuiltins = prepareBank(builtins);
-  const byId = new Map(preparedBuiltins.map(q => [q.id, q]));
-  builtins.forEach(q => { const prepared = byId.get(q.id); if (prepared) Object.assign(q, prepared); });
+  builtins.forEach(q => {
+    const upgrade = upgrades.get(q.id);
+    if (upgrade) Object.assign(q, upgrade, { sourceType: 'autoral-fgv-calibrado', quality: 'editorial-v2' });
+  });
 
+  // app.js captura referências rasas dos objetos antes do import dinâmico.
+  // A mutação em lugar mantém essas referências e permite corrigir letra/ordem
+  // sem invalidar tentativas e revisões já vinculadas aos IDs antigos.
+  const preparedBuiltins = prepareBank(builtins);
+  const preparedById = new Map(preparedBuiltins.map(q => [q.id, q]));
+  builtins.forEach(q => {
+    const prepared = preparedById.get(q.id);
+    if (prepared) Object.assign(q, prepared);
+  });
+
+  // Questões importadas/geradas também têm as posições do gabarito
+  // normalizadas em cada carregamento. O texto, porém, não é adulterado para
+  // "igualar tamanho": lotes ruins devem ser rejeitados na fábrica, não maquiados.
   return prepareBank(stored);
 }
 
