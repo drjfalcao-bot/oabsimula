@@ -19,6 +19,7 @@ jobs:
           node --check app.js
           node --check data.js
           node --check question-bank.js
+          node --check fgv-bank.js
           node --check ia.js
           node --check second-phase-data.js
           node --check segunda-fase.js
