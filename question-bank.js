@@ -1,5 +1,6 @@
 import { getCalibratedQuestions } from './fgv-bank.js';
 import { getExpandedQuestions, EXPANDED_QUESTION_COUNT } from './expanded-bank.js';
+import { getOfficialFgvQuestions, OFFICIAL_FGV_QUESTION_TARGET, clearOfficialFgvCache } from './official-fgv-bank.js';
 
 const DB_NAME = 'oab-aprova-question-bank';
 const DB_VERSION = 2;
@@ -8,6 +9,7 @@ const CLOUD_COLLECTION = 'question_bank';
 const CLOUD_LIMIT = 10000;
 let cloudCache = null;
 let cloudCacheAt = 0;
+let officialLoadError = null;
 
 function shuffle(arr) {
   const out = [...arr];
@@ -50,8 +52,12 @@ function rebalanceQuestion(question, target) {
 
 function prepareBank(questions) {
   const clean = questions.filter(q => q && q.id && Array.isArray(q.options) && q.options.length === 4);
-  const targets = balancedTargets(clean.length);
-  return clean.map((q, i) => rebalanceQuestion(q, targets[i]));
+  // Questões oficiais devem conservar a ordem exata do caderno FGV. O anti-padrão
+  // de letras é aplicado apenas ao conteúdo autoral/importado que permite reordenação.
+  const movable = clean.filter(q => !q.preserveOfficialOrder);
+  const targets = balancedTargets(movable.length);
+  let cursor = 0;
+  return clean.map(q => q.preserveOfficialOrder ? q : rebalanceQuestion(q, targets[cursor++]));
 }
 
 function openDb() {
@@ -162,14 +168,23 @@ async function calibrateBuiltins() {
   builtins.forEach(q => { const p = byId.get(q.id); if (p) Object.assign(q, p); });
 }
 
-export function getOfflineEditorialQuestions() {
-  return getExpandedQuestions().map(q => ({ ...q, storage: 'editorial' }));
+export async function getOfflineEditorialQuestions({forceOfficial=false}={}) {
+  const expanded = getExpandedQuestions().map(q => ({ ...q, storage: 'editorial' }));
+  let official=[];
+  try {
+    official=await getOfficialFgvQuestions({force:forceOfficial});
+    officialLoadError=null;
+  } catch (error) {
+    officialLoadError=error;
+    console.warn('Provas oficiais FGV indisponíveis nesta carga; mantendo banco editorial local.', error);
+  }
+  return [...expanded,...official];
 }
 
 export async function getAllQuestions(options = {}) {
   await calibrateBuiltins();
-  const editorial = getOfflineEditorialQuestions();
-  const [local, cloud] = await Promise.all([
+  const [editorial, local, cloud] = await Promise.all([
+    getOfflineEditorialQuestions({forceOfficial:Boolean(options.force)}),
     getLocalQuestions().catch(() => []),
     getCloudQuestions(options).catch(() => [])
   ]);
@@ -179,18 +194,26 @@ export async function getAllQuestions(options = {}) {
   return prepareBank([...merged.values()]);
 }
 
-export async function getQuestionBankBreakdown() {
+export async function getQuestionBankBreakdown(options={}) {
   const editorialSeed = Array.isArray(window.OAB_QUESTIONS) ? window.OAB_QUESTIONS.length : 0;
   const editorialExpanded = EXPANDED_QUESTION_COUNT;
-  const [local, cloud] = await Promise.all([getLocalQuestions().catch(() => []), getCloudQuestions().catch(() => [])]);
+  const [editorial, local, cloud] = await Promise.all([
+    getOfflineEditorialQuestions({forceOfficial:Boolean(options.force)}),
+    getLocalQuestions().catch(() => []),
+    getCloudQuestions(options).catch(() => [])
+  ]);
+  const official = editorial.filter(q=>q.official&&q.origin==='official-fgv').length;
   const mergedExternal = new Map();
-  getOfflineEditorialQuestions().forEach(q => mergedExternal.set(q.id, q));
+  editorial.forEach(q => mergedExternal.set(q.id, q));
   local.forEach(q => mergedExternal.set(q.id, q));
   cloud.forEach(q => mergedExternal.set(q.id, q));
   return {
-    builtin: editorialSeed + editorialExpanded,
+    builtin: editorialSeed + editorialExpanded + official,
     editorialSeed,
     editorialExpanded,
+    official,
+    officialTarget:OFFICIAL_FGV_QUESTION_TARGET,
+    officialLoadError:officialLoadError ? String(officialLoadError.message||officialLoadError) : null,
     local: local.length,
     central: cloud.length,
     externalUnique: mergedExternal.size,
@@ -237,4 +260,9 @@ export async function deleteQuestion(id) {
 export function invalidateCloudCache() {
   cloudCache = null;
   cloudCacheAt = 0;
+}
+
+export function invalidateOfficialFgvCache(){
+  clearOfficialFgvCache();
+  officialLoadError=null;
 }
