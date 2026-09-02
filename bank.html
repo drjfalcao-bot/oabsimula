@@ -4,114 +4,27 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Banco de Questões | OAB APROVA</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Libre+Caslon+Display&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css" />
-  <style>
-    body{min-height:100vh}.bank-shell{max-width:1220px;margin:0 auto;padding:28px}.bank-top{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:20px}.bank-top h1{font-family:"Libre Caslon Display",Georgia,serif;font-weight:400;font-size:38px;margin:0}.bank-top p{margin:4px 0 0;color:var(--muted);font-size:12px}.bank-grid{display:grid;grid-template-columns:1fr 360px;gap:16px;margin-bottom:16px}.drop{border:1.5px dashed #cdbb98;border-radius:18px;padding:28px;text-align:center;background:#fffaf0}.drop strong{display:block;font-size:14px}.drop span{display:block;color:var(--muted);font-size:10px;margin:6px 0 16px}.drop input{display:none}.bank-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.schema{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;background:#0e1e31;color:#dbe6ef;padding:14px;border-radius:14px;overflow:auto;white-space:pre}.bank-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:14px 0}.bank-metrics div{padding:13px;border:1px solid var(--line);border-radius:14px;background:#fff}.bank-metrics span{display:block;color:var(--muted);font-size:8px;text-transform:uppercase;font-weight:900;letter-spacing:.08em}.bank-metrics strong{display:block;font-family:"Libre Caslon Display";font-size:27px;font-weight:400;margin-top:4px}.bank-table{width:100%;border-collapse:collapse}.bank-table th,.bank-table td{border-bottom:1px solid var(--line);padding:10px;text-align:left;font-size:10px}.bank-table th{color:var(--muted);text-transform:uppercase;font-size:8px;letter-spacing:.08em}.bank-table td strong{display:block}.bank-table td small{display:block;color:var(--muted);margin-top:2px}.danger{color:#9e433e!important}.alert{padding:11px 13px;border-radius:12px;font-size:10px;font-weight:700;margin-top:12px}.alert.ok{background:#ebf7f1;color:#2b654f;border:1px solid #a7cfbe}.alert.bad{background:#fff0ee;color:#8d3b36;border:1px solid #ddb0ac}.controls{display:grid;gap:10px}.controls label{display:grid;gap:6px;font-size:9px;text-transform:uppercase;font-weight:900;color:var(--muted)}.controls select{border:1px solid var(--line);border-radius:11px;padding:10px;background:#fff}.subject-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.subject-summary div{padding:9px;border-radius:11px;background:var(--paper2);border:1px solid var(--line)}.subject-summary strong{display:block;font-size:10px}.subject-summary span{font-size:9px;color:var(--muted)}@media(max-width:850px){.bank-grid{grid-template-columns:1fr}.bank-shell{padding:16px}.bank-top{align-items:flex-start;flex-direction:column}.bank-metrics,.subject-summary{grid-template-columns:1fr 1fr}}
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Libre+Caslon+Display&display=swap" rel="stylesheet"><link rel="stylesheet" href="styles.css" />
+  <style>body{min-height:100vh}.bank-shell{max-width:1280px;margin:0 auto;padding:28px}.bank-top{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:20px}.bank-top h1{font-family:"Libre Caslon Display",Georgia,serif;font-weight:400;font-size:38px;margin:0}.bank-top p{margin:4px 0 0;color:var(--muted);font-size:12px}.bank-grid{display:grid;grid-template-columns:1fr 360px;gap:16px;margin-bottom:16px}.drop{border:1.5px dashed #cdbb98;border-radius:18px;padding:26px;text-align:center;background:#fffaf0}.drop strong{display:block;font-size:14px}.drop span{display:block;color:var(--muted);font-size:10px;margin:6px 0 16px}.drop input{display:none}.bank-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.bank-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:14px 0}.bank-metrics div{padding:13px;border:1px solid var(--line);border-radius:14px;background:#fff}.bank-metrics span{display:block;color:var(--muted);font-size:8px;text-transform:uppercase;font-weight:900;letter-spacing:.08em}.bank-metrics strong{display:block;font-family:"Libre Caslon Display";font-size:27px;font-weight:400;margin-top:4px}.bank-table{width:100%;border-collapse:collapse}.bank-table th,.bank-table td{border-bottom:1px solid var(--line);padding:10px;text-align:left;font-size:10px;vertical-align:top}.bank-table th{color:var(--muted);text-transform:uppercase;font-size:8px;letter-spacing:.08em}.bank-table td strong{display:block}.bank-table td small{display:block;color:var(--muted);margin-top:2px}.danger{color:#9e433e!important}.alert{padding:11px 13px;border-radius:12px;font-size:10px;font-weight:700;margin-top:12px}.alert.ok{background:#ebf7f1;color:#2b654f;border:1px solid #a7cfbe}.alert.bad{background:#fff0ee;color:#8d3b36;border:1px solid #ddb0ac}.controls{display:grid;gap:10px}.controls label{display:grid;gap:6px;font-size:9px;text-transform:uppercase;font-weight:900;color:var(--muted)}.controls select{border:1px solid var(--line);border-radius:11px;padding:10px;background:#fff}.subject-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.subject-summary div{padding:9px;border-radius:11px;background:var(--paper2);border:1px solid var(--line)}.subject-summary strong{display:block;font-size:10px}.subject-summary span{font-size:9px;color:var(--muted)}.origin{display:inline-block;padding:3px 6px;border:1px solid var(--line);border-radius:999px;font-size:8px;font-weight:800}.source-link{display:block;color:inherit;max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.filter-row select,.filter-row input{border:1px solid var(--line);border-radius:10px;padding:9px;background:#fff;font-size:10px}@media(max-width:850px){.bank-grid{grid-template-columns:1fr}.bank-shell{padding:16px}.bank-top{align-items:flex-start;flex-direction:column}.bank-metrics,.subject-summary{grid-template-columns:1fr 1fr}}</style>
 </head>
-<body>
-  <main class="bank-shell">
-    <header class="bank-top">
-      <div><p class="eyebrow">OAB APROVA • BASE DE CONTEÚDO</p><h1>Banco de questões</h1><p>Questões importadas ficam no IndexedDB do navegador e entram automaticamente nos blocos adaptativos.</p></div>
-      <a class="btn secondary" href="index.html">← Voltar ao painel</a>
-    </header>
-
-    <div class="bank-grid">
-      <section class="card">
-        <div class="card-head"><div><p class="eyebrow">IMPORTAÇÃO</p><h3>Carregar pacote JSON</h3></div><span class="badge dark">IndexedDB</span></div>
-        <div class="drop" id="dropZone">
-          <strong>Selecione um arquivo .json</strong>
-          <span>O arquivo é validado antes de qualquer gravação. IDs duplicados no mesmo pacote são recusados.</span>
-          <input id="fileInput" type="file" accept="application/json,.json" />
-          <div class="bank-actions"><button class="btn primary" id="chooseFile">Escolher arquivo</button><button class="btn secondary" id="downloadTemplate">Baixar modelo</button></div>
-        </div>
-        <div id="importAlert"></div>
-        <div class="bank-metrics"><div><span>Questões internas</span><strong id="builtinCount">0</strong></div><div><span>Importadas</span><strong id="importedCount">0</strong></div><div><span>Total disponível</span><strong id="totalCount">0</strong></div></div>
-        <div class="subject-summary" id="subjectSummary"></div>
-      </section>
-
-      <aside class="card">
-        <div class="card-head"><div><p class="eyebrow">REGRAS</p><h3>Formato do pacote</h3></div></div>
-        <div class="controls">
-          <label>Ao importar<select id="importMode"><option value="add">Adicionar/atualizar por ID</option><option value="replace">Substituir toda base importada</option></select></label>
-          <button class="btn secondary full" id="exportBank">Exportar banco importado</button>
-          <button class="btn secondary full danger" id="clearBank">Apagar banco importado</button>
-        </div>
-        <p class="muted">O campo <b>subject</b> deve usar um dos IDs reconhecidos pelo sistema. <b>correct</b> é o índice do gabarito: 0=A, 1=B, 2=C, 3=D.</p>
-        <pre class="schema">{
-  "questions": [
-    {
-      "id": "oab48-etica-001",
-      "subject": "etica",
-      "topic": "Honorários",
-      "text": "Enunciado...",
-      "options": ["A", "B", "C", "D"],
-      "correct": 1,
-      "explanation": "Fundamento...",
-      "source": "FGV/OAB",
-      "exam": "48",
-      "year": 2027,
-      "official": true
-    }
-  ]
-}</pre>
-      </aside>
-    </div>
-
-    <section class="card">
-      <div class="card-head"><div><p class="eyebrow">CONTEÚDO</p><h3>Questões importadas</h3></div><span class="badge" id="bankStatus">carregando</span></div>
-      <div style="overflow:auto"><table class="bank-table"><thead><tr><th>ID</th><th>Matéria</th><th>Tema</th><th>Fonte</th><th></th></tr></thead><tbody id="bankBody"></tbody></table></div>
-    </section>
-  </main>
-
-  <script src="data.js"></script>
-  <script type="module">
-    import {getAllQuestions, putQuestions, replaceQuestions, clearQuestions, deleteQuestion} from './question-bank.js';
-    const $=id=>document.getElementById(id);
-    const subjects=window.OAB_SUBJECTS;
-    const validSubjects=new Set(subjects.map(s=>s.id));
-    const subjectName=id=>subjects.find(s=>s.id===id)?.name||id;
-    const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
-    let bank=[];
-
-    function alertBox(text,kind='ok'){
-      const host=$('importAlert');host.replaceChildren();const div=document.createElement('div');div.className=`alert ${kind}`;div.textContent=String(text);host.appendChild(div);
-    }
-    function sanitize(q,i){
-      if(!q||typeof q!=='object')throw new Error(`Item ${i+1}: objeto inválido.`);
-      const id=String(q.id||'').trim(); const subject=String(q.subject||'').trim(); const topic=String(q.topic||'').trim(); const text=String(q.text||'').trim();
-      if(!/^[A-Za-z0-9._:-]{3,120}$/.test(id))throw new Error(`Item ${i+1}: id inválido. Use apenas letras, números, ponto, hífen, sublinhado ou dois-pontos.`);
-      if(!validSubjects.has(subject))throw new Error(`Item ${i+1} (${id}): matéria "${subject}" não reconhecida.`);
-      if(topic.length<2||topic.length>180)throw new Error(`Item ${i+1} (${id}): topic inválido.`);
-      if(text.length<10||text.length>15000)throw new Error(`Item ${i+1} (${id}): enunciado inválido.`);
-      if(!Array.isArray(q.options)||q.options.length!==4||q.options.some(x=>String(x).trim().length<1||String(x).length>5000))throw new Error(`Item ${i+1} (${id}): options deve conter exatamente 4 alternativas válidas.`);
-      const correct=Number(q.correct); if(!Number.isInteger(correct)||correct<0||correct>3)throw new Error(`Item ${i+1} (${id}): correct deve ser 0, 1, 2 ou 3.`);
-      const explanation=String(q.explanation||'').trim(); if(explanation.length<5||explanation.length>15000)throw new Error(`Item ${i+1} (${id}): explanation inválida.`);
-      return {id,subject,topic,text,options:q.options.map(x=>String(x).trim()),correct,explanation,source:String(q.source||'Importado').trim().slice(0,240),exam:q.exam?String(q.exam).slice(0,40):null,year:q.year?Number(q.year):null,official:Boolean(q.official),difficulty:q.difficulty?String(q.difficulty).slice(0,40):null,tags:Array.isArray(q.tags)?q.tags.slice(0,30).map(x=>String(x).slice(0,80)):[],importedAt:Date.now()};
-    }
-    function parsePackage(raw){
-      const obj=JSON.parse(raw); const arr=Array.isArray(obj)?obj:obj.questions;
-      if(!Array.isArray(arr)||!arr.length)throw new Error('O JSON precisa ser uma lista de questões ou conter a chave "questions".');
-      if(arr.length>10000)throw new Error('Pacote muito grande: limite de 10.000 questões por importação.');
-      const clean=arr.map(sanitize); const ids=clean.map(q=>q.id); if(new Set(ids).size!==ids.length)throw new Error('O pacote contém IDs duplicados.'); return clean;
-    }
-    async function refresh(){
-      bank=await getAllQuestions(); $('builtinCount').textContent=window.OAB_QUESTIONS.length; $('importedCount').textContent=bank.length; $('totalCount').textContent=window.OAB_QUESTIONS.length+bank.length; $('bankStatus').textContent=`${bank.length} importadas`;
-      const counts={}; bank.forEach(q=>counts[q.subject]=(counts[q.subject]||0)+1); $('subjectSummary').innerHTML=subjects.filter(s=>counts[s.id]).sort((a,b)=>counts[b.id]-counts[a.id]).map(s=>`<div><strong>${escapeHtml(s.name)}</strong><span>${counts[s.id]} questões</span></div>`).join('')||'<span class="muted">Nenhuma questão importada ainda.</span>';
-      $('bankBody').innerHTML=bank.length?bank.slice().sort((a,b)=>a.subject.localeCompare(b.subject)||a.id.localeCompare(b.id)).map(q=>`<tr><td><strong>${escapeHtml(q.id)}</strong><small>${q.official?'oficial':'autoral/importada'}</small></td><td>${escapeHtml(subjectName(q.subject))}</td><td>${escapeHtml(q.topic)}</td><td>${escapeHtml(q.source||'—')}</td><td><button class="text-btn danger" data-delete="${q.id}">Excluir</button></td></tr>`).join(''):'<tr><td colspan="5" class="muted">Nenhuma questão importada.</td></tr>';
-      document.querySelectorAll('[data-delete]').forEach(b=>b.onclick=async()=>{await deleteQuestion(b.dataset.delete);await refresh()});
-    }
-    function download(filename,data){const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
-    $('chooseFile').onclick=()=>$('fileInput').click();
-    $('fileInput').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const clean=parsePackage(await file.text());if($('importMode').value==='replace')await replaceQuestions(clean);else await putQuestions(clean);alertBox(`${clean.length} questões validadas e gravadas com sucesso.`);await refresh()}catch(err){alertBox(err.message||String(err),'bad')}finally{e.target.value=''}};
-    $('downloadTemplate').onclick=()=>download('oab-aprova-modelo-banco.json',{questions:[{id:'meu-pacote-etica-001',subject:'etica',topic:'Tema',text:'Escreva aqui o enunciado completo da questão.',options:['Alternativa A','Alternativa B','Alternativa C','Alternativa D'],correct:0,explanation:'Explique o fundamento jurídico da resposta.',source:'Minha base',exam:null,year:2026,official:false,tags:['exemplo']}]});
-    $('exportBank').onclick=()=>download('oab-aprova-banco-exportado.json',{exportedAt:new Date().toISOString(),questions:bank});
-    $('clearBank').onclick=async()=>{if(!confirm('Apagar todas as questões importadas deste navegador?'))return;await clearQuestions();alertBox('Banco importado apagado.');await refresh()};
-    $('dropZone').ondragover=e=>{e.preventDefault();e.dataTransfer.dropEffect='copy'};$('dropZone').ondrop=async e=>{e.preventDefault();const file=e.dataTransfer.files[0];if(!file)return;try{const clean=parsePackage(await file.text());if($('importMode').value==='replace')await replaceQuestions(clean);else await putQuestions(clean);alertBox(`${clean.length} questões importadas.`);await refresh()}catch(err){alertBox(err.message||String(err),'bad')}};
-    refresh().catch(err=>alertBox('Falha ao abrir o IndexedDB: '+err.message,'bad'));
-  </script>
-</body>
-</html>
+<body><main class="bank-shell">
+<header class="bank-top"><div><p class="eyebrow">OAB APROVA • BANCO V3</p><h1>Banco de questões</h1><p>Base editorial + banco central persistente + importações locais. O contador agora reflete a base efetivamente carregável pelo simulador.</p></div><div class="bank-actions"><a class="btn secondary" href="fabrica.html">Fábrica IA</a><a class="btn secondary" href="index.html">← Painel</a></div></header>
+<div class="bank-grid"><section class="card"><div class="card-head"><div><p class="eyebrow">VISÃO GERAL</p><h3>Acervo disponível</h3></div><button class="btn secondary" id="refreshCentral">Atualizar central</button></div><div class="bank-metrics"><div><span>Base editorial</span><strong id="builtinCount">0</strong></div><div><span>Banco central</span><strong id="centralCount">0</strong></div><div><span>Local/importado</span><strong id="localCount">0</strong></div><div><span>Total único</span><strong id="totalCount">0</strong></div></div><div class="subject-summary" id="subjectSummary"></div><div id="importAlert"></div></section>
+<aside class="card"><div class="card-head"><div><p class="eyebrow">IMPORTAÇÃO</p><h3>Acervo próprio/FGV</h3></div></div><div class="drop" id="dropZone"><strong>Importar pacote JSON</strong><span>Use para provas e questões que você já reuniu. A importação local continua disponível; lotes validados podem depois ser consolidados na base central.</span><input id="fileInput" type="file" accept="application/json,.json"/><div class="bank-actions"><button class="btn primary" id="chooseFile">Escolher arquivo</button><button class="btn secondary" id="downloadTemplate">Modelo JSON</button></div></div><div class="controls" style="margin-top:10px"><label>Ao importar<select id="importMode"><option value="add">Adicionar/atualizar por ID</option><option value="replace">Substituir base local</option></select></label><button class="btn secondary full" id="exportBank">Exportar base carregada</button><button class="btn secondary full danger" id="clearBank">Apagar apenas base local</button></div></aside></div>
+<section class="card"><div class="card-head"><div><p class="eyebrow">CONTEÚDO</p><h3>Questões externas à base editorial</h3></div><span class="badge" id="bankStatus">carregando</span></div><div class="filter-row"><select id="filterStorage"><option value="all">Central + local</option><option value="central">Somente central</option><option value="local">Somente local</option></select><select id="filterSubject"><option value="all">Todas as matérias</option></select><input id="filterText" placeholder="Buscar ID, tema ou fonte"></div><div style="overflow:auto"><table class="bank-table"><thead><tr><th>ID / origem</th><th>Matéria</th><th>Tema</th><th>Fonte / fundamento</th><th>Qualidade</th><th></th></tr></thead><tbody id="bankBody"></tbody></table></div></section>
+</main>
+<script src="data.js"></script>
+<script type="module">
+import {getAllQuestions,getCloudQuestions,getQuestionBankBreakdown,putQuestions,replaceQuestions,clearQuestions,deleteQuestion,invalidateCloudCache} from './question-bank.js';
+const $=id=>document.getElementById(id),subjects=window.OAB_SUBJECTS,validSubjects=new Set(subjects.map(s=>s.id)),subjectName=id=>subjects.find(s=>s.id===id)?.name||id,escapeHtml=v=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));let bank=[];
+$('filterSubject').innerHTML+=[...subjects].map(s=>`<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+function alertBox(text,kind='ok'){const host=$('importAlert');host.replaceChildren();const div=document.createElement('div');div.className=`alert ${kind}`;div.textContent=String(text);host.appendChild(div)}
+function sanitize(q,i){if(!q||typeof q!=='object')throw new Error(`Item ${i+1}: objeto inválido.`);const id=String(q.id||'').trim(),subject=String(q.subject||'').trim(),topic=String(q.topic||'').trim(),text=String(q.text||'').trim();if(!/^[A-Za-z0-9._:-]{3,120}$/.test(id))throw new Error(`Item ${i+1}: id inválido.`);if(!validSubjects.has(subject))throw new Error(`Item ${i+1} (${id}): matéria inválida.`);if(topic.length<2||text.length<10)throw new Error(`Item ${i+1} (${id}): tema/enunciado inválido.`);if(!Array.isArray(q.options)||q.options.length!==4)throw new Error(`Item ${i+1} (${id}): são necessárias 4 alternativas.`);const correct=Number(q.correct);if(!Number.isInteger(correct)||correct<0||correct>3)throw new Error(`Item ${i+1} (${id}): gabarito inválido.`);const explanation=String(q.explanation||'').trim();if(explanation.length<5)throw new Error(`Item ${i+1} (${id}): explicação ausente.`);const sources=Array.isArray(q.sources)?q.sources.slice(0,8):q.sourceUrl?[{title:q.sourceTitle||q.source||'Fonte',url:q.sourceUrl}]:[];const legalBasis=Array.isArray(q.legalBasis)?q.legalBasis.slice(0,8):[];return {id,subject,topic,text,options:q.options.map(x=>String(x).trim()),correct,explanation,source:String(q.source||'Importado').slice(0,240),sources,legalBasis,exam:q.exam?String(q.exam).slice(0,40):null,year:q.year?Number(q.year):null,official:Boolean(q.official),difficulty:Number(q.difficulty||3),tags:Array.isArray(q.tags)?q.tags.slice(0,30):[],origin:q.official?'official-import':'user-import',importedAt:Date.now()}}
+function parsePackage(raw){const obj=JSON.parse(raw),arr=Array.isArray(obj)?obj:obj.questions;if(!Array.isArray(arr)||!arr.length)throw new Error('JSON precisa conter questions[].');if(arr.length>10000)throw new Error('Limite de 10.000 por importação local.');const clean=arr.map(sanitize),ids=clean.map(q=>q.id);if(new Set(ids).size!==ids.length)throw new Error('IDs duplicados no pacote.');return clean}
+function sourceText(q){const first=q.sources?.[0],basis=q.legalBasis?.[0];if(first?.url)return `<a class="source-link" href="${escapeHtml(first.url)}" target="_blank" rel="noopener">${escapeHtml(first.title||first.url)}</a>${basis?.label?`<small>${escapeHtml(basis.label)}</small>`:''}`;return `${escapeHtml(q.source||'—')}${basis?.label?`<small>${escapeHtml(basis.label)}</small>`:''}`}
+function renderTable(){const storage=$('filterStorage').value,subj=$('filterSubject').value,needle=$('filterText').value.trim().toLowerCase();const filtered=bank.filter(q=>(storage==='all'||q.storage===storage)&&(subj==='all'||q.subject===subj)&&(!needle||[q.id,q.topic,q.source,q.sources?.[0]?.title].join(' ').toLowerCase().includes(needle)));$('bankBody').innerHTML=filtered.length?filtered.slice(0,2500).map(q=>`<tr><td><strong>${escapeHtml(q.id)}</strong><small><span class="origin">${escapeHtml(q.storage||'local')}</span> ${q.official?'FGV/oficial':escapeHtml(q.origin||q.sourceType||'autoral')}</small></td><td>${escapeHtml(subjectName(q.subject))}</td><td>${escapeHtml(q.topic)}</td><td>${sourceText(q)}</td><td>${q.validation?.score!=null?`${escapeHtml(q.validation.score)}/100`:(q.quality?escapeHtml(q.quality):'—')}<small>${escapeHtml((q.validation?.issues||[]).join(', '))}</small></td><td>${q.storage==='local'?`<button class="text-btn danger" data-delete="${escapeHtml(q.id)}">Excluir</button>`:''}</td></tr>`).join(''):'<tr><td colspan="6" class="muted">Nenhuma questão neste filtro.</td></tr>';document.querySelectorAll('[data-delete]').forEach(b=>b.onclick=async()=>{await deleteQuestion(b.dataset.delete);await refresh()})}
+async function refresh(force=false){if(force){invalidateCloudCache();await getCloudQuestions({force:true})}bank=await getAllQuestions();const breakdown=await getQuestionBankBreakdown();$('builtinCount').textContent=breakdown.builtin;$('centralCount').textContent=breakdown.central;$('localCount').textContent=breakdown.local;$('totalCount').textContent=breakdown.total;$('bankStatus').textContent=`${breakdown.total} disponíveis`;const counts={};bank.forEach(q=>counts[q.subject]=(counts[q.subject]||0)+1);$('subjectSummary').innerHTML=subjects.filter(s=>counts[s.id]).sort((a,b)=>counts[b.id]-counts[a.id]).map(s=>`<div><strong>${escapeHtml(s.name)}</strong><span>${counts[s.id]} externas + base editorial</span></div>`).join('')||'<span class="muted">Banco central ainda vazio.</span>';renderTable()}
+function download(filename,data){const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
+$('chooseFile').onclick=()=>$('fileInput').click();$('fileInput').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const clean=parsePackage(await file.text());if($('importMode').value==='replace')await replaceQuestions(clean);else await putQuestions(clean);alertBox(`${clean.length} questões validadas e adicionadas à base local.`);await refresh()}catch(err){alertBox(err.message||String(err),'bad')}finally{e.target.value=''}};
+$('downloadTemplate').onclick=()=>download('oab-aprova-modelo-banco.json',{questions:[{id:'oab46-etica-001',subject:'etica',topic:'Honorários',text:'Enunciado completo.',options:['Alternativa A','Alternativa B','Alternativa C','Alternativa D'],correct:0,explanation:'Fundamento jurídico.',official:true,exam:'46',year:2026,sources:[{title:'FGV Conhecimento — Exame de Ordem',url:'https://conhecimento.fgv.br/exames',kind:'FGV'}],legalBasis:[{label:'Dispositivo jurídico aplicável',url:'https://www.oab.org.br/leisnormas/estatuto'}]}]});$('exportBank').onclick=()=>download('oab-aprova-banco-carregado.json',{exportedAt:new Date().toISOString(),questions:bank});$('clearBank').onclick=async()=>{if(!confirm('Apagar somente as questões locais deste navegador? O banco central não será alterado.'))return;await clearQuestions();alertBox('Base local apagada; banco central preservado.');await refresh()};$('refreshCentral').onclick=async()=>{try{$('refreshCentral').disabled=true;await refresh(true);alertBox('Banco central atualizado.')}catch(e){alertBox(e.message||String(e),'bad')}finally{$('refreshCentral').disabled=false}};$('dropZone').ondragover=e=>{e.preventDefault();e.dataTransfer.dropEffect='copy'};$('dropZone').ondrop=async e=>{e.preventDefault();const file=e.dataTransfer.files[0];if(!file)return;try{const clean=parsePackage(await file.text());if($('importMode').value==='replace')await replaceQuestions(clean);else await putQuestions(clean);alertBox(`${clean.length} questões importadas localmente.`);await refresh()}catch(err){alertBox(err.message||String(err),'bad')}};['filterStorage','filterSubject'].forEach(id=>$(id).onchange=renderTable);$('filterText').oninput=renderTable;refresh().catch(err=>alertBox('Falha ao abrir o banco: '+err.message,'bad'));
+</script></body></html>
