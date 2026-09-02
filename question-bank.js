@@ -1,4 +1,5 @@
 import { getCalibratedQuestions } from './fgv-bank.js';
+import { getExpandedQuestions, EXPANDED_QUESTION_COUNT } from './expanded-bank.js';
 
 const DB_NAME = 'oab-aprova-question-bank';
 const DB_VERSION = 2;
@@ -127,7 +128,7 @@ async function ensureFirebaseFirestore() {
     if (!firebase.apps.length) firebase.initializeApp(window.OAB_FIREBASE_CONFIG);
     return firebase.firestore();
   } catch (error) {
-    console.warn('Banco central indisponível; seguindo com base local.', error);
+    console.warn('Banco central indisponível; seguindo com base editorial/local.', error);
     return null;
   }
 }
@@ -161,28 +162,45 @@ async function calibrateBuiltins() {
   builtins.forEach(q => { const p = byId.get(q.id); if (p) Object.assign(q, p); });
 }
 
+export function getOfflineEditorialQuestions() {
+  return getExpandedQuestions().map(q => ({ ...q, storage: 'editorial' }));
+}
+
 export async function getAllQuestions(options = {}) {
   await calibrateBuiltins();
+  const editorial = getOfflineEditorialQuestions();
   const [local, cloud] = await Promise.all([
     getLocalQuestions().catch(() => []),
     getCloudQuestions(options).catch(() => [])
   ]);
-  const merged = new Map();
+  const merged = new Map(editorial.map(q => [q.id, q]));
   local.forEach(q => merged.set(q.id, { ...q, storage: 'local' }));
   cloud.forEach(q => merged.set(q.id, { ...q, storage: 'central' }));
   return prepareBank([...merged.values()]);
 }
 
 export async function getQuestionBankBreakdown() {
+  const editorialSeed = Array.isArray(window.OAB_QUESTIONS) ? window.OAB_QUESTIONS.length : 0;
+  const editorialExpanded = EXPANDED_QUESTION_COUNT;
   const [local, cloud] = await Promise.all([getLocalQuestions().catch(() => []), getCloudQuestions().catch(() => [])]);
-  const merged = new Map(local.map(q => [q.id, q]));
-  cloud.forEach(q => merged.set(q.id, q));
-  return { builtin: Array.isArray(window.OAB_QUESTIONS) ? window.OAB_QUESTIONS.length : 0, local: local.length, central: cloud.length, externalUnique: merged.size, total: (Array.isArray(window.OAB_QUESTIONS) ? window.OAB_QUESTIONS.length : 0) + merged.size };
+  const mergedExternal = new Map();
+  getOfflineEditorialQuestions().forEach(q => mergedExternal.set(q.id, q));
+  local.forEach(q => mergedExternal.set(q.id, q));
+  cloud.forEach(q => mergedExternal.set(q.id, q));
+  return {
+    builtin: editorialSeed + editorialExpanded,
+    editorialSeed,
+    editorialExpanded,
+    local: local.length,
+    central: cloud.length,
+    externalUnique: mergedExternal.size,
+    total: editorialSeed + mergedExternal.size
+  };
 }
 
 export async function countQuestions() {
   const data = await getQuestionBankBreakdown();
-  return data.externalUnique;
+  return data.total;
 }
 
 export async function putQuestions(questions) {
