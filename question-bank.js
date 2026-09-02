@@ -1,6 +1,6 @@
 import { getCalibratedQuestions } from './fgv-bank.js';
 import { getExpandedQuestions, EXPANDED_QUESTION_COUNT } from './expanded-bank.js';
-import { getOfficialFgvQuestions, OFFICIAL_FGV_QUESTION_TARGET, clearOfficialFgvCache } from './official-fgv-bank.js';
+import { getOfficialFgvQuestions, OFFICIAL_FGV_ACTIVE_TARGET, OFFICIAL_FGV_QUESTION_TOTAL, OFFICIAL_FGV_ANNULLED_COUNT, clearOfficialFgvCache } from './official-fgv-bank.js';
 
 const DB_NAME = 'oab-aprova-question-bank';
 const DB_VERSION = 2;
@@ -52,8 +52,7 @@ function rebalanceQuestion(question, target) {
 
 function prepareBank(questions) {
   const clean = questions.filter(q => q && q.id && Array.isArray(q.options) && q.options.length === 4);
-  // Questões oficiais devem conservar a ordem exata do caderno FGV. O anti-padrão
-  // de letras é aplicado apenas ao conteúdo autoral/importado que permite reordenação.
+  // Questões oficiais conservam exatamente a ordem do caderno FGV.
   const movable = clean.filter(q => !q.preserveOfficialOrder);
   const targets = balancedTargets(movable.length);
   let cursor = 0;
@@ -66,11 +65,8 @@ function openDb() {
     req.onupgradeneeded = () => {
       const db = req.result;
       let store;
-      if (!db.objectStoreNames.contains(STORE)) {
-        store = db.createObjectStore(STORE, { keyPath: 'id' });
-      } else {
-        store = req.transaction.objectStore(STORE);
-      }
+      if (!db.objectStoreNames.contains(STORE)) store = db.createObjectStore(STORE, { keyPath: 'id' });
+      else store = req.transaction.objectStore(STORE);
       if (!store.indexNames.contains('subject')) store.createIndex('subject', 'subject', { unique: false });
       if (!store.indexNames.contains('topic')) store.createIndex('topic', 'topic', { unique: false });
       if (!store.indexNames.contains('source')) store.createIndex('source', 'source', { unique: false });
@@ -83,10 +79,8 @@ function openDb() {
 
 function transaction(mode, handler) {
   return openDb().then(db => new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, mode);
-    const store = tx.objectStore(STORE);
-    let result;
-    try { result = handler(store); } catch (error) { reject(error); return; }
+    const tx = db.transaction(STORE, mode), store = tx.objectStore(STORE);
+    let result; try { result = handler(store); } catch (error) { reject(error); return; }
     tx.oncomplete = () => { db.close(); resolve(result); };
     tx.onerror = () => { db.close(); reject(tx.error); };
     tx.onabort = () => { db.close(); reject(tx.error || new Error('Transação abortada')); };
@@ -96,8 +90,7 @@ function transaction(mode, handler) {
 async function getLocalQuestions() {
   const db = await openDb();
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readonly');
-    const req = tx.objectStore(STORE).getAll();
+    const tx = db.transaction(STORE, 'readonly'), req = tx.objectStore(STORE).getAll();
     req.onsuccess = () => resolve(req.result || []);
     req.onerror = () => reject(req.error);
     tx.oncomplete = () => db.close();
@@ -109,75 +102,48 @@ function loadScript(src) {
     const existing = [...document.scripts].find(s => s.src === src);
     if (existing) {
       if (existing.dataset.loaded === '1' || window.firebase) return resolve();
-      existing.addEventListener('load', resolve, { once: true });
-      existing.addEventListener('error', reject, { once: true });
-      return;
+      existing.addEventListener('load', resolve, { once: true }); existing.addEventListener('error', reject, { once: true }); return;
     }
-    const script = document.createElement('script');
-    script.src = src;
-    script.async = true;
-    script.onload = () => { script.dataset.loaded = '1'; resolve(); };
-    script.onerror = () => reject(new Error(`Falha ao carregar ${src}`));
-    document.head.appendChild(script);
+    const script = document.createElement('script'); script.src = src; script.async = true;
+    script.onload = () => { script.dataset.loaded = '1'; resolve(); }; script.onerror = () => reject(new Error(`Falha ao carregar ${src}`)); document.head.appendChild(script);
   });
 }
 
 async function ensureFirebaseFirestore() {
   if (typeof window === 'undefined' || typeof document === 'undefined') return null;
-  if (!window.OAB_FIREBASE_CONFIG) {
-    try { await import('./firebase-config.js'); } catch { return null; }
-  }
+  if (!window.OAB_FIREBASE_CONFIG) { try { await import('./firebase-config.js'); } catch { return null; } }
   try {
     if (!window.firebase?.apps) await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js');
     if (!window.firebase?.firestore) await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js');
     if (!window.firebase || !window.OAB_FIREBASE_CONFIG) return null;
     if (!firebase.apps.length) firebase.initializeApp(window.OAB_FIREBASE_CONFIG);
     return firebase.firestore();
-  } catch (error) {
-    console.warn('Banco central indisponível; seguindo com base editorial/local.', error);
-    return null;
-  }
+  } catch (error) { console.warn('Banco central indisponível; seguindo com base editorial/local.', error); return null; }
 }
 
 export async function getCloudQuestions({ force = false } = {}) {
   const fresh = cloudCache && Date.now() - cloudCacheAt < 5 * 60 * 1000;
   if (fresh && !force) return cloudCache;
-  const db = await ensureFirebaseFirestore();
-  if (!db) return [];
+  const db = await ensureFirebaseFirestore(); if (!db) return [];
   try {
     const snap = await db.collection(CLOUD_COLLECTION).where('status', '==', 'published').limit(CLOUD_LIMIT).get();
-    cloudCache = snap.docs.map(doc => ({ ...doc.data(), id: doc.id, cloud: true }));
-    cloudCacheAt = Date.now();
-    return cloudCache;
-  } catch (error) {
-    console.warn('Falha ao carregar banco central.', error);
-    return cloudCache || [];
-  }
+    cloudCache = snap.docs.map(doc => ({ ...doc.data(), id: doc.id, cloud: true })); cloudCacheAt = Date.now(); return cloudCache;
+  } catch (error) { console.warn('Falha ao carregar banco central.', error); return cloudCache || []; }
 }
 
 async function calibrateBuiltins() {
-  const calibrated = await getCalibratedQuestions();
-  const upgrades = new Map(calibrated.map(q => [q.id, q]));
+  const calibrated = await getCalibratedQuestions(), upgrades = new Map(calibrated.map(q => [q.id, q]));
   const builtins = Array.isArray(window.OAB_QUESTIONS) ? window.OAB_QUESTIONS : [];
-  builtins.forEach(q => {
-    const upgrade = upgrades.get(q.id);
-    if (upgrade) Object.assign(q, upgrade, { sourceType: 'autoral-fgv-calibrado', quality: 'editorial-v2' });
-  });
-  const prepared = prepareBank(builtins);
-  const byId = new Map(prepared.map(q => [q.id, q]));
+  builtins.forEach(q => { const upgrade = upgrades.get(q.id); if (upgrade) Object.assign(q, upgrade, { sourceType: 'autoral-fgv-calibrado', quality: 'editorial-v2' }); });
+  const prepared = prepareBank(builtins), byId = new Map(prepared.map(q => [q.id, q]));
   builtins.forEach(q => { const p = byId.get(q.id); if (p) Object.assign(q, p); });
 }
 
 export async function getOfflineEditorialQuestions({forceOfficial=false}={}) {
   const expanded = getExpandedQuestions().map(q => ({ ...q, storage: 'editorial' }));
   let official=[];
-  try {
-    official=await getOfficialFgvQuestions({force:forceOfficial});
-    officialLoadError=null;
-  } catch (error) {
-    officialLoadError=error;
-    console.warn('Provas oficiais FGV indisponíveis nesta carga; mantendo banco editorial local.', error);
-  }
+  try { official=await getOfficialFgvQuestions({force:forceOfficial}); officialLoadError=null; }
+  catch (error) { officialLoadError=error; console.warn('Provas oficiais FGV indisponíveis nesta carga; mantendo banco editorial local.', error); }
   return [...expanded,...official];
 }
 
@@ -203,66 +169,34 @@ export async function getQuestionBankBreakdown(options={}) {
     getCloudQuestions(options).catch(() => [])
   ]);
   const official = editorial.filter(q=>q.official&&q.origin==='official-fgv').length;
-  const mergedExternal = new Map();
-  editorial.forEach(q => mergedExternal.set(q.id, q));
-  local.forEach(q => mergedExternal.set(q.id, q));
-  cloud.forEach(q => mergedExternal.set(q.id, q));
+  const mergedExternal = new Map(); editorial.forEach(q => mergedExternal.set(q.id, q)); local.forEach(q => mergedExternal.set(q.id, q)); cloud.forEach(q => mergedExternal.set(q.id, q));
   return {
     builtin: editorialSeed + editorialExpanded + official,
-    editorialSeed,
-    editorialExpanded,
-    official,
-    officialTarget:OFFICIAL_FGV_QUESTION_TARGET,
+    editorialSeed, editorialExpanded, official,
+    officialTarget:OFFICIAL_FGV_ACTIVE_TARGET,
+    officialHistoricalTotal:OFFICIAL_FGV_QUESTION_TOTAL,
+    officialAnnulled:OFFICIAL_FGV_ANNULLED_COUNT,
     officialLoadError:officialLoadError ? String(officialLoadError.message||officialLoadError) : null,
-    local: local.length,
-    central: cloud.length,
-    externalUnique: mergedExternal.size,
+    local: local.length, central: cloud.length, externalUnique: mergedExternal.size,
     total: editorialSeed + mergedExternal.size
   };
 }
 
-export async function countQuestions() {
-  const data = await getQuestionBankBreakdown();
-  return data.total;
-}
+export async function countQuestions() { return (await getQuestionBankBreakdown()).total; }
 
 export async function putQuestions(questions) {
-  const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readwrite');
-    const store = tx.objectStore(STORE);
-    questions.forEach(q => store.put(q));
-    tx.oncomplete = () => { db.close(); resolve(questions.length); };
-    tx.onerror = () => { db.close(); reject(tx.error); };
+  const db = await openDb(); return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite'), store = tx.objectStore(STORE); questions.forEach(q => store.put(q));
+    tx.oncomplete = () => { db.close(); resolve(questions.length); }; tx.onerror = () => { db.close(); reject(tx.error); };
   });
 }
-
 export async function replaceQuestions(questions) {
-  const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readwrite');
-    const store = tx.objectStore(STORE);
-    store.clear();
-    questions.forEach(q => store.put(q));
-    tx.oncomplete = () => { db.close(); resolve(questions.length); };
-    tx.onerror = () => { db.close(); reject(tx.error); };
+  const db = await openDb(); return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite'), store = tx.objectStore(STORE); store.clear(); questions.forEach(q => store.put(q));
+    tx.oncomplete = () => { db.close(); resolve(questions.length); }; tx.onerror = () => { db.close(); reject(tx.error); };
   });
 }
-
-export async function clearQuestions() {
-  return transaction('readwrite', store => store.clear());
-}
-
-export async function deleteQuestion(id) {
-  return transaction('readwrite', store => store.delete(id));
-}
-
-export function invalidateCloudCache() {
-  cloudCache = null;
-  cloudCacheAt = 0;
-}
-
-export function invalidateOfficialFgvCache(){
-  clearOfficialFgvCache();
-  officialLoadError=null;
-}
+export async function clearQuestions() { return transaction('readwrite', store => store.clear()); }
+export async function deleteQuestion(id) { return transaction('readwrite', store => store.delete(id)); }
+export function invalidateCloudCache() { cloudCache = null; cloudCacheAt = 0; }
+export function invalidateOfficialFgvCache(){ clearOfficialFgvCache(); officialLoadError=null; }
