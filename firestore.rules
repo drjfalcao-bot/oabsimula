@@ -5,5 +5,20 @@ service cloud.firestore {
     match /users/{userId}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
+
+    // Banco central: somente questões aprovadas podem ser lidas pelo aplicativo.
+    // Toda gravação é feita pelas Cloud Functions com Admin SDK.
+    match /question_bank/{questionId} {
+      allow read: if resource.data.status == 'published';
+      allow write: if false;
+    }
+
+    match /question_batches/{batchId} {
+      allow read, write: if false;
+    }
+
+    match /question_fingerprints/{fingerprintId} {
+      allow read, write: if false;
+    }
   }
 }
