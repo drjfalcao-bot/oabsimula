@@ -1,8 +1,12 @@
 import { getCalibratedQuestions } from './fgv-bank.js';
 
 const DB_NAME = 'oab-aprova-question-bank';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE = 'questions';
+const CLOUD_COLLECTION = 'question_bank';
+const CLOUD_LIMIT = 10000;
+let cloudCache = null;
+let cloudCacheAt = 0;
 
 function shuffle(arr) {
   const out = [...arr];
@@ -35,7 +39,6 @@ function rebalanceQuestion(question, target) {
   if (!Array.isArray(question.options) || question.options.length !== 4) return question;
   const correct = Number(question.correct);
   if (!Number.isInteger(correct) || correct < 0 || correct > 3) return question;
-
   const correctText = question.options[correct];
   const distractors = shuffle(question.options.filter((_, i) => i !== correct));
   const options = [];
@@ -55,12 +58,16 @@ function openDb() {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = () => {
       const db = req.result;
+      let store;
       if (!db.objectStoreNames.contains(STORE)) {
-        const store = db.createObjectStore(STORE, { keyPath: 'id' });
-        store.createIndex('subject', 'subject', { unique: false });
-        store.createIndex('topic', 'topic', { unique: false });
-        store.createIndex('source', 'source', { unique: false });
+        store = db.createObjectStore(STORE, { keyPath: 'id' });
+      } else {
+        store = req.transaction.objectStore(STORE);
       }
+      if (!store.indexNames.contains('subject')) store.createIndex('subject', 'subject', { unique: false });
+      if (!store.indexNames.contains('topic')) store.createIndex('topic', 'topic', { unique: false });
+      if (!store.indexNames.contains('source')) store.createIndex('source', 'source', { unique: false });
+      if (!store.indexNames.contains('origin')) store.createIndex('origin', 'origin', { unique: false });
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
@@ -79,18 +86,69 @@ function transaction(mode, handler) {
   }));
 }
 
-export async function getAllQuestions() {
+async function getLocalQuestions() {
   const db = await openDb();
-  const stored = await new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE, 'readonly');
     const req = tx.objectStore(STORE).getAll();
     req.onsuccess = () => resolve(req.result || []);
     req.onerror = () => reject(req.error);
     tx.oncomplete = () => db.close();
   });
+}
 
-  // Substitui o antigo banco-semente por versões casuísticas de dificuldade
-  // calibrada. Os IDs são preservados para não quebrar histórico e revisões.
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const existing = [...document.scripts].find(s => s.src === src);
+    if (existing) {
+      if (existing.dataset.loaded === '1' || window.firebase) return resolve();
+      existing.addEventListener('load', resolve, { once: true });
+      existing.addEventListener('error', reject, { once: true });
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = true;
+    script.onload = () => { script.dataset.loaded = '1'; resolve(); };
+    script.onerror = () => reject(new Error(`Falha ao carregar ${src}`));
+    document.head.appendChild(script);
+  });
+}
+
+async function ensureFirebaseFirestore() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return null;
+  if (!window.OAB_FIREBASE_CONFIG) {
+    try { await import('./firebase-config.js'); } catch { return null; }
+  }
+  try {
+    if (!window.firebase?.apps) await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js');
+    if (!window.firebase?.firestore) await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js');
+    if (!window.firebase || !window.OAB_FIREBASE_CONFIG) return null;
+    if (!firebase.apps.length) firebase.initializeApp(window.OAB_FIREBASE_CONFIG);
+    return firebase.firestore();
+  } catch (error) {
+    console.warn('Banco central indisponível; seguindo com base local.', error);
+    return null;
+  }
+}
+
+export async function getCloudQuestions({ force = false } = {}) {
+  const fresh = cloudCache && Date.now() - cloudCacheAt < 5 * 60 * 1000;
+  if (fresh && !force) return cloudCache;
+  const db = await ensureFirebaseFirestore();
+  if (!db) return [];
+  try {
+    const snap = await db.collection(CLOUD_COLLECTION).where('status', '==', 'published').limit(CLOUD_LIMIT).get();
+    cloudCache = snap.docs.map(doc => ({ ...doc.data(), id: doc.id, cloud: true }));
+    cloudCacheAt = Date.now();
+    return cloudCache;
+  } catch (error) {
+    console.warn('Falha ao carregar banco central.', error);
+    return cloudCache || [];
+  }
+}
+
+async function calibrateBuiltins() {
   const calibrated = await getCalibratedQuestions();
   const upgrades = new Map(calibrated.map(q => [q.id, q]));
   const builtins = Array.isArray(window.OAB_QUESTIONS) ? window.OAB_QUESTIONS : [];
@@ -98,32 +156,33 @@ export async function getAllQuestions() {
     const upgrade = upgrades.get(q.id);
     if (upgrade) Object.assign(q, upgrade, { sourceType: 'autoral-fgv-calibrado', quality: 'editorial-v2' });
   });
+  const prepared = prepareBank(builtins);
+  const byId = new Map(prepared.map(q => [q.id, q]));
+  builtins.forEach(q => { const p = byId.get(q.id); if (p) Object.assign(q, p); });
+}
 
-  // app.js captura referências rasas dos objetos antes do import dinâmico.
-  // A mutação em lugar mantém essas referências e permite corrigir letra/ordem
-  // sem invalidar tentativas e revisões já vinculadas aos IDs antigos.
-  const preparedBuiltins = prepareBank(builtins);
-  const preparedById = new Map(preparedBuiltins.map(q => [q.id, q]));
-  builtins.forEach(q => {
-    const prepared = preparedById.get(q.id);
-    if (prepared) Object.assign(q, prepared);
-  });
+export async function getAllQuestions(options = {}) {
+  await calibrateBuiltins();
+  const [local, cloud] = await Promise.all([
+    getLocalQuestions().catch(() => []),
+    getCloudQuestions(options).catch(() => [])
+  ]);
+  const merged = new Map();
+  local.forEach(q => merged.set(q.id, { ...q, storage: 'local' }));
+  cloud.forEach(q => merged.set(q.id, { ...q, storage: 'central' }));
+  return prepareBank([...merged.values()]);
+}
 
-  // Questões importadas/geradas também têm as posições do gabarito
-  // normalizadas em cada carregamento. O texto, porém, não é adulterado para
-  // "igualar tamanho": lotes ruins devem ser rejeitados na fábrica, não maquiados.
-  return prepareBank(stored);
+export async function getQuestionBankBreakdown() {
+  const [local, cloud] = await Promise.all([getLocalQuestions().catch(() => []), getCloudQuestions().catch(() => [])]);
+  const merged = new Map(local.map(q => [q.id, q]));
+  cloud.forEach(q => merged.set(q.id, q));
+  return { builtin: Array.isArray(window.OAB_QUESTIONS) ? window.OAB_QUESTIONS.length : 0, local: local.length, central: cloud.length, externalUnique: merged.size, total: (Array.isArray(window.OAB_QUESTIONS) ? window.OAB_QUESTIONS.length : 0) + merged.size };
 }
 
 export async function countQuestions() {
-  const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readonly');
-    const req = tx.objectStore(STORE).count();
-    req.onsuccess = () => resolve(req.result || 0);
-    req.onerror = () => reject(req.error);
-    tx.oncomplete = () => db.close();
-  });
+  const data = await getQuestionBankBreakdown();
+  return data.externalUnique;
 }
 
 export async function putQuestions(questions) {
@@ -155,4 +214,9 @@ export async function clearQuestions() {
 
 export async function deleteQuestion(id) {
   return transaction('readwrite', store => store.delete(id));
+}
+
+export function invalidateCloudCache() {
+  cloudCache = null;
+  cloudCacheAt = 0;
 }
