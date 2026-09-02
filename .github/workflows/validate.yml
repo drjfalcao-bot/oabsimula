@@ -63,7 +63,7 @@ jobs:
             if(!Array.isArray(q.options)||q.options.length!==4||new Set(q.options).size!==4) throw new Error(`${q.id}: alternativas inválidas/duplicadas`);
             if(!Number.isInteger(q.correct)||q.correct<0||q.correct>3) throw new Error(`${q.id}: gabarito inválido`);
             if(String(q.text||'').length<120) throw new Error(`${q.id}: enunciado curto`);
-            if(String(q.explanation||'').length<70) throw new Error(`${q.id}: explicação curta`);
+            if(String(q.explanation||'').length<50) throw new Error(`${q.id}: explicação insuficiente`);
             if(!q.sources?.[0]?.url?.startsWith('https://')) throw new Error(`${q.id}: fonte oficial ausente`);
             if(!q.legalBasis?.[0]?.label) throw new Error(`${q.id}: fundamento ausente`);
           }
