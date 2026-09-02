@@ -1,7 +1,7 @@
 {
   "name": "oab-simula-functions",
   "engines": {"node": "20"},
-  "main": "index.js",
+  "main": "main.js",
   "type": "module",
   "scripts": {
     "deploy": "firebase deploy --only functions"

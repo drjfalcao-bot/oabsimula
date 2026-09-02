@@ -25,7 +25,9 @@ jobs:
           node --check segunda-fase.js
           node --check fabrica.js
           node --check functions/index.js
-      - name: Validate calibrated first-phase bank
+          node --check functions/main.js
+          node --check functions/question-engine.js
+      - name: Validate calibrated editorial seed
         run: |
           node - <<'NODE'
           const fs=require('fs'),zlib=require('zlib');
@@ -33,7 +35,7 @@ jobs:
           const match=source.match(/const DATA = '([^']+)'/);
           if(!match) throw new Error('Payload do banco calibrado ausente');
           const questions=JSON.parse(zlib.gunzipSync(Buffer.from(match[1],'base64')).toString('utf8'));
-          if(questions.length!==33) throw new Error(`Banco calibrado deveria ter 33 questões, recebeu ${questions.length}`);
+          if(questions.length<33) throw new Error(`Banco editorial regrediu: mínimo 33, recebeu ${questions.length}`);
           const ids=new Set();
           for(const q of questions){
             if(!q.id || ids.has(q.id)) throw new Error(`ID inválido/duplicado: ${q.id}`);
@@ -43,7 +45,7 @@ jobs:
             if(String(q.text||'').length<150) throw new Error(`${q.id}: enunciado curto para o banco calibrado`);
             if(String(q.explanation||'').length<100) throw new Error(`${q.id}: explicação insuficiente`);
           }
-          console.log(`Banco calibrado íntegro: ${questions.length} questões, ${ids.size} IDs únicos.`);
+          console.log(`Seed editorial íntegro: ${questions.length} questões, sem teto fixo.`);
           NODE
       - name: Validate HTML IDs
         run: |

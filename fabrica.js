@@ -1,15 +1,74 @@
-import { putQuestions } from './question-bank.js';
-const $=id=>document.getElementById(id);let auth,functions,batch=[];
+import { invalidateCloudCache } from './question-bank.js';
+
+const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+let auth,functions,batch=[],batchId=null,bulkRunning=false;
 
-function shuffle(arr){const out=[...arr];for(let i=out.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[out[i],out[j]]=[out[j],out[i]]}return out}
-function targets(n){const a=shuffle(Array.from({length:n},(_,i)=>i%4));for(let p=0;p<10;p++){let changed=false;for(let i=2;i<a.length;i++){if(a[i]===a[i-1]&&a[i]===a[i-2]){const j=a.findIndex((v,k)=>k>i&&v!==a[i]);if(j>i){[a[i],a[j]]=[a[j],a[i]];changed=true}}}if(!changed)break}return a}
-function rebalance(qs){const t=targets(qs.length);return qs.map((q,i)=>{if(!Array.isArray(q.options)||q.options.length!==4||!Number.isInteger(Number(q.correct)))return q;const c=Number(q.correct),right=q.options[c],wrong=shuffle(q.options.filter((_,x)=>x!==c)),options=[];let w=0;for(let p=0;p<4;p++)options[p]=p===t[i]?right:wrong[w++];return {...q,options,correct:t[i],engineVersion:2}})}
-function batchDistribution(qs){const d=[0,0,0,0];qs.forEach(q=>{const c=Number(q.correct);if(Number.isInteger(c)&&c>=0&&c<4)d[c]++});return d}
-function validate(qs,difficulty=3){const ids=new Set(),issues=[];for(const [idx,q] of qs.entries()){const tag=`Q${idx+1}`;if(!q.id||ids.has(q.id))issues.push(`${tag}: ID ausente/duplicado`);ids.add(q.id);if(!window.OAB_SUBJECTS.some(s=>s.id===q.subject))issues.push(`${tag}: matéria inválida`);if(!Array.isArray(q.options)||q.options.length!==4)issues.push(`${tag}: alternativas inválidas`);if(!Number.isInteger(Number(q.correct))||Number(q.correct)<0||Number(q.correct)>3)issues.push(`${tag}: gabarito inválido`);const text=String(q.text||'');if(text.length<(difficulty>=4?180:120))issues.push(`${tag}: enunciado abaixo do padrão do nível`);if(String(q.explanation||'').length<100)issues.push(`${tag}: explicação curta`);if(Array.isArray(q.options)&&q.options.length===4){const lens=q.options.map(x=>String(x||'').trim().length),c=Number(q.correct),corr=lens[c]||0,others=lens.filter((_,i)=>i!==c),avg=lens.reduce((a,b)=>a+b,0)/4;if(corr>Math.max(...others)*1.25&&corr>avg*1.18)issues.push(`${tag}: correta denunciada pelo comprimento`);if(Math.max(...lens)>Math.max(80,Math.min(...lens)*2.3))issues.push(`${tag}: alternativas muito desiguais`);if(q.options.some(x=>String(x||'').trim().length<12))issues.push(`${tag}: distrator curto/demasiado fácil`)}}
-  const d=batchDistribution(qs),max=Math.max(...d),min=Math.min(...d);if(qs.length>=4&&max-min>1)issues.push(`Lote: gabaritos desequilibrados A/B/C/D = ${d.join('/')}`);for(let i=2;i<qs.length;i++)if(qs[i].correct===qs[i-1].correct&&qs[i].correct===qs[i-2].correct)issues.push('Lote: três gabaritos consecutivos na mesma letra');return [...new Set(issues)]}
+function init(){
+  $('subject').innerHTML=window.OAB_SUBJECTS.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');
+  try{
+    if(!firebase.apps.length)firebase.initializeApp(window.OAB_FIREBASE_CONFIG);
+    auth=firebase.auth();
+    functions=firebase.app().functions('southamerica-east1');
+    auth.onAuthStateChanged(u=>{$('status').textContent=u?'Conectado: '+(u.displayName||u.email):'Entre com Google no Tutor IA antes de gerar.'});
+  }catch(e){$('status').textContent='Firebase indisponível.'}
+}
+function inputs(quantity){return {subject:$('subject').value,topic:$('topic').value,difficulty:Number($('difficulty').value),quantity,mode:$('mode').value}}
+function summarize(data){
+  const q=Array.isArray(data?.questions)?data.questions:[];
+  const ready=Number(data?.quality?.ready??q.filter(x=>x.validation?.readyToPublish).length),blocked=q.length-ready;
+  $('qTotal').textContent=q.length;$('qReady').textContent=ready;$('qBlocked').textContent=blocked;
+  const issues={};q.forEach(x=>(x.validation?.issues||[]).forEach(i=>issues[i]=(issues[i]||0)+1));
+  const issueText=Object.entries(issues).map(([k,v])=>`${k}: ${v}`).join(' • ');
+  $('quality').innerHTML=`<strong>Motor V${data?.quality?.engineVersion||3}:</strong> ${ready}/${q.length} passaram no corte.${issueText?`<br><span class="muted">${esc(issueText)}</span>`:''}`;
+}
+async function generateOne(quantity){
+  if(!auth?.currentUser)throw new Error('Entre com Google antes de gerar.');
+  const call=functions.httpsCallable('generateGroundedQuestionBatch');
+  const r=await call(inputs(quantity));
+  return r.data||{};
+}
+async function publish(id){
+  if(!id)throw new Error('Lote sem identificador.');
+  const call=functions.httpsCallable('publishGroundedQuestionBatch');
+  const r=await call({batchId:id});invalidateCloudCache();return r.data||{};
+}
+$('generate').onclick=async()=>{
+  if(!auth?.currentUser){alert('Entre com Google no Tutor IA.');return}
+  const b=$('generate');b.disabled=true;b.textContent='Pesquisando e auditando…';
+  try{
+    const data=await generateOne(Number($('qty').value));batch=Array.isArray(data.questions)?data.questions:[];batchId=data.batchId||null;
+    $('preview').textContent=JSON.stringify({batchId,questions:batch},null,2);summarize(data);
+    $('save').disabled=!batchId||!batch.some(q=>q.validation?.readyToPublish);$('discard').disabled=!batch.length;
+  }catch(e){$('quality').textContent='Falha ao gerar lote: '+(e.message||e)}finally{b.disabled=false;b.textContent='Gerar + pesquisar + auditar'}
+};
+$('save').onclick=async()=>{
+  if(!batchId)return;const b=$('save');b.disabled=true;b.textContent='Publicando…';
+  try{const r=await publish(batchId);$('quality').innerHTML=`<strong>${Number(r.published||0)} questões publicadas no banco central.</strong> ${Number(r.skipped||0)} duplicatas foram ignoradas.`;batch=[];batchId=null;$('preview').textContent='[]';$('discard').disabled=true}
+  catch(e){$('quality').textContent='Falha ao publicar: '+(e.message||e);b.disabled=false}
+  finally{b.textContent='Publicar aprovadas no banco central'}
+};
+$('discard').onclick=()=>{batch=[];batchId=null;$('preview').textContent='[]';$('quality').textContent='Lote descartado.';$('qTotal').textContent='0';$('qReady').textContent='0';$('qBlocked').textContent='0';$('save').disabled=true;$('discard').disabled=true};
+$('bulk').onclick=async()=>{
+  if(bulkRunning)return;if(!auth?.currentUser){alert('Entre com Google antes de iniciar a produção em escala.');return}
+  const target=Math.max(1,Number($('bulkQty').value)||100),b=$('bulk');bulkRunning=true;b.disabled=true;b.textContent='Produzindo…';
+  let requested=0,published=0,blocked=0,duplicates=0,cycles=0;
+  try{
+    while(requested<target){
+      const qty=Math.min(20,target-requested);cycles++;
+      $('bulkStatus').textContent=`Lote ${cycles}: pesquisando fontes e auditando ${qty} questões…`;
+      const data=await generateOne(qty);requested+=qty;
+      const ready=Number(data?.quality?.ready||0);blocked+=Math.max(0,qty-ready);
+      if(data.batchId&&ready){
+        $('bulkStatus').textContent=`Lote ${cycles}: ${ready} aprovadas; publicando no banco central…`;
+        const pub=await publish(data.batchId);published+=Number(pub.published||0);duplicates+=Number(pub.skipped||0);
+      }
+      $('bulkBar').style.width=`${Math.min(100,(requested/target)*100)}%`;
+      $('bulkStatus').textContent=`Processadas ${requested}/${target} • publicadas ${published} • bloqueadas ${blocked} • duplicatas ${duplicates}`;
+    }
+    $('bulkStatus').innerHTML=`<strong>Produção concluída.</strong> ${published} novas questões entraram no banco central; ${blocked} foram barradas por qualidade e ${duplicates} por duplicidade.`;
+  }catch(e){$('bulkStatus').textContent=`Produção interrompida após ${requested}/${target}: ${e.message||e}`}
+  finally{bulkRunning=false;b.disabled=false;b.textContent='Produzir e publicar automaticamente'}
+};
 
-function init(){const subjects=window.OAB_SUBJECTS;$('subject').innerHTML=subjects.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');try{if(!firebase.apps.length)firebase.initializeApp(window.OAB_FIREBASE_CONFIG);auth=firebase.auth();functions=firebase.app().functions('southamerica-east1');auth.onAuthStateChanged(u=>{$('status').textContent=u?'Conectado: '+(u.displayName||u.email):'Entre com Google no Tutor IA antes de gerar.'})}catch(e){$('status').textContent='Firebase indisponível.'}}
-$('generate').onclick=async()=>{if(!auth?.currentUser){alert('Entre com Google em Tutor IA.');return}const b=$('generate'),difficulty=Number($('difficulty').value);b.disabled=true;b.textContent='Gerando…';try{const call=functions.httpsCallable('generateFirstPhaseBatch');const r=await call({subject:$('subject').value,topic:$('topic').value,difficulty,quantity:Number($('qty').value)});batch=rebalance(Array.isArray(r.data?.questions)?r.data.questions:[]);const issues=validate(batch,difficulty);$('preview').textContent=JSON.stringify(batch,null,2);const dist=batchDistribution(batch);$('quality').innerHTML=`<strong>${batch.length} questões recebidas.</strong><br>Gabaritos A/B/C/D: ${dist.join(' / ')}.<br>${issues.length?'Pendências de qualidade: '+issues.join('; '):'Validação estrutural e anti-padrão aprovada.'}`;$('save').disabled=!batch.length||issues.length>0;$('discard').disabled=!batch.length}catch(e){$('quality').textContent='Falha ao gerar lote: '+(e.message||e)}finally{b.disabled=false;b.textContent='Gerar questões'}};
-$('save').onclick=async()=>{if(!batch.length)return;await putQuestions(batch);$('quality').innerHTML=`<strong>${batch.length} questões salvas no banco local.</strong> O motor redistribui as letras do gabarito a cada carregamento e evita o padrão “resposta mais longa”.`;batch=[];$('preview').textContent='[]';$('save').disabled=true;$('discard').disabled=true};
-$('discard').onclick=()=>{batch=[];$('preview').textContent='[]';$('quality').textContent='Lote descartado.';$('save').disabled=true;$('discard').disabled=true};init();
+init();
