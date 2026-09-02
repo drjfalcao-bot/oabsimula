@@ -20,6 +20,7 @@ jobs:
           node --check data.js
           node --check question-bank.js
           node --check fgv-bank.js
+          node --check expanded-bank.js
           node --check ia.js
           node --check second-phase-data.js
           node --check segunda-fase.js
@@ -46,6 +47,29 @@ jobs:
             if(String(q.explanation||'').length<100) throw new Error(`${q.id}: explicação insuficiente`);
           }
           console.log(`Seed editorial íntegro: ${questions.length} questões, sem teto fixo.`);
+          NODE
+      - name: Validate expanded grounded bank
+        run: |
+          node --input-type=module - <<'NODE'
+          const mod=await import('./expanded-bank.js');
+          const questions=mod.getExpandedQuestions();
+          if(mod.EXPANDED_RULE_COUNT!==110) throw new Error(`Esperadas 110 regras, recebidas ${mod.EXPANDED_RULE_COUNT}`);
+          if(questions.length!==550) throw new Error(`Esperadas 550 questões expandidas, recebidas ${questions.length}`);
+          const ids=new Set(),rules=new Map(),subjects=new Map();
+          for(const q of questions){
+            if(!q.id||ids.has(q.id)) throw new Error(`ID inválido/duplicado: ${q.id}`);ids.add(q.id);
+            if(!q.ruleId) throw new Error(`${q.id}: ruleId ausente`);
+            rules.set(q.ruleId,(rules.get(q.ruleId)||0)+1);subjects.set(q.subject,(subjects.get(q.subject)||0)+1);
+            if(!Array.isArray(q.options)||q.options.length!==4||new Set(q.options).size!==4) throw new Error(`${q.id}: alternativas inválidas/duplicadas`);
+            if(!Number.isInteger(q.correct)||q.correct<0||q.correct>3) throw new Error(`${q.id}: gabarito inválido`);
+            if(String(q.text||'').length<120) throw new Error(`${q.id}: enunciado curto`);
+            if(String(q.explanation||'').length<70) throw new Error(`${q.id}: explicação curta`);
+            if(!q.sources?.[0]?.url?.startsWith('https://')) throw new Error(`${q.id}: fonte oficial ausente`);
+            if(!q.legalBasis?.[0]?.label) throw new Error(`${q.id}: fundamento ausente`);
+          }
+          for(const [rule,count] of rules) if(count!==5) throw new Error(`${rule}: deveria ter 5 variantes, tem ${count}`);
+          if(rules.size!==110) throw new Error(`Esperadas 110 regras únicas, recebidas ${rules.size}`);
+          console.log(`Banco expandido íntegro: ${questions.length} questões / ${rules.size} regras / ${subjects.size} matérias.`);
           NODE
       - name: Validate HTML IDs
         run: |
