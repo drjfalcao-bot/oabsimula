@@ -21,6 +21,7 @@ jobs:
           node --check question-bank.js
           node --check fgv-bank.js
           node --check expanded-bank.js
+          node --check official-fgv-bank.js
           node --check ia.js
           node --check second-phase-data.js
           node --check segunda-fase.js
@@ -70,6 +71,25 @@ jobs:
           for(const [rule,count] of rules) if(count!==5) throw new Error(`${rule}: deveria ter 5 variantes, tem ${count}`);
           if(rules.size!==110) throw new Error(`Esperadas 110 regras únicas, recebidas ${rules.size}`);
           console.log(`Banco expandido íntegro: ${questions.length} questões / ${rules.size} regras / ${subjects.size} matérias.`);
+          NODE
+      - name: Validate official FGV exam catalogue
+        run: |
+          node --input-type=module - <<'NODE'
+          const mod=await import('./official-fgv-bank.js');
+          const issues=mod.validateOfficialFgvConfig();
+          if(issues.length) throw new Error(issues.join('; '));
+          if(mod.OFFICIAL_FGV_EXAM_COUNT!==5) throw new Error(`Esperados 5 exames, recebidos ${mod.OFFICIAL_FGV_EXAM_COUNT}`);
+          if(mod.OFFICIAL_FGV_QUESTION_TOTAL!==400) throw new Error(`Histórico deveria ter 400 itens, recebeu ${mod.OFFICIAL_FGV_QUESTION_TOTAL}`);
+          if(mod.OFFICIAL_FGV_ANNULLED_COUNT!==3) throw new Error(`Esperadas 3 anulações, recebidas ${mod.OFFICIAL_FGV_ANNULLED_COUNT}`);
+          if(mod.OFFICIAL_FGV_ACTIVE_TARGET!==397) throw new Error(`Esperadas 397 questões válidas, recebidas ${mod.OFFICIAL_FGV_ACTIVE_TARGET}`);
+          const expected='42:43,43:1,43:74';
+          const actual=mod.OFFICIAL_FGV_ANNULLED.map(x=>`${x.exam}:${x.question}`).join(',');
+          if(actual!==expected) throw new Error(`Mapa de anulações divergente: ${actual}`);
+          for(const exam of [42,43,44,45,46]){
+            const m=mod.OFFICIAL_FGV_EXAMS[exam];
+            if(!m||m.key.length!==80) throw new Error(`${exam}: gabarito definitivo incompleto`);
+          }
+          console.log('Catálogo FGV íntegro: 5 exames, 400 itens históricos, 397 válidos e 3 anulados.');
           NODE
       - name: Validate HTML IDs
         run: |
