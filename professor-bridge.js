@@ -117,8 +117,18 @@
     wrap.querySelector('[data-open-professor]').addEventListener('click', saveAndOpenProfessor);
   }
 
+  function loadCommentaryGuard() {
+    if (document.querySelector('script[data-guided-commentary-guard]')) return;
+    const script = document.createElement('script');
+    script.src = 'guided-commentary-guard.js';
+    script.defer = true;
+    script.dataset.guidedCommentaryGuard = '1';
+    document.head.appendChild(script);
+  }
+
   const observer = new MutationObserver(installButton);
   const questionArea = document.getElementById('questionArea');
   if (questionArea) observer.observe(questionArea, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
   installButton();
+  loadCommentaryGuard();
 })();
