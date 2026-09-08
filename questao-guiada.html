@@ -26,7 +26,7 @@
         <a class="nav-item nav-link active" href="questao-guiada.html"><span>⌕</span>Questão Guiada</a>
         <a class="nav-item nav-link" href="bank.html"><span>▦</span>Banco de questões</a>
         <a class="nav-item nav-link" href="index.html#errors"><span>↺</span>Revisões</a>
-        <a class="nav-item nav-link" href="ia.html"><span>✦</span>Tutor IA</a>
+        <a class="nav-item nav-link" href="ia.html"><span>✦</span>Professor IA</a>
       </nav>
       <div class="sidebar-foot">
         <div class="user-card"><div class="avatar" id="userAvatar">U</div><div><strong id="userName">Usuário local</strong><span id="syncStatus">Dados salvos neste navegador</span></div></div>
@@ -38,12 +38,12 @@
     <main class="main guided-main">
       <header class="topbar">
         <div><p class="eyebrow">RECUPERAÇÃO ATIVA + CORREÇÃO CAUSAL</p><h1>Questão Guiada</h1></div>
-        <div class="top-actions"><a class="btn secondary" href="bank.html">Ver banco</a><button class="btn primary" id="nextTop">Nova questão</button></div>
+        <div class="top-actions"><a class="btn secondary" href="ia.html">Professor IA</a><a class="btn secondary" href="bank.html">Ver banco</a><button class="btn primary" id="nextTop">Nova questão</button></div>
       </header>
       <div class="notice hidden" id="notice"></div>
 
       <section class="card" style="padding:20px">
-        <div class="card-head"><div><p class="eyebrow">FILTRO DE ESTUDO</p><h3>Escolha de onde a próxima questão deve vir</h3></div><div class="login-inline"><span id="aiStatus">Comentário editorial disponível; IA amplia a análise quando conectada.</span></div></div>
+        <div class="card-head"><div><p class="eyebrow">FILTRO DE ESTUDO</p><h3>Escolha de onde a próxima questão deve vir</h3></div><div class="login-inline"><span id="aiStatus">O modo guiado funciona sem chat; a IA apenas amplia a explicação quando conectada.</span></div></div>
         <div class="guided-toolbar">
           <label>Origem<select id="originFilter"><option value="all">Todas</option><option value="official">FGV Oficial</option><option value="authorial">Autorais fundamentadas</option></select></label>
           <label>Matéria<select id="subjectFilter"><option value="all">Todas as matérias</option></select></label>
@@ -73,6 +73,7 @@
 
   <script src="data.js"></script>
   <script src="firebase-config.js"></script>
+  <script src="professor-bridge.js"></script>
   <script type="module" src="questao-guiada.js"></script>
 </body>
 </html>
