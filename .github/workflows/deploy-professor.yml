@@ -47,14 +47,15 @@ jobs:
             echo "Nenhuma credencial de deploy Firebase encontrada nos GitHub Actions secrets." >&2
             exit 1
           fi
-      - name: Deploy professorOab
+      - name: Deploy Professor IA endpoints
         shell: bash
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         run: |
           set -euo pipefail
+          TARGETS="functions:professorOab,functions:tutorOab"
           if [ "${{ steps.auth.outputs.mode }}" = "token" ]; then
-            npx --yes firebase-tools@latest deploy --only functions:professorOab --project oabsimula-5c31b --token "$FIREBASE_TOKEN" --non-interactive
+            npx --yes firebase-tools@latest deploy --only "$TARGETS" --project oabsimula-5c31b --token "$FIREBASE_TOKEN" --non-interactive
           else
-            npx --yes firebase-tools@latest deploy --only functions:professorOab --project oabsimula-5c31b --non-interactive
+            npx --yes firebase-tools@latest deploy --only "$TARGETS" --project oabsimula-5c31b --non-interactive
           fi
