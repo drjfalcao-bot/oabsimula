@@ -1,0 +1,63 @@
+name: Deploy Professor IA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'functions/professor-api.js'
+      - 'functions/main.js'
+      - 'functions/package.json'
+      - 'functions/package-lock.json'
+      - '.github/workflows/deploy-professor.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+      - name: Install function dependencies
+        working-directory: functions
+        run: npm ci
+      - name: Prepare Firebase credentials
+        id: auth
+        shell: bash
+        env:
+          FIREBASE_SERVICE_ACCOUNT_PROJECT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_OABSIMULA_5C31B }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -n "${FIREBASE_SERVICE_ACCOUNT_PROJECT:-}" ]; then
+            printf '%s' "$FIREBASE_SERVICE_ACCOUNT_PROJECT" > "$RUNNER_TEMP/firebase-service-account.json"
+            echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-service-account.json" >> "$GITHUB_ENV"
+            echo "mode=adc" >> "$GITHUB_OUTPUT"
+          elif [ -n "${FIREBASE_SERVICE_ACCOUNT:-}" ]; then
+            printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-service-account.json"
+            echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-service-account.json" >> "$GITHUB_ENV"
+            echo "mode=adc" >> "$GITHUB_OUTPUT"
+          elif [ -n "${FIREBASE_TOKEN:-}" ]; then
+            echo "mode=token" >> "$GITHUB_OUTPUT"
+          else
+            echo "Nenhuma credencial de deploy Firebase encontrada nos GitHub Actions secrets." >&2
+            exit 1
+          fi
+      - name: Deploy professorOab
+        shell: bash
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ "${{ steps.auth.outputs.mode }}" = "token" ]; then
+            npx --yes firebase-tools@latest deploy --only functions:professorOab --project oabsimula-5c31b --token "$FIREBASE_TOKEN" --non-interactive
+          else
+            npx --yes firebase-tools@latest deploy --only functions:professorOab --project oabsimula-5c31b --non-interactive
+          fi
