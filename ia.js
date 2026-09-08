@@ -22,6 +22,7 @@ let professorContext = launchedFromGuided ? readJson(CONTEXT_KEY, null) : null;
 if (professorContext && Date.now() - Number(professorContext.createdAt || 0) > GUIDED_CONTEXT_TTL) professorContext = null;
 let messages = readJson(CHAT_KEY, []);
 let busy = false;
+let currentUser = null;
 
 function readJson(key, fallback) {
   try {
@@ -217,17 +218,48 @@ function buildConversationBlock() {
 function buildContextForModel() {
   const instruction = 'MODO PROFESSOR OAB APROVA. Use o histórico para decidir profundidade e próxima ação. Não altere o gabarito fornecido pelo banco. Diferencie regra, exceção e pegadilha FGV. Se o aluno errou, localize o desvio de raciocínio antes de despejar teoria. Prefira recuperação ativa: depois de explicar, faça uma pergunta curta ou proponha uma ação de estudo. Não invente artigo, súmula, precedente ou prazo; quando não tiver segurança numérica, explique a regra sem numeração.';
   const blocks = [instruction, buildStudyBlock(), buildQuestionBlock(), buildConversationBlock()].filter(Boolean);
-  return blocks.join('\n\n').slice(0, 3500);
+  return blocks.join('\n\n').slice(0, 5000);
+}
+
+function ensureGeminiLoaded() {
+  if (window.OABGemini) return Promise.resolve(window.OABGemini);
+  return new Promise((resolve, reject) => {
+    let script = document.querySelector('script[data-oab-gemini-provider]');
+    if (!script) {
+      script = document.createElement('script');
+      script.src = 'gemini-provider.js';
+      script.dataset.oabGeminiProvider = '1';
+      document.head.appendChild(script);
+    }
+    script.addEventListener('load', () => resolve(window.OABGemini), { once: true });
+    script.addEventListener('error', () => reject(new Error('Não foi possível carregar o conector Gemini.')), { once: true });
+  });
+}
+
+async function askWithGemini(question) {
+  const gemini = await ensureGeminiLoaded();
+  if (!gemini?.isConnected()) throw new Error('Gemini não conectado.');
+  return gemini.generate({
+    system: 'Você é o Professor IA do OAB APROVA. Ensine para aprovação na 1ª fase da OAB. Seja claro, juridicamente rigoroso e objetivo. Nas questões, explique o ponto de discriminação entre alternativas e nunca altere o gabarito fornecido. Não invente artigo, súmula, precedente ou prazo. Use recuperação ativa: após explicar, faça uma pergunta curta quando isso ajudar a fixação.',
+    prompt: `MATÉRIA/ÁREA: ${$('subject').value}\n\n${buildContextForModel()}\n\nPERGUNTA DO ALUNO: ${question}`,
+    maxOutputTokens: 1800,
+    temperature: 0.15
+  });
+}
+
+async function askWithCentral(question) {
+  if (!auth.currentUser) throw new Error('Entre com Google ou conecte seu Gemini para usar o Professor IA.');
+  const result = await tutorOab({
+    subject: $('subject').value,
+    question,
+    context: buildContextForModel()
+  });
+  return result.data?.answer || 'Não recebi uma resposta do professor.';
 }
 
 async function askProfessor(rawQuestion) {
   const question = String(rawQuestion || '').trim().slice(0, 1600);
   if (busy || question.length < 2) return;
-
-  if (!auth.currentUser) {
-    appendMessageElement('system', 'Entre com Google para usar o Professor IA. A Questão Guiada continua funcionando normalmente sem o chat.');
-    return;
-  }
 
   busy = true;
   $('ask').disabled = true;
@@ -236,13 +268,29 @@ async function askProfessor(rawQuestion) {
   const thinking = appendMessageElement('assistant', 'Analisando seu histórico e a questão…', 'thinking');
 
   try {
-    const result = await tutorOab({
-      subject: $('subject').value,
-      question,
-      context: buildContextForModel()
-    });
+    const gemini = await ensureGeminiLoaded().catch(() => null);
+    let answer;
+    if (gemini?.isConnected()) {
+      answer = await askWithGemini(question);
+    } else {
+      try {
+        answer = await askWithCentral(question);
+      } catch (centralError) {
+        thinking.remove();
+        const system = appendMessageElement('system', `O professor central não respondeu (${centralError?.message || centralError}). Você pode conectar gratuitamente sua própria Gemini API nesta página.`);
+        system.style.cursor = 'pointer';
+        system.title = 'Clique para conectar Gemini';
+        system.onclick = async () => {
+          const g = await ensureGeminiLoaded();
+          const ok = await g.connect();
+          updateProviderUi();
+          if (ok) askProfessor(question);
+        };
+        return;
+      }
+    }
     thinking.remove();
-    addMessage('assistant', result.data?.answer || 'Não recebi uma resposta do professor.');
+    addMessage('assistant', answer);
   } catch (error) {
     thinking.remove();
     appendMessageElement('system', `Não foi possível chamar o Professor IA: ${error?.message || error}`);
@@ -272,17 +320,54 @@ async function refreshCloudState(user) {
   }
 }
 
+function installProviderButton() {
+  if ($('geminiConnect')) return;
+  const row = document.querySelector('.top .row');
+  if (!row) return;
+  const button = document.createElement('button');
+  button.className = 'light';
+  button.id = 'geminiConnect';
+  row.insertBefore(button, row.firstChild);
+  button.onclick = async () => {
+    const gemini = await ensureGeminiLoaded();
+    if (gemini.isConnected()) {
+      if (confirm('Desconectar o Gemini desta aba?')) gemini.disconnect();
+    } else {
+      await gemini.connect();
+    }
+    updateProviderUi();
+  };
+}
+
+async function updateProviderUi() {
+  installProviderButton();
+  const gemini = await ensureGeminiLoaded().catch(() => null);
+  const connected = Boolean(gemini?.isConnected());
+  const button = $('geminiConnect');
+  if (button) {
+    button.textContent = connected ? `Gemini conectado` : 'Conectar Gemini';
+    button.title = connected ? `Usando ${gemini.MODEL}. Clique para desconectar.` : 'Usar sua própria cota da Gemini API';
+  }
+  if (connected) {
+    $('status').textContent = currentUser ? `Google + Gemini` : 'Gemini conectado';
+  } else if (currentUser) {
+    $('status').textContent = `Conectado: ${currentUser.displayName || currentUser.email || 'Google'}`;
+  } else {
+    $('status').textContent = 'Conecte Gemini ou entre com Google';
+  }
+}
+
 onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
   if (user) {
-    $('status').textContent = `Conectado: ${user.displayName || user.email || 'Google'}`;
     $('login').classList.add('hidden');
     $('logout').classList.remove('hidden');
     await refreshCloudState(user);
   } else {
-    $('status').textContent = 'Entre com Google para conversar';
     $('login').classList.remove('hidden');
     $('logout').classList.add('hidden');
   }
+  updateProviderUi();
 });
 
 $('login').onclick = async () => {
@@ -304,6 +389,8 @@ document.querySelectorAll('[data-prompt]').forEach(button => {
   button.addEventListener('click', () => askProfessor(button.dataset.prompt));
 });
 
+window.addEventListener('oab-gemini-status', updateProviderUi);
 renderStudySummary();
 renderContext();
 renderMessages();
+updateProviderUi();
