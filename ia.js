@@ -7,6 +7,7 @@ const STATE_KEY = 'oab-aprova-premium-v1';
 const CONTEXT_KEY = 'oab-aprova-professor-context-v1';
 const CHAT_KEY = 'oab-aprova-professor-chat-v1';
 const MAX_MESSAGES = 24;
+const GUIDED_CONTEXT_TTL = 6 * 60 * 60 * 1000;
 const $ = (id) => document.getElementById(id);
 
 const app = getApps()[0] || initializeApp(window.OAB_FIREBASE_CONFIG);
@@ -15,8 +16,10 @@ const db = getFirestore(app);
 const functions = getFunctions(app, 'southamerica-east1');
 const tutorOab = httpsCallable(functions, 'tutorOab');
 
+const launchedFromGuided = new URLSearchParams(window.location.search).get('from') === 'guided';
 let state = readJson(STATE_KEY, {});
-let professorContext = readJson(CONTEXT_KEY, null);
+let professorContext = launchedFromGuided ? readJson(CONTEXT_KEY, null) : null;
+if (professorContext && Date.now() - Number(professorContext.createdAt || 0) > GUIDED_CONTEXT_TTL) professorContext = null;
 let messages = readJson(CHAT_KEY, []);
 let busy = false;
 
@@ -186,6 +189,7 @@ function buildQuestionBlock() {
 
   return [
     'QUESTÃO ATUAL DO OAB APROVA:',
+    q.qid ? `ID: ${normalizeText(q.qid, 140)}` : '',
     normalizeText(q.question, 1250),
     'ALTERNATIVAS:',
     options,
