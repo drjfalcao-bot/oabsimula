@@ -11,6 +11,24 @@ let cloudCache = null;
 let cloudCacheAt = 0;
 let officialLoadError = null;
 
+function installGuidedNavigation() {
+  if (typeof document === 'undefined') return;
+  const nav = document.querySelector('.nav');
+  if (!nav || nav.querySelector('a[href="questao-guiada.html"]')) return;
+  const bank = nav.querySelector('a[href="bank.html"]');
+  const tutor = nav.querySelector('a[href="ia.html"]');
+  const link = document.createElement('a');
+  link.className = 'nav-item nav-link';
+  link.href = 'questao-guiada.html';
+  link.innerHTML = '<span>⌕</span>Questão Guiada';
+  nav.insertBefore(link, bank || tutor || null);
+}
+
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', installGuidedNavigation, { once: true });
+  else installGuidedNavigation();
+}
+
 function shuffle(arr) {
   const out = [...arr];
   for (let i = out.length - 1; i > 0; i--) {
