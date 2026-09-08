@@ -1,6 +1,7 @@
 (() => {
   const CONTEXT_KEY = 'oab-aprova-professor-context-v1';
   const STATE_KEY = 'oab-aprova-premium-v1';
+  const CHAT_KEY = 'oab-aprova-professor-chat-v1';
 
   const text = (el) => (el?.textContent || '').trim();
   const readState = () => {
@@ -68,8 +69,12 @@
     const selectedIndex = options.findIndex(o => o.selected);
     const meta = [...area.querySelectorAll('.guided-kicker .guided-source')].map(text);
     const cause = text(document.querySelector('[data-cause].active')) || null;
+    const state = readState();
+    const attempts = Array.isArray(state.attempts) ? state.attempts : [];
+    const lastGuidedAttempt = [...attempts].reverse().find(a => a.mode === 'guided');
 
     return {
+      qid: lastGuidedAttempt?.qid || null,
       source: meta[0] || null,
       subject: meta[1] || null,
       topic: meta[2] || null,
@@ -78,7 +83,7 @@
       correctLetter: correctIndex >= 0 ? options[correctIndex].letter : null,
       selectedLetter: selectedIndex >= 0 ? options[selectedIndex].letter : null,
       wasCorrect: selectedIndex >= 0 && selectedIndex === correctIndex,
-      errorCause: cause,
+      errorCause: cause || lastGuidedAttempt?.cause || null,
       editorialNote: text(verdict.querySelector('span')) || null,
       capturedAt: Date.now()
     };
@@ -95,6 +100,7 @@
       createdAt: Date.now()
     };
     localStorage.setItem(CONTEXT_KEY, JSON.stringify(payload));
+    localStorage.removeItem(CHAT_KEY);
     window.location.href = 'ia.html?from=guided';
   }
 
