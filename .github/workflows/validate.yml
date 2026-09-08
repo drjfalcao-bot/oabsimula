@@ -22,6 +22,8 @@ jobs:
           node --check fgv-bank.js
           node --check expanded-bank.js
           node --check official-fgv-bank.js
+          node --check questao-guiada.js
+          node --check professor-bridge.js
           node --check ia.js
           node --check second-phase-data.js
           node --check segunda-fase.js
@@ -97,7 +99,7 @@ jobs:
           from pathlib import Path
           import re, sys
           failed=False
-          for name in ['index.html','ia.html','bank.html','segunda-fase.html','fabrica.html']:
+          for name in ['index.html','ia.html','questao-guiada.html','bank.html','segunda-fase.html','fabrica.html']:
               text=Path(name).read_text(encoding='utf-8')
               ids=re.findall(r'\bid=["\']([^"\']+)["\']', text)
               dup=sorted({x for x in ids if ids.count(x)>1})
