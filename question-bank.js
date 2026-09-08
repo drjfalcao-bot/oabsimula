@@ -11,6 +11,11 @@ let cloudCache = null;
 let cloudCacheAt = 0;
 let officialLoadError = null;
 
+// As 550 questões geradas por variações de uma mesma matriz permanecem no
+// repositório para reedição, mas NÃO entram no treino até aprovação editorial.
+// Quantidade nunca deve prevalecer sobre legibilidade e fidelidade ao padrão FGV.
+const EXPANDED_EDITORIAL_ACTIVE = false;
+
 function installGuidedNavigation() {
   if (typeof document === 'undefined') return;
   const nav = document.querySelector('.nav');
@@ -157,8 +162,17 @@ async function calibrateBuiltins() {
   builtins.forEach(q => { const p = byId.get(q.id); if (p) Object.assign(q, p); });
 }
 
-export async function getOfflineEditorialQuestions({forceOfficial=false}={}) {
-  const expanded = getExpandedQuestions().map(q => ({ ...q, storage: 'editorial' }));
+export function getQuarantinedEditorialQuestions() {
+  return getExpandedQuestions().map(q => ({
+    ...q,
+    storage: 'editorial-draft',
+    studyEligible: false,
+    quality: 'quarantined-copy-review'
+  }));
+}
+
+export async function getOfflineEditorialQuestions({forceOfficial=false,includeDrafts=false}={}) {
+  const expanded = includeDrafts || EXPANDED_EDITORIAL_ACTIVE ? getQuarantinedEditorialQuestions() : [];
   let official=[];
   try { official=await getOfficialFgvQuestions({force:forceOfficial}); officialLoadError=null; }
   catch (error) { officialLoadError=error; console.warn('Provas oficiais FGV indisponíveis nesta carga; mantendo banco editorial local.', error); }
@@ -168,7 +182,7 @@ export async function getOfflineEditorialQuestions({forceOfficial=false}={}) {
 export async function getAllQuestions(options = {}) {
   await calibrateBuiltins();
   const [editorial, local, cloud] = await Promise.all([
-    getOfflineEditorialQuestions({forceOfficial:Boolean(options.force)}),
+    getOfflineEditorialQuestions({forceOfficial:Boolean(options.force),includeDrafts:Boolean(options.includeDrafts)}),
     getLocalQuestions().catch(() => []),
     getCloudQuestions(options).catch(() => [])
   ]);
@@ -180,9 +194,10 @@ export async function getAllQuestions(options = {}) {
 
 export async function getQuestionBankBreakdown(options={}) {
   const editorialSeed = Array.isArray(window.OAB_QUESTIONS) ? window.OAB_QUESTIONS.length : 0;
-  const editorialExpanded = EXPANDED_QUESTION_COUNT;
+  const editorialExpanded = EXPANDED_EDITORIAL_ACTIVE ? EXPANDED_QUESTION_COUNT : 0;
+  const editorialDrafts = EXPANDED_QUESTION_COUNT;
   const [editorial, local, cloud] = await Promise.all([
-    getOfflineEditorialQuestions({forceOfficial:Boolean(options.force)}),
+    getOfflineEditorialQuestions({forceOfficial:Boolean(options.force),includeDrafts:false}),
     getLocalQuestions().catch(() => []),
     getCloudQuestions(options).catch(() => [])
   ]);
@@ -190,12 +205,18 @@ export async function getQuestionBankBreakdown(options={}) {
   const mergedExternal = new Map(); editorial.forEach(q => mergedExternal.set(q.id, q)); local.forEach(q => mergedExternal.set(q.id, q)); cloud.forEach(q => mergedExternal.set(q.id, q));
   return {
     builtin: editorialSeed + editorialExpanded + official,
-    editorialSeed, editorialExpanded, official,
+    editorialSeed,
+    editorialExpanded,
+    editorialDrafts,
+    quarantinedEditorial: editorialDrafts,
+    official,
     officialTarget:OFFICIAL_FGV_ACTIVE_TARGET,
     officialHistoricalTotal:OFFICIAL_FGV_QUESTION_TOTAL,
     officialAnnulled:OFFICIAL_FGV_ANNULLED_COUNT,
     officialLoadError:officialLoadError ? String(officialLoadError.message||officialLoadError) : null,
-    local: local.length, central: cloud.length, externalUnique: mergedExternal.size,
+    local: local.length,
+    central: cloud.length,
+    externalUnique: mergedExternal.size,
     total: editorialSeed + mergedExternal.size
   };
 }
