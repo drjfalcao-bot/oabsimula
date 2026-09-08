@@ -1,6 +1,7 @@
 (() => {
   const GENERIC_WRONG = 'não coincide com o gabarito';
   const GENERIC_TRAP = 'compare cada distrator com a regra central';
+  let geminiLoading = false;
 
   const clean = (v) => String(v || '').replace(/\s+/g, ' ').trim();
   const norm = (v) => clean(v).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -154,19 +155,134 @@
     if (!style) {
       style = document.createElement('style');
       style.id = 'guided-commentary-guard-style';
-      style.textContent = '.alt-analysis-item{display:grid;grid-template-columns:28px minmax(0,1fr);column-gap:7px}.alt-analysis-item>b{width:auto}.alt-analysis-item span strong{margin-right:4px}';
+      style.textContent = '.alt-analysis-item{display:grid;grid-template-columns:28px minmax(0,1fr);column-gap:7px}.alt-analysis-item>b{width:auto}.alt-analysis-item span strong{margin-right:4px}.guided-gemini-card button{margin-top:9px}';
       document.head.appendChild(style);
     }
+  }
+
+  function ensureGeminiLoaded() {
+    if (window.OABGemini) return Promise.resolve(window.OABGemini);
+    return new Promise((resolve, reject) => {
+      let script = document.querySelector('script[data-oab-gemini-provider]');
+      if (!script) {
+        script = document.createElement('script');
+        script.src = 'gemini-provider.js';
+        script.dataset.oabGeminiProvider = '1';
+        document.head.appendChild(script);
+      }
+      if (window.OABGemini) return resolve(window.OABGemini);
+      script.addEventListener('load', () => resolve(window.OABGemini), { once: true });
+      script.addEventListener('error', () => reject(new Error('Não foi possível carregar o conector Gemini.')), { once: true });
+    });
+  }
+
+  function parseJson(text) {
+    let raw = String(text || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+    const a = raw.indexOf('{'), b = raw.lastIndexOf('}');
+    if (a >= 0 && b > a) raw = raw.slice(a, b + 1);
+    return JSON.parse(raw);
+  }
+
+  function buildGeminiPrompt(data) {
+    const options = data.options.map((o, i) => `${String.fromCharCode(65 + i)}) ${o}`).join('\n');
+    return `Analise esta questão para estudo da 1ª fase da OAB.\n\nMATÉRIA: ${data.subject}\nTEMA: ${data.topic}\nORIGEM: ${data.source}\nENUNCIADO: ${data.question}\n\nALTERNATIVAS:\n${options}\n\nGABARITO FIXO: ${String.fromCharCode(65 + data.correct)}\nCOMENTÁRIO/REGRA JÁ REGISTRADA: ${data.rule || 'sem comentário editorial suficiente'}\n\nRetorne SOMENTE JSON válido neste formato: {"concept":"...","trap":"...","alternatives":[{"letter":"A","why":"..."},{"letter":"B","why":"..."},{"letter":"C","why":"..."},{"letter":"D","why":"..."}],"rule":"...","memory":"..."}. Cada alternativa precisa ter justificativa jurídica ESPECÍFICA: diga qual requisito, exceção, competência, prazo, efeito ou conceito a torna correta/errada. É proibido justificar uma errada apenas dizendo que não coincide com o gabarito. Não altere o gabarito. Não invente artigo, súmula ou precedente; se não tiver segurança no número, explique a regra sem numeração.`;
+  }
+
+  function applyGeminiAnalysis(data, parsed) {
+    const analysis = document.getElementById('analysisArea');
+    if (!analysis) return;
+    const cards = [...analysis.querySelectorAll('.analysis-card')];
+    const findCard = (needle) => cards.find(card => norm(card.querySelector('h3')?.textContent).includes(needle));
+    const concept = findCard('conceito por tras');
+    const trap = findCard('armadilha');
+    const alts = findCard('alternativa por alternativa');
+    const rule = findCard('regra que precisa ficar');
+    const memory = findCard('fixacao na memoria');
+
+    if (concept?.querySelector('p') && parsed.concept) concept.querySelector('p').textContent = clean(parsed.concept);
+    if (trap?.querySelector('p') && parsed.trap) trap.querySelector('p').textContent = clean(parsed.trap);
+    if (rule?.querySelector('p') && parsed.rule) rule.querySelector('p').textContent = clean(parsed.rule);
+    if (memory?.querySelector('p') && parsed.memory) memory.querySelector('p').textContent = clean(parsed.memory);
+
+    if (alts && Array.isArray(parsed.alternatives) && parsed.alternatives.length === 4) {
+      const items = [...alts.querySelectorAll('.alt-analysis-item')];
+      items.forEach((item, i) => {
+        const span = item.querySelector('span');
+        if (!span) return;
+        const why = clean(parsed.alternatives[i]?.why);
+        if (!why) return;
+        span.innerHTML = `<strong>${i === data.correct ? 'Certa' : 'Errada'}:</strong> ${why}`;
+      });
+    }
+
+    const action = document.getElementById('guidedGeminiAction');
+    if (action) {
+      action.querySelector('p').textContent = 'Análise jurídica individual das quatro alternativas gerada com a sua própria conta Gemini. O gabarito do OAB APROVA permaneceu fixo.';
+      const button = action.querySelector('button');
+      if (button) {
+        button.textContent = 'Atualizar análise com Gemini';
+        button.disabled = false;
+      }
+    }
+  }
+
+  async function generateGeminiAnalysis(button) {
+    if (geminiLoading) return;
+    const data = getQuestionData();
+    if (!data) return;
+    geminiLoading = true;
+    button.disabled = true;
+    const old = button.textContent;
+    button.textContent = 'Gerando análise jurídica…';
+    try {
+      const gemini = await ensureGeminiLoaded();
+      if (!gemini.isConnected()) {
+        const connected = await gemini.connect();
+        if (!connected) return;
+      }
+      const text = await gemini.generate({
+        system: 'Você é professor de preparação para a OAB. Explique questões com rigor técnico e foco em discriminação entre alternativas. O gabarito fornecido é fixo. Nunca use tautologias como “está errada porque não é o gabarito”.',
+        prompt: buildGeminiPrompt(data),
+        json: true,
+        maxOutputTokens: 2200,
+        temperature: 0.1
+      });
+      const parsed = parseJson(text);
+      if (!Array.isArray(parsed.alternatives) || parsed.alternatives.length !== 4) throw new Error('A análise veio incompleta.');
+      applyGeminiAnalysis(data, parsed);
+    } catch (error) {
+      button.disabled = false;
+      button.textContent = old;
+      const p = document.querySelector('#guidedGeminiAction p');
+      if (p) p.textContent = `Não foi possível gerar a análise completa: ${error?.message || error}`;
+    } finally {
+      geminiLoading = false;
+    }
+  }
+
+  function installGeminiAction() {
+    const analysis = document.getElementById('analysisArea');
+    if (!analysis || !getQuestionData() || document.getElementById('guidedGeminiAction')) return;
+    const card = document.createElement('article');
+    card.id = 'guidedGeminiAction';
+    card.className = 'card analysis-card guided-gemini-card';
+    card.innerHTML = '<h3>Explicação completa das alternativas</h3><p>Para questões oficiais sem comentário editorial individual, conecte sua conta Gemini e gere a análise jurídica específica de A, B, C e D.</p><button class="btn primary full" type="button">Conectar Gemini e analisar</button>';
+    analysis.appendChild(card);
+    card.querySelector('button').onclick = (event) => generateGeminiAnalysis(event.currentTarget);
+    ensureGeminiLoaded().then(gemini => {
+      if (gemini?.isConnected()) card.querySelector('button').textContent = 'Gerar análise completa com Gemini';
+    }).catch(() => {});
   }
 
   const start = () => {
     const analysis = document.getElementById('analysisArea');
     const question = document.getElementById('questionArea');
     if (!analysis || !question) return;
-    const observer = new MutationObserver(() => queueMicrotask(improve));
+    const observer = new MutationObserver(() => queueMicrotask(() => { improve(); installGeminiAction(); }));
     observer.observe(analysis, { childList: true, subtree: true, characterData: true });
     observer.observe(question, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
     improve();
+    installGeminiAction();
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
