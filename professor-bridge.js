@@ -126,9 +126,17 @@
     document.head.appendChild(script);
   }
 
+  function enforceStudyQualityDefaults() {
+    const origin = document.getElementById('originFilter');
+    if (origin && origin.value === 'all') origin.value = 'official';
+    const status = document.getElementById('aiStatus');
+    if (status) status.textContent = 'Treino principal prioriza FGV oficial. Questões autorais de baixa qualidade foram retiradas do estudo até revisão editorial.';
+  }
+
   const observer = new MutationObserver(installButton);
   const questionArea = document.getElementById('questionArea');
   if (questionArea) observer.observe(questionArea, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+  enforceStudyQualityDefaults();
   installButton();
   loadCommentaryGuard();
 })();
