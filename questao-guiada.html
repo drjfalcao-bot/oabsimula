@@ -24,6 +24,7 @@
         <a class="nav-item nav-link" href="index.html"><span>◫</span>Painel</a>
         <a class="nav-item nav-link" href="index.html#questions"><span>✓</span>Questões</a>
         <a class="nav-item nav-link active" href="questao-guiada.html"><span>⌕</span>Questão Guiada</a>
+        <a class="nav-item nav-link" href="trilha.html"><span>◉</span>Trilha</a>
         <a class="nav-item nav-link" href="bank.html"><span>▦</span>Banco de questões</a>
         <a class="nav-item nav-link" href="index.html#errors"><span>↺</span>Revisões</a>
         <a class="nav-item nav-link" href="ia.html"><span>✦</span>Professor IA</a>
@@ -47,7 +48,7 @@
         <div class="guided-toolbar">
           <label>Origem<select id="originFilter"><option value="all">Todas</option><option value="official">FGV Oficial</option><option value="authorial">Autorais fundamentadas</option></select></label>
           <label>Matéria<select id="subjectFilter"><option value="all">Todas as matérias</option></select></label>
-          <label>Prioridade<select id="priorityFilter"><option value="unseen">Ainda não vistas primeiro</option><option value="review">Erros e revisões abertas</option><option value="core">Núcleo 62</option><option value="random">Aleatória</option></select></label>
+          <label>Prioridade<select id="priorityFilter"><option value="adaptive" selected>Adaptativa — maior valor esperado</option><option value="unseen">Ainda não vistas primeiro</option><option value="review">Erros e revisões abertas</option><option value="core">Núcleo 62</option><option value="random">Aleatória</option></select></label>
           <button class="btn primary" id="applyFilters">Buscar questão</button>
         </div>
       </section>
@@ -72,6 +73,8 @@
   </div>
 
   <script src="data.js"></script>
+  <script src="learning-materials.js"></script>
+  <script src="oab-intelligence.js"></script>
   <script src="firebase-config.js"></script>
   <script src="professor-bridge.js"></script>
   <script type="module" src="questao-guiada.js"></script>
