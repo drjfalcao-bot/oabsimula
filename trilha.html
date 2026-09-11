@@ -1,148 +1,24 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#0b1726" />
-  <title>OAB APROVA | Trilha de Aprovação</title>
-  <meta name="description" content="Trilha adaptativa orientada por incidência FGV, domínio individual, revisão espaçada e acervo pedagógico." />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Libre+Caslon+Display&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b1726">
+  <title>OAB APROVA | Trilha de Aprovação</title><meta name="description" content="Trilha adaptativa executável orientada por incidência FGV, domínio individual, causa dos erros, revisão e materiais privados.">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Libre+Caslon+Display&display=swap" rel="stylesheet"><link rel="stylesheet" href="styles.css">
   <style>
-    body{background:#edf1f4;color:#132033}.wrap{max-width:1320px;margin:auto;padding:24px}.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px}.top h1{margin:0;font-family:"Libre Caslon Display",Georgia,serif;font-size:38px;font-weight:400}.actions{display:flex;gap:8px;flex-wrap:wrap}.exam-note{display:flex;gap:12px;align-items:flex-start;background:#fff7e8;border:1px solid #e6c77f;border-radius:16px;padding:13px 15px;margin-bottom:16px;color:#5e4b26}.exam-note b{font-size:18px}.exam-note strong{display:block;font-size:12px}.exam-note span{display:block;font-size:11px;margin-top:3px;color:#78643c}.hero{background:radial-gradient(circle at 90% 15%,rgba(201,154,75,.34),transparent 24%),linear-gradient(135deg,#0b1726,#173955 72%);color:#fff;border-radius:26px;padding:28px;display:grid;grid-template-columns:1.45fr .75fr;gap:24px;margin-bottom:14px}.hero h2{font-family:"Libre Caslon Display",Georgia,serif;font-size:46px;font-weight:400;line-height:1;margin:8px 0 12px}.hero p{color:#c7d5e2;max-width:780px;font-size:13px}.hero-target{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:20px;align-self:stretch}.hero-target small{color:#aebed0;text-transform:uppercase;letter-spacing:.1em;font-weight:800}.hero-target strong{display:block;font-size:25px;margin:8px 0 3px}.hero-target b{display:block;color:#efd49d;font-size:15px}.hero-target span{display:block;color:#bdcbd8;font-size:11px;margin-top:8px}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}.metric{background:#fff;border:1px solid #e4dfd5;border-radius:17px;padding:16px}.metric span{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:#697386}.metric strong{display:block;font-family:"Libre Caslon Display";font-weight:400;font-size:31px;margin:4px 0}.metric small{font-size:10px;color:#697386}.grid{display:grid;grid-template-columns:1.22fr .78fr;gap:14px}.panel{background:#fff;border:1px solid #e4dfd5;border-radius:20px;padding:20px}.panel h2,.panel h3{font-family:"Libre Caslon Display";font-weight:400;margin:0}.focus{border:1px solid #dce4ea;background:#f7fafc;border-radius:18px;padding:18px;margin-top:12px}.focus-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.focus h3{font-family:Inter;font-size:19px;font-weight:800}.focus .subject{font-size:11px;color:#315f8a;font-weight:800;text-transform:uppercase;letter-spacing:.06em}.index{min-width:58px;height:58px;border-radius:16px;background:#0f2c47;color:#fff;display:grid;place-items:center;font-size:22px;font-weight:900}.why{margin:14px 0;padding:12px 14px;background:#fff7e8;border-left:3px solid #c99a4b;border-radius:0 12px 12px 0;font-size:11px;color:#594c39}.focus-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.focus-metrics div{background:#fff;border:1px solid #e4dfd5;border-radius:12px;padding:10px}.focus-metrics span{font-size:8px;text-transform:uppercase;color:#697386;font-weight:900}.focus-metrics b{display:block;margin-top:3px;font-size:14px}.prescription{display:flex;gap:12px;align-items:flex-start;margin-top:14px;padding:14px;border-radius:14px;background:#0e2134;color:#fff}.prescription b{width:30px;height:30px;flex:0 0 30px;display:grid;place-items:center;border-radius:10px;background:#c99a4b;color:#132033}.prescription strong{display:block;font-size:12px}.prescription span{display:block;font-size:10px;color:#b9c8d7;margin-top:3px}.queue{display:grid;gap:8px;margin-top:12px}.queue-item{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:11px;border:1px solid #e4dfd5;border-radius:14px}.queue-item>b{width:30px;height:30px;display:grid;place-items:center;border-radius:9px;background:#edf2f6;color:#31506e}.queue-item strong{display:block;font-size:11px}.queue-item span{display:block;font-size:9px;color:#697386;margin-top:2px}.queue-item em{font-style:normal;font-size:10px;font-weight:900;color:#315f8a}.subject-cloud{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}.subject-chip{border:1px solid #d8dde3;background:#fff;border-radius:999px;padding:7px 10px;font-size:10px;font-weight:700}.subject-chip.active{background:#0b1726;color:#fff;border-color:#0b1726}.topic-table{display:grid;gap:6px}.topic-row{display:grid;grid-template-columns:1fr 74px 70px;gap:8px;align-items:center;padding:9px 0;border-top:1px solid #edf0f2}.topic-row strong{font-size:10px}.topic-row span{display:block;font-size:8px;color:#697386;margin-top:2px}.topic-row b{text-align:right;font-size:10px}.topic-row em{text-align:right;font-style:normal;font-size:9px;color:#315f8a}.method{margin-top:14px}.method-grid{grid-template-columns:repeat(5,1fr)}.source-note{font-size:10px;color:#697386;margin-top:12px}.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:9px;color:#697386;margin-top:9px}.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px}.dot.fgv{background:#315f8a}.dot.user{background:#2c7a61}.dot.material{background:#c99a4b}@media(max-width:950px){.hero,.grid{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}.focus-metrics{grid-template-columns:1fr 1fr}.method-grid{grid-template-columns:1fr 1fr}.topic-row{grid-template-columns:1fr 65px}.topic-row em{display:none}}@media(max-width:560px){.wrap{padding:14px}.metrics{grid-template-columns:1fr}.hero h2{font-size:36px}}
+    body{background:#edf1f4;color:#132033}.wrap{max-width:1320px;margin:auto;padding:24px}.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px}.top h1{margin:0;font-family:"Libre Caslon Display",Georgia,serif;font-size:38px;font-weight:400}.actions{display:flex;gap:8px;flex-wrap:wrap}.exam-note{display:flex;gap:12px;align-items:flex-start;background:#fff7e8;border:1px solid #e6c77f;border-radius:16px;padding:13px 15px;margin-bottom:16px;color:#5e4b26}.exam-note b{font-size:18px}.exam-note strong{display:block;font-size:12px}.exam-note span{display:block;font-size:11px;margin-top:3px;color:#78643c}.hero{background:radial-gradient(circle at 90% 15%,rgba(201,154,75,.34),transparent 24%),linear-gradient(135deg,#0b1726,#173955 72%);color:#fff;border-radius:26px;padding:28px;display:grid;grid-template-columns:1.45fr .75fr;gap:24px;margin-bottom:14px}.hero h2{font-family:"Libre Caslon Display",Georgia,serif;font-size:44px;font-weight:400;line-height:1.04;margin:8px 0 12px}.hero p{color:#c7d5e2;max-width:780px;font-size:13px}.hero-target{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:20px}.hero-target small{color:#aebed0;text-transform:uppercase;letter-spacing:.1em;font-weight:800}.hero-target strong{display:block;font-size:23px;margin:8px 0 3px}.hero-target b{display:block;color:#efd49d;font-size:15px}.hero-target span{display:block;color:#bdcbd8;font-size:11px;margin-top:8px}.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px}.metric{background:#fff;border:1px solid #e4dfd5;border-radius:17px;padding:16px}.metric span{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:#697386}.metric strong{display:block;font-family:"Libre Caslon Display";font-weight:400;font-size:29px;margin:4px 0}.metric small{font-size:10px;color:#697386}.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:14px}.panel{background:#fff;border:1px solid #e4dfd5;border-radius:20px;padding:20px}.panel h2,.panel h3{font-family:"Libre Caslon Display";font-weight:400;margin:0}.focus{border:1px solid #dce4ea;background:#f7fafc;border-radius:18px;padding:18px;margin-top:12px}.focus-head{display:flex;justify-content:space-between;gap:12px}.focus h3{font-family:Inter;font-size:19px;font-weight:800}.focus .subject{font-size:11px;color:#315f8a;font-weight:800;text-transform:uppercase}.index{min-width:58px;height:58px;border-radius:16px;background:#0f2c47;color:#fff;display:grid;place-items:center;font-size:22px;font-weight:900}.why{margin:14px 0;padding:12px 14px;background:#fff7e8;border-left:3px solid #c99a4b;border-radius:0 12px 12px 0;font-size:11px;color:#594c39}.focus-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.focus-metrics div{background:#fff;border:1px solid #e4dfd5;border-radius:12px;padding:10px}.focus-metrics span{font-size:8px;text-transform:uppercase;color:#697386;font-weight:900}.focus-metrics b{display:block;margin-top:3px;font-size:14px}.prescription{display:flex;gap:12px;align-items:flex-start;margin-top:14px;padding:14px;border-radius:14px;background:#0e2134;color:#fff}.prescription>b{width:30px;height:30px;flex:0 0 30px;display:grid;place-items:center;border-radius:10px;background:#c99a4b;color:#132033}.prescription strong{display:block;font-size:12px}.prescription span{display:block;font-size:10px;color:#b9c8d7;margin-top:3px}.queue{display:grid;gap:8px;margin-top:12px}.queue-item{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:11px;border:1px solid #e4dfd5;border-radius:14px}.queue-item>b{width:30px;height:30px;display:grid;place-items:center;border-radius:9px;background:#edf2f6;color:#31506e}.queue-item strong{display:block;font-size:11px}.queue-item span{display:block;font-size:9px;color:#697386;margin-top:2px}.queue-actions{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}.mini-link{font-size:9px;font-weight:800;text-decoration:none;border:1px solid #d7dde3;border-radius:999px;padding:5px 7px;color:#31506e;background:#fff}.today{display:grid;gap:8px;margin-top:12px}.today-step{display:grid;grid-template-columns:48px 1fr;gap:10px;padding:11px;border-radius:13px;background:#f7f9fb;border:1px solid #e4e8ec}.today-step b{font-size:12px;color:#31506e}.today-step strong{display:block;font-size:11px}.today-step span{display:block;font-size:9px;color:#697386;margin-top:3px}.subject-cloud{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}.subject-chip{border:1px solid #d8dde3;background:#fff;border-radius:999px;padding:7px 10px;font-size:10px;font-weight:700}.subject-chip.active{background:#0b1726;color:#fff}.topic-table{display:grid;gap:6px}.topic-row{display:grid;grid-template-columns:1fr 64px 64px;gap:8px;align-items:center;padding:9px 0;border-top:1px solid #edf0f2}.topic-row strong{font-size:10px}.topic-row span{display:block;font-size:8px;color:#697386;margin-top:2px}.topic-row b,.topic-row em{text-align:right;font-size:9px;font-style:normal}.method{margin-top:14px}.method-grid{grid-template-columns:repeat(5,1fr)}.source-note{font-size:10px;color:#697386;margin-top:12px}.hidden{display:none!important}@media(max-width:1000px){.hero,.grid{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}.focus-metrics{grid-template-columns:1fr 1fr}.method-grid{grid-template-columns:1fr 1fr}}@media(max-width:560px){.wrap{padding:14px}.metrics{grid-template-columns:1fr}.hero h2{font-size:34px}.queue-item{grid-template-columns:34px 1fr}.queue-actions{grid-column:2;justify-content:flex-start}}
   </style>
 </head>
 <body>
 <main class="wrap">
-  <header class="top">
-    <div><p class="eyebrow">OAB APROVA • MOTOR ESTRATÉGICO</p><h1>Trilha de Aprovação</h1><p class="muted">A prioridade nasce da prova real, depois é personalizada pelo seu desempenho.</p></div>
-    <div class="actions"><a class="btn secondary" href="index.html">Painel</a><a class="btn secondary" href="questao-guiada.html">Questão guiada</a><a class="btn secondary" href="cronograma.html">Cronograma</a></div>
-  </header>
-
+  <header class="top"><div><p class="eyebrow">OAB APROVA • MOTOR ESTRATÉGICO</p><h1>Trilha de Aprovação</h1><p class="muted">Decide o próximo ponto e já entrega o caminho para executar.</p></div><div class="actions"><a class="btn secondary" href="index.html">Painel</a><a class="btn secondary" href="questao-guiada.html">Questão Guiada</a><a class="btn secondary" href="caderno.html">Caderno</a><a class="btn secondary" href="materiais.html">Aulas</a></div></header>
   <div class="exam-note"><b>!</b><div><strong id="examStatus">Carregando status do exame…</strong><span id="examBasis"></span></div></div>
-
-  <section class="hero">
-    <div>
-      <p class="eyebrow light">DECISÃO DE ESTUDO BASEADA EM EVIDÊNCIA</p>
-      <h2>Não estude a matéria. Ataque o próximo ponto provável.</h2>
-      <p>O motor cruza incidência histórica da FGV, peso da disciplina, evidência individual recente, causa dos erros, revisões vencidas e cobertura dos materiais. O acervo ajuda a executar a decisão; ele não define sozinho o que é importante.</p>
-      <div class="actions" style="margin-top:18px"><a class="btn light" href="index.html">Executar bloco adaptativo</a><a class="btn hero-outline" href="questao-guiada.html">Treinar correção causal</a></div>
-    </div>
-    <aside class="hero-target"><small>Alvo nº 1 agora</small><strong id="heroSubject">—</strong><b id="heroTopic">—</b><span id="heroAction">—</span></aside>
-  </section>
-
-  <section class="metrics">
-    <article class="metric"><span>Projeção modelada</span><strong id="mProjected">—</strong><small>pontos em 80; ainda depende da qualidade da amostra</small></article>
-    <article class="metric"><span>Cobertura diagnóstica</span><strong id="mCoverage">—</strong><small>peso do Núcleo 62 já medido com amostra mínima</small></article>
-    <article class="metric"><span>Domínio robusto</span><strong id="mRobust">—</strong><small>peso com amostra + desempenho sustentado</small></article>
-    <article class="metric"><span>Pontos frágeis</span><strong id="mFragile">—</strong><small>aparente domínio com evidência ainda pequena</small></article>
-  </section>
-
+  <section class="hero"><div><p class="eyebrow light">DECISÃO DE ESTUDO BASEADA EM EVIDÊNCIA</p><h2>O sistema deve dizer o que fazer agora — e por quê.</h2><p>Incidência FGV, peso da disciplina, domínio recente, causa dos erros, revisões vencidas e materiais disponíveis entram no mesmo motor. Curso não substitui diagnóstico: a aula só aparece quando é a intervenção adequada.</p><div class="actions" style="margin-top:18px"><a class="btn light" id="heroTrain" href="questao-guiada.html">Executar alvo nº 1</a><a class="btn hero-outline" id="heroVideo" href="materiais.html">Aula do tema</a><a class="btn hero-outline" id="heroNotebook" href="caderno.html">Abrir caderno</a></div></div><aside class="hero-target"><small>Alvo nº 1 agora</small><strong id="heroSubject">—</strong><b id="heroTopic">—</b><span id="heroAction">—</span></aside></section>
+  <section class="metrics"><article class="metric"><span>Projeção</span><strong id="mProjected">—</strong><small>pontos em 80</small></article><article class="metric"><span>Cobertura diagnóstica</span><strong id="mCoverage">—</strong><small>Núcleo 62 medido</small></article><article class="metric"><span>Domínio robusto</span><strong id="mRobust">—</strong><small>amostra + desempenho</small></article><article class="metric"><span>Pontos frágeis</span><strong id="mFragile">—</strong><small>domínio ainda pouco provado</small></article><article class="metric"><span>Revisões vencidas</span><strong id="mDue">—</strong><small>precisam voltar hoje</small></article></section>
   <div class="grid">
-    <section class="panel">
-      <div class="card-head"><div><p class="eyebrow">PRESCRIÇÃO ADAPTATIVA</p><h2>Próximo bloco</h2></div><span class="badge" id="actionBadge">—</span></div>
-      <div class="focus">
-        <div class="focus-head"><div><div class="subject" id="focusSubject">—</div><h3 id="focusTopic">—</h3></div><div class="index" id="focusIndex">—</div></div>
-        <div class="why" id="focusWhy">Calculando…</div>
-        <div class="focus-metrics">
-          <div><span>Valor na prova</span><b id="focusExamValue">—</b></div>
-          <div><span>Domínio</span><b id="focusMastery">—</b></div>
-          <div><span>Recuperável</span><b id="focusRecoverable">—</b></div>
-          <div><span>Eficiência heurística</span><b id="focusPph">—</b></div>
-        </div>
-        <div class="prescription"><b>→</b><div><strong id="prescriptionTitle">—</strong><span id="prescriptionText">—</span></div></div>
-      </div>
-
-      <div class="card-head" style="margin-top:20px"><div><p class="eyebrow">FILA</p><h3>Próximos alvos</h3></div></div>
-      <div class="queue" id="queue"></div>
-    </section>
-
-    <aside class="panel">
-      <p class="eyebrow">MAPA DO NÚCLEO</p><h3>Incidência × domínio</h3>
-      <div class="subject-cloud" id="subjectCloud"></div>
-      <div class="topic-table" id="topicTable"></div>
-      <div class="legend"><span><i class="dot fgv"></i>incidência FGV</span><span><i class="dot user"></i>seu domínio</span><span><i class="dot material"></i>material indexado</span></div>
-      <p class="source-note">Percentuais de tema representam participação histórica dentro da disciplina, não previsão determinística da próxima prova.</p>
-    </aside>
+    <section class="panel"><div class="card-head"><div><p class="eyebrow">PRESCRIÇÃO ADAPTATIVA</p><h2>Próximo bloco</h2></div><span class="badge" id="actionBadge">—</span></div><div class="focus"><div class="focus-head"><div><div class="subject" id="focusSubject">—</div><h3 id="focusTopic">—</h3></div><div class="index" id="focusIndex">—</div></div><div class="why" id="focusWhy">Calculando…</div><div class="focus-metrics"><div><span>Valor na prova</span><b id="focusExamValue">—</b></div><div><span>Domínio</span><b id="focusMastery">—</b></div><div><span>Recuperável</span><b id="focusRecoverable">—</b></div><div><span>Aulas locais</span><b id="focusVideos">—</b></div></div><div class="prescription"><b>→</b><div><strong id="prescriptionTitle">—</strong><span id="prescriptionText">—</span></div></div><div class="actions" style="margin-top:12px"><a class="btn primary" id="focusTrain" href="questao-guiada.html">Treinar</a><a class="btn secondary" id="focusVideo" href="materiais.html">Ver aula</a><a class="btn secondary" id="focusNotes" href="caderno.html">Registrar regra</a></div></div><div class="card-head" style="margin-top:20px"><div><p class="eyebrow">FILA</p><h3>Próximos alvos</h3></div></div><div class="queue" id="queue"></div></section>
+    <aside class="panel"><p class="eyebrow">HOJE</p><h3 id="todayTitle">Plano executável</h3><div class="today" id="todayPlan"></div><p class="source-note">Tempo vem da sua configuração no Painel. Revisão vencida entra antes de conteúdo novo.</p><div style="height:18px"></div><p class="eyebrow">MAPA DO NÚCLEO</p><h3>Incidência × domínio</h3><div class="subject-cloud" id="subjectCloud"></div><div class="topic-table" id="topicTable"></div><p class="source-note">Percentuais de tema são históricos dentro da disciplina; não são promessa sobre a próxima prova.</p></aside>
   </div>
-
-  <section class="panel method">
-    <div class="card-head"><div><p class="eyebrow">PROTOCOLO</p><h2>Como cada alvo vira memória recuperável</h2></div></div>
-    <div class="method-grid" id="methodGrid"></div>
-    <p class="source-note">Regra central: teoria longa não é a unidade de estudo. A unidade é <strong>erro diagnosticado → regra → recuperação → nova aplicação → revisão</strong>.</p>
-  </section>
+  <section class="panel method"><div class="card-head"><div><p class="eyebrow">PROTOCOLO</p><h2>Como cada alvo vira memória recuperável</h2></div></div><div class="method-grid" id="methodGrid"></div><p class="source-note">Unidade de estudo: <strong>erro diagnosticado → regra mínima → recuperação → nova aplicação → revisão</strong>.</p></section>
 </main>
-<script src="learning-materials.js"></script>
-<script src="oab-intelligence.js"></script>
-<script>
-(() => {
-  'use strict';
-  const I=window.OAB_INTELLIGENCE,C=window.OAB_LEARNING_MATERIALS;
-  const KEY='oab-aprova-premium-v1';
-  let state={attempts:[],reviews:{},profile:{strategy:'core'}};
-  try{state={...state,...JSON.parse(localStorage.getItem(KEY)||'{}')};}catch(e){}
-  state.profile={strategy:'core',...(state.profile||{})};
-  const pct=n=>`${Math.round((n||0)*100)}%`;
-  const one=n=>Number(n||0).toFixed(1);
-  let selected=null;
-
-  function strategy(){return state.profile?.strategy==='balanced'?'balanced':'core';}
-  function stars(p){return p?`${'★'.repeat(p)}${'☆'.repeat(3-p)}`:'—';}
-
-  function renderExam(){
-    document.getElementById('examStatus').textContent=`48º EOU: edital previsto para ${new Date(I.EXAM.editalExpected+'T12:00:00').toLocaleDateString('pt-BR')}.`;
-    document.getElementById('examBasis').textContent=`${I.EXAM.distributionBasis} O sistema deve ser recalibrado quando o edital oficial for publicado.`;
-  }
-
-  function renderMetrics(){
-    const r=I.readiness(state);
-    document.getElementById('mProjected').textContent=one(r.projected);
-    document.getElementById('mCoverage').textContent=pct(r.coverage);
-    document.getElementById('mRobust').textContent=pct(r.robust);
-    document.getElementById('mFragile').textContent=one(r.fragilePoints);
-  }
-
-  function renderFocus(){
-    const recs=I.recommendations(state,{strategy:strategy(),limit:5});
-    const x=recs[0]; if(!x)return;
-    document.getElementById('heroSubject').textContent=x.subjectName;
-    document.getElementById('heroTopic').textContent=x.topic.label;
-    document.getElementById('heroAction').textContent=`${x.action.label} • ~${x.action.minutes} min`;
-    document.getElementById('focusSubject').textContent=x.subjectName;
-    document.getElementById('focusTopic').textContent=x.topic.label;
-    document.getElementById('focusIndex').textContent=x.priorityIndex;
-    document.getElementById('actionBadge').textContent=x.action.label;
-    document.getElementById('focusWhy').textContent=I.explainRecommendation(x);
-    document.getElementById('focusExamValue').textContent=`${one(x.examValue)} q/prova*`;
-    document.getElementById('focusMastery').textContent=pct(x.stats.estimated);
-    document.getElementById('focusRecoverable').textContent=`+${one(x.recoverable)} pt*`;
-    document.getElementById('focusPph').textContent=`${one(x.pointsPerHour)} pt/h*`;
-    document.getElementById('prescriptionTitle').textContent=x.action.label;
-    document.getElementById('prescriptionText').textContent=x.action.description;
-    document.getElementById('queue').innerHTML=recs.map((r,i)=>`<div class="queue-item"><b>${i+1}</b><div><strong>${r.subjectName} • ${r.topic.label}</strong><span>${Math.round(r.topic.historicalShare*100)}% da matéria historicamente • domínio ${pct(r.stats.estimated)} • ${r.action.label}</span></div><em>${r.priorityIndex}</em></div>`).join('');
-    if(!selected) selected=x.subject;
-  }
-
-  function renderSubjects(){
-    const ids=Object.keys(I.SUBJECTS).filter(id=>I.SUBJECTS[id].core);
-    document.getElementById('subjectCloud').innerHTML=ids.map(id=>`<button class="subject-chip ${selected===id?'active':''}" data-s="${id}">${I.SUBJECTS[id].name}</button>`).join('');
-    document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{selected=b.dataset.s;renderSubjects();renderTopicTable();});
-  }
-
-  function renderTopicTable(){
-    const rows=I.rankTopics(state,{subject:selected});
-    document.getElementById('topicTable').innerHTML=rows.map(x=>`<div class="topic-row"><div><strong>${x.topic.label}</strong><span>${x.topic.historicalCount} questões em 16 exames • ${Math.round(x.topic.historicalShare*100)}% da matéria</span></div><b>${pct(x.stats.estimated)}</b><em>${stars(x.material.priority)}</em></div>`).join('');
-  }
-
-  function renderMethod(){
-    const steps=C?.cycle||[];
-    document.getElementById('methodGrid').innerHTML=steps.map((s,i)=>`<div><b>${i+1}</b><strong>${s.label}</strong><span>${s.description}</span></div>`).join('');
-  }
-
-  renderExam();renderMetrics();renderFocus();renderSubjects();renderTopicTable();renderMethod();
-})();
-</script>
-</body>
-</html>
+<script src="learning-materials.js"></script><script src="oab-intelligence.js"></script><script src="firebase-config.js"></script><script type="module" src="trilha.js"></script>
+</body></html>
