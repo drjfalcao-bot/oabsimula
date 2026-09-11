@@ -5,40 +5,45 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#0b1726" />
   <title>OAB APROVA | Biblioteca de Aulas</title>
-  <meta name="description" content="Biblioteca privada de aulas do OAB APROVA, conectada ao Google Drive do próprio aluno sem publicar IDs ou links do acervo." />
+  <meta name="description" content="Biblioteca privada de videoaulas do OAB APROVA, conectada ao Google Drive do próprio aluno sem publicar IDs ou links do acervo." />
   <link rel="stylesheet" href="styles.css" />
   <style>
-    body{background:#edf1f4;color:#132033}.wrap{max-width:1320px;margin:auto;padding:24px}.top,.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.top{justify-content:space-between;align-items:flex-start;margin-bottom:16px}.top h1{margin:0}.grid{display:grid;grid-template-columns:380px 1fr;gap:16px}.panel{background:#fff;border:1px solid #e4dfd5;border-radius:20px;padding:20px}.privacy{background:#edf7f2;border:1px solid #c7e3d4;border-radius:14px;padding:12px;font-size:12px;line-height:1.45;margin:12px 0}.privacy strong{display:block;margin-bottom:3px}.field{display:grid;gap:6px;margin:12px 0}.field span{font-size:11px;font-weight:800;color:#5d6978}.field input,.field select{width:100%;border:1px solid #d7dde3;border-radius:11px;padding:10px;background:#fff}.status{font-size:12px;color:#5f6f80;line-height:1.45;margin-top:10px}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.metric{border:1px solid #e4dfd5;border-radius:13px;padding:10px;background:#fafbfc}.metric span{display:block;font-size:9px;text-transform:uppercase;color:#697386;font-weight:900}.metric strong{font-size:21px}.toolbar{display:grid;grid-template-columns:1fr 230px;gap:10px;margin:12px 0}.library{display:grid;gap:9px}.video{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;border:1px solid #e2e6ea;border-radius:15px;padding:13px}.video h3{font-size:13px;margin:0 0 4px}.video p{font-size:10px;color:#687588;margin:0}.tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.tag{font-size:9px;font-weight:800;border-radius:999px;padding:4px 7px;background:#edf2f6;color:#31506e}.tag.gold{background:#fff4d8;color:#6f5421}.video-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.empty{padding:32px;text-align:center;color:#687588}.modal{position:fixed;inset:0;background:#08111ddd;z-index:1000;display:grid;place-items:center;padding:20px}.modal.hidden{display:none}.modal-box{width:min(1100px,96vw);height:min(760px,90vh);background:#0b1726;border-radius:18px;overflow:hidden;display:grid;grid-template-rows:auto 1fr}.modal-head{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 14px;color:#fff}.modal-head strong{font-size:12px}.modal iframe{width:100%;height:100%;border:0;background:#fff}.close{border:1px solid #ffffff44;background:#ffffff12;color:#fff;border-radius:10px;padding:7px 10px;cursor:pointer}.small{font-size:11px;color:#697386}.hidden{display:none!important}@media(max-width:900px){.grid{grid-template-columns:1fr}.toolbar{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}.video{grid-template-columns:1fr}.video-actions{justify-content:flex-start}}@media(max-width:560px){.wrap{padding:14px}.metrics{grid-template-columns:1fr}}
+    body{background:#edf1f4;color:#132033}.wrap{max-width:1320px;margin:auto;padding:24px}.top,.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.top{justify-content:space-between;align-items:flex-start;margin-bottom:16px}.top h1{margin:0}.grid{display:grid;grid-template-columns:380px 1fr;gap:16px}.panel{background:#fff;border:1px solid #e4dfd5;border-radius:20px;padding:20px}.privacy{background:#edf7f2;border:1px solid #c7e3d4;border-radius:14px;padding:12px;font-size:12px;line-height:1.45;margin:12px 0}.privacy strong{display:block;margin-bottom:3px}.field{display:grid;gap:6px;margin:12px 0}.field span{font-size:11px;font-weight:800;color:#5d6978}.field input,.field select{width:100%;border:1px solid #d7dde3;border-radius:11px;padding:10px;background:#fff}.status{font-size:12px;color:#5f6f80;line-height:1.45;margin-top:10px;min-height:34px}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.metric{border:1px solid #e4dfd5;border-radius:13px;padding:10px;background:#fafbfc}.metric span{display:block;font-size:9px;text-transform:uppercase;color:#697386;font-weight:900}.metric strong{font-size:21px}.toolbar{display:grid;grid-template-columns:1fr 230px;gap:10px;margin:12px 0}.library{display:grid;gap:9px}.video{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;border:1px solid #e2e6ea;border-radius:15px;padding:13px}.video h3{font-size:13px;margin:0 0 4px}.video p{font-size:10px;color:#687588;margin:0}.tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.tag{font-size:9px;font-weight:800;border-radius:999px;padding:4px 7px;background:#edf2f6;color:#31506e}.tag.gold{background:#fff4d8;color:#6f5421}.video-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.empty{padding:32px;text-align:center;color:#687588}.modal{position:fixed;inset:0;background:#08111ddd;z-index:1000;display:grid;place-items:center;padding:20px}.modal.hidden{display:none}.modal-box{width:min(1100px,96vw);height:min(760px,90vh);background:#0b1726;border-radius:18px;overflow:hidden;display:grid;grid-template-rows:auto 1fr}.modal-head{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 14px;color:#fff}.modal-head strong{font-size:12px}.modal iframe{width:100%;height:100%;border:0;background:#fff}.close{border:1px solid #ffffff44;background:#ffffff12;color:#fff;border-radius:10px;padding:7px 10px;cursor:pointer}.small{font-size:11px;color:#697386}.hidden{display:none!important}.advanced{margin-top:14px;border-top:1px solid #e5e9ed;padding-top:12px}.advanced summary{cursor:pointer;font-size:11px;font-weight:800;color:#526477}.auto-callout{padding:12px;border-radius:14px;background:#f5f8fb;border:1px solid #dfe7ee;margin:12px 0}.auto-callout strong{display:block;font-size:13px;margin-bottom:4px}.auto-callout span{font-size:11px;color:#647285;line-height:1.4}@media(max-width:900px){.grid{grid-template-columns:1fr}.toolbar{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}.video{grid-template-columns:1fr}.video-actions{justify-content:flex-start}}@media(max-width:560px){.wrap{padding:14px}.metrics{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
 <main class="wrap">
   <header class="top">
-    <div><p class="eyebrow">ACERVO PRIVADO • GOOGLE DRIVE</p><h1>Biblioteca de Aulas</h1><p class="muted">A Trilha pode apontar a aula certa sem publicar o seu acervo.</p></div>
+    <div><p class="eyebrow">ACERVO PRIVADO • GOOGLE DRIVE</p><h1>Biblioteca de Aulas</h1><p class="muted">Localiza as videoaulas do teu Drive e cruza cada aula com matéria, tema e prioridade da Trilha.</p></div>
     <div class="row"><a class="btn secondary" href="index.html">Painel</a><a class="btn secondary" href="trilha.html">Trilha</a><a class="btn secondary" href="caderno.html">Caderno</a><a class="btn secondary" href="questao-guiada.html">Questão Guiada</a></div>
   </header>
 
   <div class="grid">
     <aside class="panel">
-      <p class="eyebrow">CONEXÃO SEGURA</p><h2>Importar aulas do meu Drive</h2>
-      <div class="privacy"><strong>O acervo continua privado.</strong>O código público não contém IDs, links ou tokens dos seus vídeos. A autorização do Drive fica na sua sessão; o catálogo gerado fica neste navegador. O token OAuth não é gravado.</div>
-      <button class="btn primary full" id="connectDrive">Autorizar Google Drive</button>
+      <p class="eyebrow">CONEXÃO SEGURA</p><h2>Carregar minhas videoaulas</h2>
+      <div class="privacy"><strong>O acervo continua privado.</strong>O código público não contém IDs, links ou tokens dos teus vídeos. A autorização é somente leitura e o catálogo fica no teu navegador.</div>
+      <div class="auto-callout"><strong>Não precisa informar pasta.</strong><span>O sistema procura automaticamente pastas chamadas “Aulas Teóricas” na conta Google autorizada e indexa os vídeos encontrados.</span></div>
+      <button class="btn primary full" id="connectDrive">Autorizar Google Drive e carregar aulas</button>
+      <button class="btn secondary full" id="autoScanDrive" style="margin-top:8px">Localizar minhas aulas automaticamente</button>
       <button class="btn secondary full hidden" id="disconnectDrive" style="margin-top:8px">Desconectar sessão do Drive</button>
-      <label class="field"><span>Pasta raiz do curso</span><input id="rootFolder" placeholder="Cole a URL da pasta CEISC/VDE ou o ID da pasta" autocomplete="off" /></label>
-      <button class="btn primary full" id="scanDrive">Escanear aulas teóricas</button>
-      <div id="status" class="status">Conecte o Drive e informe a pasta raiz uma única vez.</div>
+      <div id="status" class="status">Clique em “Autorizar Google Drive e carregar aulas”.</div>
       <div class="metrics">
         <div class="metric"><span>Vídeos</span><strong id="mVideos">0</strong></div>
         <div class="metric"><span>Matérias</span><strong id="mSubjects">0</strong></div>
         <div class="metric"><span>Mapeados</span><strong id="mMapped">0%</strong></div>
       </div>
-      <p class="small">O scanner procura pastas de aulas teóricas e arquivos de vídeo. TAQ, PDFs e simulados permanecem fora desta tela para não misturar formatos.</p>
+      <details class="advanced">
+        <summary>Opção avançada: escanear uma pasta específica</summary>
+        <label class="field"><span>Pasta raiz do curso</span><input id="rootFolder" placeholder="Cole a URL da pasta CEISC/VDE ou o ID da pasta" autocomplete="off" /></label>
+        <button class="btn secondary full" id="scanDrive">Escanear esta pasta</button>
+      </details>
+      <p class="small">São considerados arquivos de vídeo MP4, M4V, MOV, WEBM, MKV e AVI, inclusive quando o Drive não informa o MIME corretamente.</p>
     </aside>
 
     <section class="panel">
       <div class="card-head"><div><p class="eyebrow">AULAS INDEXADAS</p><h2>Vídeo por matéria e tema</h2></div><span class="badge" id="scanBadge">sem catálogo</span></div>
       <div class="toolbar"><input id="search" placeholder="Buscar por aula, tema ou matéria" /><select id="subjectFilter"><option value="all">Todas as matérias</option></select></div>
-      <div id="library" class="library"><div class="empty">Nenhuma aula importada neste navegador.</div></div>
+      <div id="library" class="library"><div class="empty">Nenhuma aula carregada ainda. Autorize o Drive para localizar o acervo automaticamente.</div></div>
     </section>
   </div>
 </main>
