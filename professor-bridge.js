@@ -2,12 +2,39 @@
   const CONTEXT_KEY = 'oab-aprova-professor-context-v1';
   const STATE_KEY = 'oab-aprova-premium-v1';
   const CHAT_KEY = 'oab-aprova-professor-chat-v1';
+  const I = window.OAB_INTELLIGENCE || null;
 
   const text = (el) => (el?.textContent || '').trim();
   const readState = () => {
     try { return JSON.parse(localStorage.getItem(STATE_KEY) || 'null') || {}; }
     catch { return {}; }
   };
+
+  function adaptiveSnapshot(state) {
+    if (!I) return null;
+    try {
+      const strategy = state.profile?.strategy === 'balanced' ? 'balanced' : 'core';
+      const readiness = I.readiness(state);
+      const recommendations = I.recommendations(state, { strategy, limit: 3 }).map(r => ({
+        subject: r.subjectName,
+        topic: r.topic.label,
+        historicalShareWithinSubject: Math.round(r.topic.historicalShare * 100),
+        estimatedMastery: Math.round(r.stats.estimated * 100),
+        sample: r.stats.n,
+        dueReviews: r.stats.due,
+        recoverablePointsHeuristic: Number(r.recoverable.toFixed(2)),
+        prescribedAction: r.action.label,
+        actionReason: I.explainRecommendation(r)
+      }));
+      return {
+        projection: Number(readiness.projected.toFixed(1)),
+        diagnosticCoveragePct: Math.round(readiness.coverage * 100),
+        robustMasteryPct: Math.round(readiness.robust * 100),
+        fragilePointsHeuristic: Number(readiness.fragilePoints.toFixed(1)),
+        recommendations
+      };
+    } catch { return null; }
+  }
 
   function buildStudySnapshot() {
     const state = readState();
@@ -45,7 +72,8 @@
       openReviews,
       dueReviews,
       guidedAnswered: Number(state.guided?.answered || 0),
-      profileName: state.profile?.name || null
+      profileName: state.profile?.name || null,
+      adaptive: adaptiveSnapshot(state)
     };
   }
 
@@ -72,12 +100,29 @@
     const state = readState();
     const attempts = Array.isArray(state.attempts) ? state.attempts : [];
     const lastGuidedAttempt = [...attempts].reverse().find(a => a.mode === 'guided');
+    const subjectId = lastGuidedAttempt?.subject || null;
+    const topic = lastGuidedAttempt?.topic || meta[2] || null;
+    let intelligence = null;
+    if (I && subjectId && topic) {
+      try {
+        const resolved = I.resolveTopic(subjectId, topic);
+        const ranked = resolved ? I.topicPriority(state, subjectId, resolved) : null;
+        if (ranked) intelligence = {
+          historicalShareWithinSubject: Math.round(ranked.topic.historicalShare * 100),
+          estimatedMastery: Math.round(ranked.stats.estimated * 100),
+          sample: ranked.stats.n,
+          prescribedAction: ranked.action.label,
+          materialAvailable: ranked.material.available,
+          materialPriority: ranked.material.priority
+        };
+      } catch { intelligence = null; }
+    }
 
     return {
       qid: lastGuidedAttempt?.qid || null,
       source: meta[0] || null,
       subject: meta[1] || null,
-      topic: meta[2] || null,
+      topic,
       question,
       options,
       correctLetter: correctIndex >= 0 ? options[correctIndex].letter : null,
@@ -85,6 +130,7 @@
       wasCorrect: selectedIndex >= 0 && selectedIndex === correctIndex,
       errorCause: cause || lastGuidedAttempt?.cause || null,
       editorialNote: text(verdict.querySelector('span')) || null,
+      intelligence,
       capturedAt: Date.now()
     };
   }
@@ -93,8 +139,9 @@
     const question = buildQuestionContext();
     if (!question) return;
     const payload = {
-      version: 1,
+      version: 2,
       source: 'questao-guiada',
+      examTarget: { exam: '48º EOU', firstPhase: '2027-01-10', editalExpected: '2026-09-21', distributionStatus: 'provisória até edital' },
       question,
       study: buildStudySnapshot(),
       createdAt: Date.now()
@@ -112,7 +159,7 @@
     const wrap = document.createElement('div');
     wrap.className = 'guided-professor-actions';
     wrap.style.cssText = 'display:flex;gap:10px;flex-wrap:wrap;margin-top:12px';
-    wrap.innerHTML = '<button class="btn secondary" type="button" data-open-professor>Professor IA: aprofundar esta questão</button><span style="font-size:12px;color:#687588;align-self:center">O professor recebe a questão, sua resposta e seu histórico recente.</span>';
+    wrap.innerHTML = '<button class="btn secondary" type="button" data-open-professor>Professor IA: destrinchar como a FGV cobra isto</button><span style="font-size:12px;color:#687588;align-self:center">Recebe a questão, sua resposta, causa do erro e fila adaptativa atual.</span>';
     after.appendChild(wrap);
     wrap.querySelector('[data-open-professor]').addEventListener('click', saveAndOpenProfessor);
   }
@@ -129,8 +176,10 @@
   function enforceStudyQualityDefaults() {
     const origin = document.getElementById('originFilter');
     if (origin && origin.value === 'all') origin.value = 'official';
+    const priority = document.getElementById('priorityFilter');
+    if (priority && [...priority.options].some(o => o.value === 'adaptive')) priority.value = 'adaptive';
     const status = document.getElementById('aiStatus');
-    if (status) status.textContent = 'Treino principal prioriza FGV oficial. Questões autorais de baixa qualidade foram retiradas do estudo até revisão editorial.';
+    if (status) status.textContent = 'Treino principal prioriza FGV oficial e, quando possível, o tema com maior valor adaptativo. Questões autorais só entram após corte editorial.';
   }
 
   const observer = new MutationObserver(installButton);
