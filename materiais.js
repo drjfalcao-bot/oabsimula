@@ -2,6 +2,9 @@ const SUBJECTS=window.OAB_SUBJECTS||[];
 const MATERIALS=window.OAB_LEARNING_MATERIALS||{};
 const $=id=>document.getElementById(id);
 const norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+
+// Pastas verificadas no acervo conectado. O site não tenta embutir pastas privadas:
+// o embeddedfolderview do Drive é inconsistente para conteúdo compartilhado.
 const folders=[
 {id:'etica',name:'Ética Profissional',folder:'12gZ_cpUGbYPyTjdeWPPztPT58NAkn1yf'},
 {id:'constitucional',name:'Direito Constitucional',folder:'1VevNLk8p4IbZVhad0Sn3E1vacyfLUy88'},
@@ -24,12 +27,35 @@ const folders=[
 {id:'previdenciario',name:'Direito Previdenciário',folder:'1i6xg4u46CfMQJO1aAPOZpMtJ1kbvVeXO'},
 {id:'filosofia',name:'Filosofia do Direito',folder:'1m5G-g-MG8YCF3Ki9CFiTpwR6vcSZ6H7A'}
 ];
+
 function key(id){return id.replace(/-/g,'_');}
-function topicsFor(id){return (MATERIALS.topicCatalog?.[key(id)]?.items||[]).slice(0,6).map(x=>x.label);}
-function driveUrl(f){return `https://drive.google.com/drive/folders/${encodeURIComponent(f.folder)}`;}
-function embedUrl(f){return `https://drive.google.com/embeddedfolderview?id=${encodeURIComponent(f.folder)}#list`;}
-function populate(){const sel=$('subjectFilter');sel.innerHTML='<option value="all">Todas as matérias</option>'+folders.map(f=>`<option value="${f.id}">${f.name}</option>`).join('');const requested=new URLSearchParams(location.search).get('subject');if(requested&&folders.some(f=>f.id===requested))sel.value=requested;}
-function render(){const q=norm($('search').value),subject=$('subjectFilter').value;const rows=folders.filter(f=>(subject==='all'||f.id===subject)&&(!q||norm(`${f.name} ${topicsFor(f.id).join(' ')}`).includes(q)));$('library').innerHTML=rows.length?rows.map(f=>{const topics=topicsFor(f.id);return `<article class="course"><div><p class="eyebrow">VIDEOAULAS</p><h3>${f.name}</h3><p>Pasta original do Google Drive. O conteúdo permanece atualizado conforme a pasta muda.</p></div><div class="tags">${topics.map(t=>`<span class="tag">${t}</span>`).join('')}</div><div class="course-actions"><button class="btn primary" data-view="${f.id}">Ver aulas</button><a class="btn secondary" target="_blank" rel="noopener noreferrer" href="${driveUrl(f)}">Abrir no Drive</a></div></article>`}).join(''):'<div class="empty">Nenhuma matéria corresponde ao filtro.</div>';document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>openViewer(b.dataset.view));}
-function openViewer(id){const f=folders.find(x=>x.id===id);if(!f)return;$('viewerTitle').textContent=f.name;$('viewerDrive').href=driveUrl(f);$('viewerFrame').src=embedUrl(f);$('viewer').classList.remove('hidden');}
-function closeViewer(){$('viewerFrame').src='about:blank';$('viewer').classList.add('hidden');}
-populate();$('search').oninput=render;$('subjectFilter').onchange=render;$('viewerClose').onclick=closeViewer;$('viewer').onclick=e=>{if(e.target===$('viewer'))closeViewer();};render();
+function topicsFor(id){return (MATERIALS.topicCatalog?.[key(id)]?.items||[]).slice(0,8).map(x=>x.label);}
+function driveUrl(f){return `https://drive.google.com/drive/folders/${encodeURIComponent(f.folder)}?usp=drive_link`;}
+
+function populate(){
+  const params=new URLSearchParams(location.search);
+  const sel=$('subjectFilter');
+  sel.innerHTML='<option value="all">Todas as matérias</option>'+folders.map(f=>`<option value="${f.id}">${f.name}</option>`).join('');
+  const requested=params.get('subject');
+  if(requested&&folders.some(f=>f.id===requested))sel.value=requested;
+  const q=params.get('q');
+  if(q)$('search').value=q;
+}
+
+function render(){
+  const q=norm($('search').value),subject=$('subjectFilter').value;
+  const rows=folders.filter(f=>(subject==='all'||f.id===subject)&&(!q||norm(`${f.name} ${topicsFor(f.id).join(' ')}`).includes(q)));
+  $('library').innerHTML=rows.length?rows.map(f=>{
+    const topics=topicsFor(f.id),url=driveUrl(f);
+    return `<article class="course">
+      <div><p class="eyebrow">VIDEOAULAS</p><h3>${f.name}</h3><p>Pasta original do Google Drive. Abre diretamente no Drive para evitar falhas do visualizador embutido.</p></div>
+      <div class="tags">${topics.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+      <div class="course-actions"><a class="btn primary" target="_blank" rel="noopener noreferrer" href="${url}">Abrir aulas no Drive</a></div>
+    </article>`;
+  }).join(''):'<div class="empty">Nenhuma matéria corresponde ao filtro. Limpe a busca para ver a pasta da disciplina.</div>';
+}
+
+populate();
+$('search').oninput=render;
+$('subjectFilter').onchange=render;
+render();
