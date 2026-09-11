@@ -1,410 +1,120 @@
-(() => {
-  'use strict';
-  const CFG = window.OAB_CONFIG;
-  const SUBJECTS = window.OAB_SUBJECTS;
-  const CORE = SUBJECTS.filter(s => s.core);
-  const INTEL = window.OAB_INTELLIGENCE || null;
-  const BUILTIN_QUESTIONS = [...window.OAB_QUESTIONS];
-  let QUESTIONS = [...BUILTIN_QUESTIONS];
-  const STORAGE_KEY = 'oab-aprova-premium-v1';
-  const $ = id => document.getElementById(id);
-  const $$ = sel => [...document.querySelectorAll(sel)];
-  const now = () => Date.now();
-  const day = 86400000;
-  const clamp = (v,min,max) => Math.min(max,Math.max(min,v));
-  const fmtPct = n => `${Math.round(n*100)}%`;
-  const subjectById = id => SUBJECTS.find(s=>s.id===id);
-  const questionById = id => QUESTIONS.find(q=>q.id===id);
-  const shuffle = arr => [...arr].sort(()=>Math.random()-.5);
-  const questionFamily = q => q?.ruleId || q?.sourceQuestionId || q?.officialQuestionId || q?.id;
-  const uniqueFamilies = arr => {
-    const seen=new Set();
-    return arr.filter(q=>{const k=questionFamily(q);if(seen.has(k))return false;seen.add(k);return true;});
-  };
+import { getAllQuestions } from './question-bank.js';
 
-  const defaultState = () => ({
-    version:3,
-    profile:{name:'Usuário local',targetDate:CFG.examDate,targetScore:CFG.safeTarget,dailyMinutes:60,strategy:'core'},
-    attempts:[],reviews:{},sessions:[],settings:{subjectFilter:'core'},createdAt:now(),updatedAt:now()
-  });
+const CFG=window.OAB_CONFIG;
+const SUBJECTS=window.OAB_SUBJECTS||[];
+const INTEL=window.OAB_INTELLIGENCE||null;
+const BUILTIN=[...(window.OAB_QUESTIONS||[])];
+const STORAGE_KEY='oab-aprova-premium-v1';
+const CAL_KEY='oab-aprova-calendar-v1';
+const DAY=86400000,HOUR=3600000;
+const $=id=>document.getElementById(id);
+const $$=s=>[...document.querySelectorAll(s)];
+const now=()=>Date.now();
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const pct=v=>`${Math.round((v||0)*100)}%`;
+let QUESTIONS=[...BUILTIN],state=loadState(),selectedSubject='etica',selectedMode='adaptive',session=null,timer=null;
 
-  let state = loadLocal();
-  let selectedSubject = 'etica';
-  let selectedMode = 'adaptive';
-  let session = null;
-  let timerHandle = null;
-  let auth = null, db = null, currentUser = null, cloudSaveTimer = null;
+const OFFICIAL_CAL={edital:'2026-09-21',open:'2026-09-28',close:'2026-10-05',exam:'2027-01-10'};
+const BASES={
+  etica:'Lei 8.906/1994 (EOAB), Código de Ética e Disciplina e Provimento CFOAB 205/2021 quando houver publicidade.',
+  constitucional:'Constituição Federal de 1988 e legislação do controle/remédios constitucionais conforme o instituto.',
+  civil:'Código Civil (Lei 10.406/2002).',
+  'processo-civil':'Código de Processo Civil (Lei 13.105/2015).',
+  penal:'Código Penal e legislação penal especial pertinente.',
+  'processo-penal':'Código de Processo Penal, Lei de Execução Penal e legislação processual penal especial pertinente.',
+  tributario:'Constituição Federal e Código Tributário Nacional.',
+  administrativo:'Constituição Federal, Lei 14.133/2021, Lei 8.429/1992, LINDB e legislação administrativa pertinente.',
+  empresarial:'Código Civil, Lei 6.404/1976, Lei 11.101/2005 e legislação empresarial específica.',
+  trabalho:'Constituição Federal e CLT.',
+  'processo-trabalho':'CLT e CPC em aplicação subsidiária/supletiva quando cabível.',
+  consumidor:'Código de Defesa do Consumidor.',eca:'Estatuto da Criança e do Adolescente.',humanos:'Constituição Federal e tratados internacionais de direitos humanos pertinentes.',
+  filosofia:'Teorias e autores cobrados pela FGV conforme o enunciado.',internacional:'Constituição Federal, LINDB, tratados e legislação internacional pertinente.',ambiental:'Constituição Federal, Lei 6.938/1981 e legislação ambiental pertinente.',
+  eleitoral:'Constituição Federal, Código Eleitoral e legislação eleitoral pertinente.',previdenciario:'Constituição Federal e legislação previdenciária pertinente.',financeiro:'Constituição Federal, Lei 4.320/1964 e Lei de Responsabilidade Fiscal.'
+};
+const TOPIC_BASES={
+  publicidade:'EOAB, Código de Ética e Provimento CFOAB 205/2021.',honorarios:'EOAB e Código de Ética e Disciplina.',prerrogativas:'EOAB, especialmente o regime de direitos e prerrogativas da advocacia.',
+  controle_constitucionalidade:'CF/88, Lei 9.868/1999 e Lei 9.882/1999 conforme a ação.',remedios_constitucionais:'CF/88 e legislação específica do remédio constitucional.',
+  tutela_provisoria:'CPC, regime das tutelas provisórias.',cumprimento_execucao:'CPC, cumprimento de sentença e execução.',recursos:'Legislação processual da matéria e regras específicas do recurso cobrado.',
+  credito_tributario:'CTN, constituição, suspensão, extinção e exclusão do crédito tributário.',competencia_limitacoes:'CF/88 e CTN, competência e limitações ao poder de tributar.',
+  licitacoes_contratos:'Lei 14.133/2021.',improbidade:'Lei 8.429/1992 com as alterações vigentes.',atos_administrativos:'Regime jurídico dos atos administrativos e LINDB quando pertinente.',
+  teoria_crime:'Código Penal, teoria do delito.',prisoes_cautelares:'CPP, prisões e medidas cautelares.',investigacao_acao:'CPP, investigação e ação penal.',
+  relacao_contrato:'CLT, relação de emprego e contrato de trabalho.',jornada_descanso:'CLT, jornada, intervalos, repousos e férias.',
+  recuperacao_falencia:'Lei 11.101/2005.'
+};
 
-  function loadLocal(){
-    try{
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if(!raw) return defaultState();
-      const saved=JSON.parse(raw);
-      return {...defaultState(),...saved,profile:{...defaultState().profile,...(saved.profile||{})},settings:{...defaultState().settings,...(saved.settings||{})}};
-    }catch(e){ return defaultState(); }
-  }
-  function persist(){
-    state.updatedAt = now();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    scheduleCloudSave();
-  }
-  function scheduleCloudSave(){
-    if(!currentUser || !db) return;
-    clearTimeout(cloudSaveTimer);
-    cloudSaveTimer=setTimeout(async()=>{
-      try{
-        await db.collection('users').doc(currentUser.uid).collection('state').doc('main').set(state);
-        $('syncStatus').textContent='Sincronizado com a nuvem';
-      }catch(e){ $('syncStatus').textContent='Salvo localmente • nuvem indisponível'; }
-    },700);
-  }
+function defaultState(){return {version:4,profile:{targetDate:OFFICIAL_CAL.exam,targetScore:45,dailyMinutes:60,strategy:'core'},attempts:[],reviews:{},sessions:[],settings:{subjectFilter:'core'},updatedAt:now()};}
+function loadState(){try{const raw=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');const b=defaultState();return raw?{...b,...raw,profile:{...b.profile,...(raw.profile||{})},settings:{...b.settings,...(raw.settings||{})}}:b;}catch{return defaultState();}}
+function persist(){state.updatedAt=now();localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}
+function subj(id){return SUBJECTS.find(s=>s.id===id)||{id,name:id,q:1,core:false};}
+function qById(id){return QUESTIONS.find(q=>q.id===id);}
+function canon(id){try{return INTEL?.canonicalSubject(id)||id;}catch{return id;}}
+function topicOf(q){if(!q)return null;const raw=`${q.topic||''} ${q.text||''} ${(q.options||[]).join(' ')}`;try{return INTEL?.resolveTopic(q.subject,raw)||INTEL?.resolveTopic(q.subject,q.topic)||null;}catch{return null;}}
+function topicLabel(q){return topicOf(q)?.label||String(q?.topic||'Conteúdo geral').replace(/\s*•\s*prova oficial/ig,'');}
+function topicId(q){return topicOf(q)?.id||'geral';}
+function sourceBase(q){return TOPIC_BASES[topicId(q)]||BASES[canon(q.subject)]||'Legislação específica do instituto cobrado.';}
+function usefulExplanation(q){const e=String(q?.explanation||'').trim();if(!e||/Questão oficial preservada sem comentário editorial automático/i.test(e)||/Gabarito definitivo oficial/i.test(e))return null;return e;}
+function attemptsForQ(id){return state.attempts.filter(a=>a.qid===id);}
+function attemptsForConcept(q){const sid=canon(q.subject),tid=topicId(q);return state.attempts.filter(a=>canon(a.subject)===sid && ((INTEL?.resolveTopic(sid,a.topic)?.id)||'geral')===tid);}
+function recurrence(q){const qa=attemptsForQ(q.id),ca=attemptsForConcept(q);return {qWrong:qa.filter(a=>!a.correct).length,cWrong:ca.filter(a=>!a.correct).length,qTotal:qa.length,cTotal:ca.length};}
+function dueLabel(ts){const d=Number(ts||0)-now();if(d<=0)return'vencida';if(d<DAY)return`em ${Math.max(1,Math.ceil(d/HOUR))}h`;const n=Math.ceil(d/DAY);return n===1?'amanhã':`em ${n} dias`;}
 
-  function erf(x){
-    const sign=x<0?-1:1; x=Math.abs(x);
-    const a1=.254829592,a2=-.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=.3275911;
-    const t=1/(1+p*x);
-    const y=1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);
-    return sign*y;
-  }
-  function normalCDF(z){ return .5*(1+erf(z/Math.sqrt(2))); }
-  function attemptsFor(subjectId){ return state.attempts.filter(a=>a.subject===subjectId); }
+function readCal(){try{return {...OFFICIAL_CAL,...JSON.parse(localStorage.getItem(CAL_KEY)||'{}')};}catch{return {...OFFICIAL_CAL};}}
+function dateLocal(s){return new Date(`${s}T12:00:00`);}
+function daysUntil(s){return Math.ceil((dateLocal(s)-new Date())/DAY);}
+function fmtDate(s){return dateLocal(s).toLocaleDateString('pt-BR');}
+function countdownText(s){const d=daysUntil(s);return d>1?`${d} dias`:d===1?'amanhã':d===0?'hoje':`${Math.abs(d)}d atrás`;}
+function renderCalendar(){const c=readCal();$('editalCountdown').textContent=countdownText(c.edital);$('editalDateLabel').textContent=fmtDate(c.edital);$('inscriptionOpenCountdown').textContent=countdownText(c.open);$('inscriptionOpenLabel').textContent=fmtDate(c.open);$('inscriptionCloseCountdown').textContent=countdownText(c.close);$('inscriptionCloseLabel').textContent=fmtDate(c.close);$('examCountdown').textContent=countdownText(c.exam);$('examDateLabel').textContent=fmtDate(c.exam);$('daysToExam').textContent=Math.max(0,daysUntil(state.profile.targetDate||c.exam));$('calEdital').value=c.edital;$('calOpen').value=c.open;$('calClose').value=c.close;$('calExam').value=c.exam;const t=now(),o=dateLocal(c.open).getTime(),cl=dateLocal(c.close).getTime();$('calendarStatus').textContent=t<o?'inscrições ainda não abertas':t<=cl?'inscrições abertas':'inscrições encerradas';}
 
-  function legacyStats(subjectId){
-    const a=attemptsFor(subjectId), n=a.length, correct=a.filter(x=>x.correct).length, wrong=n-correct;
-    const raw=n?correct/n:0;
-    const alpha=correct+2, beta=wrong+3, sum=alpha+beta;
-    const estimated=alpha/sum;
-    const open=Object.values(state.reviews).filter(r=>r.subject===subjectId && !r.mastered).length;
-    const due=Object.values(state.reviews).filter(r=>r.subject===subjectId && !r.mastered && r.due<=now()).length;
-    const s=subjectById(subjectId);
-    const target=.75;
-    const potential=s.q*Math.max(0,target-estimated);
-    const deficit=Math.max(0,.78-estimated);
-    const errorPressure=open/(n+4);
-    const uncertainty=Math.sqrt((alpha*beta)/(sum*sum*(sum+1)));
-    const focus=s.q*(.55+deficit*2.2)*(1+errorPressure*.8)*(1+uncertainty*1.8);
-    const predictiveVar=s.q*alpha*beta*(sum+s.q)/(sum*sum*(sum+1));
-    return {n,correct,wrong,raw,estimated,alpha,beta,open,due,potential,focus,uncertainty,predictiveVar};
-  }
+function stats(id){if(INTEL)return INTEL.subjectStats(state,id);const a=state.attempts.filter(x=>x.subject===id),correct=a.filter(x=>x.correct).length,n=a.length;return {n,correct,wrong:n-correct,raw:n?correct/n:0,estimated:n?correct/n:.4,open:Object.values(state.reviews).filter(r=>r.subject===id&&!r.mastered).length,due:Object.values(state.reviews).filter(r=>r.subject===id&&!r.mastered&&r.due<=now()).length,potential:0};}
+function overall(){const total=state.attempts.length,correct=state.attempts.filter(a=>a.correct).length,projected=SUBJECTS.reduce((n,s)=>n+s.q*stats(s.id).estimated,0),due=Object.values(state.reviews).filter(r=>!r.mastered&&r.due<=now()).length,recurrent=Object.values(state.reviews).filter(r=>(r.lapses||r.wrongCount||0)>=2&&!r.mastered).length,unclassified=state.attempts.filter(a=>!a.correct&&!a.cause).length;return {total,correct,accuracy:total?correct/total:0,projected,due,recurrent,unclassified};}
+function ranking(){return INTEL?INTEL.rankSubjects(state,{strategy:state.profile.strategy}):SUBJECTS.map(s=>({id:s.id,name:s.name,q:s.q,stats:stats(s.id),focus:s.q*(1-stats(s.id).estimated),potential:0})).sort((a,b)=>b.focus-a.focus);}
+function recs(n=4){return INTEL?INTEL.recommendations(state,{strategy:state.profile.strategy,limit:n}):[];}
 
-  function stats(subjectId){
-    if(!INTEL) return legacyStats(subjectId);
-    const base=INTEL.subjectStats(state,subjectId);
-    const topics=INTEL.rankTopics(state,{subject:subjectId});
-    const focus=topics.slice(0,3).reduce((n,x)=>n+x.score,0) || (subjectById(subjectId)?.q||1)*(1-base.estimated);
-    return {...base,focus};
-  }
+function page(name){$$('.page').forEach(x=>x.classList.toggle('active',x.dataset.view===name));$$('[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===name));const labels={dashboard:['CENTRAL DE APROVAÇÃO','Painel de aprovação'],plan:['ESTRATÉGIA','Plano adaptativo'],study:['CONTEÚDO','Matérias'],questions:['TREINO','Questões'],errors:['MEMÓRIA','Erros e reforço'],analytics:['MÉTRICAS','Desempenho']};$('pageEyebrow').textContent=labels[name]?.[0]||'OAB APROVA';$('pageTitle').textContent=labels[name]?.[1]||'OAB APROVA';if(name==='errors')renderErrors();if(name==='analytics')renderAnalytics();window.scrollTo({top:0,behavior:'smooth'});}
+function notice(msg){$('notice').textContent=msg;$('notice').classList.remove('hidden');setTimeout(()=>$('notice').classList.add('hidden'),4500);}
 
-  function overall(){
-    const total=state.attempts.length, correct=state.attempts.filter(a=>a.correct).length;
-    const accuracy=total?correct/total:0;
-    const subjectStats=SUBJECTS.map(s=>({s,st:stats(s.id)}));
-    const projected=subjectStats.reduce((sum,x)=>sum+x.s.q*x.st.estimated,0);
-    const variance=subjectStats.reduce((sum,x)=>sum+x.st.predictiveVar,0);
-    const sd=Math.sqrt(Math.max(.0001,variance));
-    const passZ=(CFG.passingScore-.5-projected)/sd;
-    const passProbability=clamp(1-normalCDF(passZ),0,1);
-    const targetZ=((state.profile.targetScore||CFG.safeTarget)-.5-projected)/sd;
-    const safeProbability=clamp(1-normalCDF(targetZ),0,1);
-    const low90=clamp(projected-1.645*sd,0,80), high90=clamp(projected+1.645*sd,0,80);
-    const coreProjected=CORE.reduce((sum,s)=>sum+s.q*stats(s.id).estimated,0);
-    const coreMastery=coreProjected/CORE.reduce((a,s)=>a+s.q,0);
-    const due=Object.values(state.reviews).filter(r=>!r.mastered && r.due<=now()).length;
-    const open=Object.values(state.reviews).filter(r=>!r.mastered).length;
-    return {total,correct,accuracy,projected,variance,sd,passProbability,safeProbability,low90,high90,coreMastery,due,open};
-  }
-  function dataConfidence(){
-    if(INTEL) return clamp(INTEL.readiness(state).coverage,0,1);
-    return clamp(state.attempts.length/120,0,1);
-  }
-  function subjectRanking(){
-    if(INTEL){
-      return INTEL.rankSubjects(state,{strategy:state.profile.strategy}).map(r=>({
-        s:subjectById(r.id)||{id:r.id,name:r.name,q:r.q,core:r.core},
-        st:{...r.stats,focus:r.focus,potential:r.potential},topTopic:r.topTopic
-      }));
-    }
-    const base=(state.profile.strategy==='balanced'?SUBJECTS:CORE);
-    return base.map(s=>({s,st:stats(s.id)})).sort((a,b)=>b.st.focus-a.st.focus);
-  }
-  function recommendations(limit=4){
-    return INTEL?INTEL.recommendations(state,{strategy:state.profile.strategy,limit}):[];
-  }
-  function daysToExam(){
-    const d = new Date(`${state.profile.targetDate || CFG.examDate}T12:00:00`);
-    return Math.max(0,Math.ceil((d-new Date())/day));
-  }
-  function dueLabel(ts){
-    const diff=Math.ceil((ts-now())/day);
-    if(diff<=0) return 'vencida'; if(diff===1) return 'amanhã'; return `em ${diff} dias`;
-  }
+function renderDashboard(){renderCalendar();const o=overall();$('projectedScore').textContent=o.projected.toFixed(1);$('scoreRing').style.setProperty('--pct',`${clamp(o.projected/80,0,1)*360}deg`);$('projectionConfidence').textContent=o.total<20?'projeção inicial — aumente a amostra':`${o.total} respostas usadas na projeção`;$('safeTarget').textContent=state.profile.targetScore;$('dashboardDue').textContent=o.due;$('metricAttempts').textContent=o.total;$('metricSessions').textContent=`${state.sessions.length} sessões`;$('metricAccuracy').textContent=pct(o.accuracy);$('metricRecurrent').textContent=o.recurrent;$('metricUnclassified').textContent=o.unclassified;let label='Sem diagnóstico',text='Resolva questões para formar amostra.',kind='neutral';if(o.total>=20&&o.projected>=45){label='Zona de segurança';text='A projeção está acima da meta; preserve os pontos com revisão.';kind='good';}else if(o.total>=20&&o.projected>=40){label='Zona de aprovação';text='A projeção cruza 40, mas ainda falta margem.';kind='warn';}else if(o.total>=20){label='Risco de reprovação';text='A prioridade é recuperar conceitos de maior peso.';kind='bad';}$('riskLabel').textContent=label;$('riskText').textContent=text;$('riskDot').className=`status-dot ${kind}`;const rs=recs(4);$('priorityList').innerHTML=rs.length?rs.map((r,i)=>`<div class="priority-row"><div class="priority-rank">${i+1}</div><div><strong>${r.subjectName}</strong><small>${r.topic.label} • domínio ${pct(r.stats.estimated)} • ${r.action.label}</small></div><div class="priority-value"><b>+${r.recoverable.toFixed(1)}</b><span>pts recuperáveis</span></div></div>`).join(''):'<div class="muted">Faça algumas questões para formar a fila adaptativa.</div>';const top=rs[0],mins=state.profile.dailyMinutes||60;$('routineBox').innerHTML=`<div class="routine-step"><b>1</b><div><strong>${Math.max(10,Math.round(mins*.25))} min • erros vencidos/reincidentes</strong><span>Feche primeiro falhas já descobertas.</span></div></div><div class="routine-step"><b>2</b><div><strong>${Math.max(15,Math.round(mins*.45))} min • ${top?`${top.subjectName}: ${top.topic.label}`:'bloco adaptativo'}</strong><span>Questões antes da teoria.</span></div></div><div class="routine-step"><b>3</b><div><strong>${Math.max(10,Math.round(mins*.30))} min • reforço</strong><span>Regra mínima + nova aplicação do mesmo conceito.</span></div></div>`;}
 
-  function page(name){
-    $$('.page').forEach(p=>p.classList.toggle('active',p.dataset.view===name));
-    $$('.nav-item[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===name));
-    const labels={dashboard:['CENTRAL DE APROVAÇÃO','Painel de aprovação'],plan:['ESTRATÉGIA','Plano adaptativo'],study:['CONTEÚDO','Matérias'],questions:['TREINO','Questões'],errors:['MEMÓRIA','Revisões'],analytics:['MÉTRICAS','Desempenho']};
-    $('pageEyebrow').textContent=labels[name]?.[0]||'OAB APROVA'; $('pageTitle').textContent=labels[name]?.[1]||'OAB APROVA';
-    window.scrollTo({top:0,behavior:'smooth'});
-    if(name==='errors') renderReviews();
-    if(name==='analytics') renderAnalytics();
-  }
+function renderPlan(){const rows=ranking();$('planRanking').innerHTML=rows.map((r,i)=>`<div class="ranking-item"><div class="ranking-score">${i+1}</div><div><strong>${r.name}</strong><small>${r.topTopic?`${r.topTopic.topic.label} • `:''}${r.q} questões • domínio ${pct(r.stats.estimated)} • ${r.stats.wrong||0} erros</small></div><div class="priority-pill">${Math.round(r.focus||0)}</div></div>`).join('');$('targetDate').value=state.profile.targetDate||readCal().exam;$('targetScore').value=state.profile.targetScore||45;$('dailyMinutes').value=state.profile.dailyMinutes||60;$('strategy').value=state.profile.strategy||'core';}
+function renderStudy(){const filter=state.settings.subjectFilter||'core',arr=filter==='core'?SUBJECTS.filter(s=>s.core):SUBJECTS;$('subjectList').innerHTML=arr.map(s=>{const st=stats(s.id);return `<button class="subject-btn ${selectedSubject===s.id?'active':''}" data-subject="${s.id}"><div class="line1"><strong>${s.name}</strong><b>${s.q}Q</b></div><span>${st.n?`${pct(st.estimated)} domínio • ${st.wrong} erros`:'sem diagnóstico'}</span></button>`}).join('');$$('[data-subject]').forEach(b=>b.onclick=()=>{selectedSubject=b.dataset.subject;renderStudy();});const s=subj(selectedSubject),st=stats(s.id),top=INTEL?.rankTopics(state,{subject:s.id})?.[0];$('subjectTier').textContent=s.core?'NÚCLEO 62':'COMPLEMENTAR';$('subjectName').textContent=s.name;$('subjectWeight').textContent=`${s.q} questões`;$('subjectEstimated').textContent=pct(st.estimated);$('subjectSample').textContent=st.n;$('subjectErrors').textContent=st.open||0;$('subjectGain').textContent=`+${(st.potential||0).toFixed(1)} pts`;$('subjectAdvice').textContent=top?`Próximo alvo: ${top.topic.label}. ${top.action.label}. ${INTEL.explainRecommendation(top)}`:'Faça um diagnóstico curto antes de abrir teoria.';const topics=INTEL?INTEL.topicObjects(s.id).map(x=>x.label):s.topics||[];$('subjectTopics').innerHTML=topics.map(t=>`<span class="chip">${t}</span>`).join('');$('videoSubject').href=`materiais.html?subject=${encodeURIComponent(s.id)}`;}
 
-  function riskInfo(o){
-    if(o.total<20) return {label:'Diagnóstico insuficiente',kind:'neutral',text:`Há ${o.total} resposta${o.total===1?'':'s'}. A probabilidade de aprovação ainda não é exibida como sinal decisório.`};
-    if(o.projected>=state.profile.targetScore && o.passProbability>=.85) return {label:'Zona de segurança',kind:'good',text:`Probabilidade modelada de atingir 40: ${fmtPct(o.passProbability)}. Mantenha revisão para reduzir perda de pontos já conquistados.`};
-    if(o.projected>=40 && o.passProbability>=.60) return {label:'Zona de aprovação',kind:'warn',text:`A média projetada cruza 40, mas a incerteza ainda importa. Probabilidade modelada: ${fmtPct(o.passProbability)}.`};
-    if(o.passProbability>=.40) return {label:'Faixa limítrofe',kind:'warn',text:`O modelo ainda vê chance relevante de aprovação (${fmtPct(o.passProbability)}), porém sem margem estatística confortável.`};
-    return {label:'Risco de reprovação',kind:'bad',text:`A probabilidade modelada de alcançar 40 está em ${fmtPct(o.passProbability)}. O foco deve permanecer no maior ganho marginal por minuto.`};
-  }
+function uniqueFamilies(arr){const seen=new Set();return arr.filter(q=>{const k=q.ruleId||q.sourceQuestionId||q.officialQuestionId||q.id;if(seen.has(k))return false;seen.add(k);return true;});}
+function makePool(mode,limit,subject='all'){
+ let base=QUESTIONS.filter(q=>subject==='all'?true:canon(q.subject)===canon(subject));
+ if(state.profile.strategy==='core'&&subject==='all')base=base.filter(q=>subj(canon(q.subject)).core);
+ const enriched=base.map(q=>({...q,topic:topicLabel(q)}));
+ if(mode==='review'){
+   const ordered=Object.values(state.reviews).filter(r=>!r.mastered).sort((a,b)=>{const ar=(a.due<=now()?0:1),br=(b.due<=now()?0:1);if(ar!==br)return ar-br;return (b.lapses||b.wrongCount||0)-(a.lapses||a.wrongCount||0)||a.due-b.due;}).map(r=>qById(r.qid)).filter(Boolean).filter(q=>subject==='all'||canon(q.subject)===canon(subject));
+   return ordered.slice(0,limit);
+ }
+ if(mode==='adaptive'&&INTEL)return INTEL.selectAdaptiveQuestions(enriched,state,{limit,strategy:state.profile.strategy,subject});
+ if(mode==='exam'){const out=[];const allowed=subject==='all'?(state.profile.strategy==='core'?SUBJECTS.filter(s=>s.core):SUBJECTS):[subj(subject)],den=allowed.reduce((n,s)=>n+s.q,0);for(const s of allowed){out.push(...uniqueFamilies(base.filter(q=>canon(q.subject)===s.id).sort(()=>Math.random()-.5)).slice(0,Math.max(1,Math.round(limit*s.q/den))));}return uniqueFamilies(out).sort(()=>Math.random()-.5).slice(0,limit);}
+ return uniqueFamilies(base.sort(()=>Math.random()-.5)).slice(0,limit);
+}
+function renderQuestionSelectors(){const prev=$('questionSubject').value;$('questionSubject').innerHTML='<option value="all">Todas</option>'+SUBJECTS.filter(s=>QUESTIONS.some(q=>canon(q.subject)===s.id)).map(s=>`<option value="${s.id}">${s.name}</option>`).join('');if([...$('questionSubject').options].some(o=>o.value===prev))$('questionSubject').value=prev;$('errorSubject').innerHTML='<option value="all">Todas as matérias</option>'+SUBJECTS.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');}
+function startSession(mode=selectedMode,limit=Number($('questionLimit').value||10),subject=$('questionSubject').value||'all'){let qs=makePool(mode,limit,subject);if(!qs.length&&mode==='review'){notice('Não há revisão aberta. Iniciando bloco adaptativo.');mode='adaptive';qs=makePool(mode,limit,subject);}if(!qs.length){notice('Nenhuma questão disponível neste filtro.');return;}session={mode,qs,index:0,answers:{},startedAt:now(),questionStartedAt:now()};$('sessionSetup').classList.add('hidden');$('sessionResult').classList.add('hidden');$('sessionArea').classList.remove('hidden');page('questions');startTimer();renderQuestion();}
+function startTimer(){clearInterval(timer);timer=setInterval(()=>{if(!session)return;const s=Math.floor((now()-session.startedAt)/1000);$('sessionTimer').textContent=`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;},1000);}
+function reviewFor(q){return state.reviews[q.id]||null;}
+function updateReview(q,correct){const old=state.reviews[q.id];if(!correct){const wrong=(old?.wrongCount||0)+1,lapses=(old?.lapses||0)+1;state.reviews[q.id]={...(old||{}),qid:q.id,subject:canon(q.subject),topic:topicLabel(q),due:now()+(wrong>=2?8*HOUR:DAY),interval:wrong>=2?.33:1,streak:0,mastered:false,lastResult:false,lastSeen:now(),cause:old?.cause||null,wrongCount:wrong,lapses};return;}if(old){const intervals=[3,7,14,30,60],streak=(old.streak||0)+1,interval=intervals[Math.min(streak-1,intervals.length-1)];state.reviews[q.id]={...old,due:now()+interval*DAY,interval,streak,mastered:streak>=4,lastResult:true,lastSeen:now()};}}
+function answerQuestion(choice){const q=session.qs[session.index];if(session.answers[q.id])return;const correct=choice===q.correct,timeMs=now()-session.questionStartedAt,topic=topicLabel(q);session.answers[q.id]={choice,correct,timeMs,cause:null};state.attempts.push({qid:q.id,ruleId:q.ruleId||null,subject:canon(q.subject),topic,correct,choice,timeMs,mode:session.mode,ts:now(),cause:null,origin:q.origin||null});updateReview(q,correct);persist();renderQuestion();renderDashboard();renderErrors();}
+function classifyCause(cause){if(!session)return;const q=session.qs[session.index],ans=session.answers[q.id];if(!ans||ans.correct)return;ans.cause=cause;const last=[...state.attempts].reverse().find(a=>a.qid===q.id&&a.ts>=session.startedAt);if(last)last.cause=cause;if(state.reviews[q.id])state.reviews[q.id].cause=cause;persist();renderQuestion();renderErrors();}
+function addReinforcement(){if(!session)return;const q=session.qs[session.index],sid=canon(q.subject),tid=topicId(q);let same=QUESTIONS.filter(x=>x.id!==q.id&&canon(x.subject)===sid&&topicId(x)===tid&&!session.qs.some(y=>y.id===x.id));if(!same.length){notice('Não há outra questão desse conceito no banco atual. O tema ficou priorizado na Trilha.');return;}if(INTEL)same=INTEL.selectAdaptiveQuestions(same.map(x=>({...x,topic:topicLabel(x)})),state,{limit:same.length,strategy:state.profile.strategy,subject:sid});session.qs.splice(session.index+1,0,same[0]);notice('Questão de reforço inserida logo a seguir.');renderQuestion();}
+function feedbackHtml(q,ans){const rec=recurrence(q),r=reviewFor(q),exp=usefulExplanation(q),marked=q.options[ans.choice],correct=q.options[q.correct],cause=ans.cause;let diagnosis='Classifique a causa do erro para o reforço ficar correto.';if(cause==='knowledge')diagnosis='Falha principal: a regra não estava recuperável. Releia apenas a regra-base abaixo, feche o texto e explique com tuas palavras antes da próxima questão.';if(cause==='confusion')diagnosis='Falha principal: dois institutos/requisitos foram misturados. Compare o requisito que muda entre a alternativa marcada e a correta.';if(cause==='reading')diagnosis='Falha principal: leitura/atenção. Na próxima, leia primeiro o comando e procure palavras como NÃO, EXCETO, prazo, competência, legitimidade e efeito.';return `<div class="question-feedback ${ans.correct?'':'bad'}"><h4>${ans.correct?'Correto.':'Errado.'} Gabarito ${String.fromCharCode(65+q.correct)}.</h4><p><b>Conceito:</b> ${topicLabel(q)}</p>${!ans.correct?`<p><b>Tua alternativa:</b> ${marked}</p><p><b>Alternativa correta:</b> ${correct}</p>`:''}${exp?`<p><b>Comentário:</b> ${exp}</p>`:''}<div class="rule-box"><b>Base jurídica:</b> ${sourceBase(q)}<br><b>Regra para recuperar:</b> ${exp||'Reconstitua a regra a partir da alternativa correta e identifique sujeito, requisito, exceção, prazo/competência e efeito jurídico que a FGV alterou no distrator.'}<br><b>Reincidência:</b> ${rec.qWrong} erro(s) nesta questão • ${rec.cWrong} erro(s) neste conceito${r?` • próxima revisão ${dueLabel(r.due)}`:''}.</div>${!ans.correct?`<div class="feedback-tools"><p>${diagnosis}</p><div class="cause-buttons"><button class="btn secondary ${cause==='knowledge'?'active':''}" data-cause="knowledge">Não sabia a regra</button><button class="btn secondary ${cause==='confusion'?'active':''}" data-cause="confusion">Confundi conceitos</button><button class="btn secondary ${cause==='reading'?'active':''}" data-cause="reading">Leitura/atenção</button></div><div class="actions-row"><button class="btn primary" id="reinforceNow">Outra do mesmo conceito</button><a class="btn secondary" href="materiais.html?subject=${encodeURIComponent(canon(q.subject))}&q=${encodeURIComponent(topicLabel(q))}">Abrir videoaulas</a><a class="btn secondary" href="caderno.html?subject=${encodeURIComponent(canon(q.subject))}">Anotar regra</a></div></div>`:''}</div>`;}
+function renderQuestion(){if(!session)return;const q=session.qs[session.index],ans=session.answers[q.id];$('sessionModeLabel').textContent=session.mode.toUpperCase();$('sessionProgress').textContent=`Questão ${session.index+1} de ${session.qs.length}`;$('sessionDots').innerHTML=session.qs.map((x,i)=>`<button class="${i===session.index?'active':''} ${session.answers[x.id]?'done':''}" data-qindex="${i}">${i+1}</button>`).join('');$$('[data-qindex]').forEach(b=>b.onclick=()=>{session.index=+b.dataset.qindex;session.questionStartedAt=now();renderQuestion();});$('questionSubjectLabel').textContent=subj(canon(q.subject)).name;$('questionTopicLabel').textContent=topicLabel(q);$('questionText').textContent=q.text;$('answerList').innerHTML=q.options.map((o,i)=>{let cls='';if(ans){if(i===q.correct)cls='correct';else if(i===ans.choice)cls='wrong';}return `<button class="answer-option ${cls}" data-answer="${i}" ${ans?'disabled':''}><b>${String.fromCharCode(65+i)})</b> ${o}</button>`}).join('');$$('[data-answer]').forEach(b=>b.onclick=()=>answerQuestion(+b.dataset.answer));$('feedbackBox').className=ans?'':'hidden';$('feedbackBox').innerHTML=ans?feedbackHtml(q,ans):'';$$('[data-cause]').forEach(b=>b.onclick=()=>classifyCause(b.dataset.cause));const rb=$('reinforceNow');if(rb)rb.onclick=addReinforcement;$('prevQuestion').disabled=session.index===0;$('nextQuestion').textContent=session.index===session.qs.length-1?'Finalizar':'Próxima →';}
+function nextQuestion(){if(!session)return;if(session.index===session.qs.length-1){finishSession();return;}session.index++;session.questionStartedAt=now();renderQuestion();}
+function finishSession(){if(!session)return;clearInterval(timer);const a=Object.values(session.answers),total=a.length,correct=a.filter(x=>x.correct).length,duration=now()-session.startedAt;state.sessions.unshift({id:`s-${now()}`,mode:session.mode,total,correct,duration,ts:now()});state.sessions=state.sessions.slice(0,50);persist();$('sessionArea').classList.add('hidden');$('sessionResult').classList.remove('hidden');$('sessionResult').innerHTML=`<p class="eyebrow">BLOCO CONCLUÍDO</p><h2>${correct}/${total} acertos</h2><p class="muted">Erros, causas e revisões foram incorporados ao sistema.</p><div class="actions-row"><button class="btn primary" id="newAdaptive">Novo adaptativo</button><button class="btn secondary" id="goErrors">Ver erros</button></div>`;$('newAdaptive').onclick=()=>{resetSession();startSession('adaptive');};$('goErrors').onclick=()=>{resetSession();page('errors');};session=null;renderAll();}
+function resetSession(){$('sessionSetup').classList.remove('hidden');$('sessionArea').classList.add('hidden');$('sessionResult').classList.add('hidden');}
 
-  function renderDashboard(){
-    const o=overall();
-    $('daysToExam').textContent=daysToExam();
-    $('projectedScore').textContent=o.projected.toFixed(1);
-    $('scoreRing').style.setProperty('--pct',`${clamp(o.projected/80,0,1)*360}deg`);
-    const conf=dataConfidence();
-    $('projectionConfidence').textContent=o.total<20?(conf<.15?'projeção inicial • aumente a amostra':'projeção preliminar • cobertura em formação'):`P(≥40) ${fmtPct(o.passProbability)} • faixa 90% ${o.low90.toFixed(0)}–${o.high90.toFixed(0)}`;
-    const r=riskInfo(o);
-    $('riskLabel').textContent=r.label; $('riskText').textContent=r.text;
-    $('riskDot').className=`status-dot ${r.kind}`;
-    $('scoreBar').style.width=`${clamp(o.projected/80,0,1)*100}%`;
-    $('safeTarget').textContent=state.profile.targetScore;
-    const margin=o.projected-40; $('scoreMargin').textContent=`${margin>=0?'+':''}${margin.toFixed(1)}`;
-    $('metricAttempts').textContent=o.total; $('metricSessions').textContent=`${state.sessions.length} sessões`;
-    $('metricAccuracy').textContent=fmtPct(o.accuracy); $('metricDue').textContent=o.due; $('metricOpenErrors').textContent=`${o.open} erros abertos`;
-    $('metricCore').textContent=fmtPct(o.coreMastery);
+function errorRows(){return Object.values(state.reviews).map(r=>{const q=qById(r.qid),a=state.attempts.filter(x=>x.qid===r.qid),wrong=a.filter(x=>!x.correct).length;return {...r,q,wrong,total:a.length,recurrent:wrong>=2||(r.lapses||0)>=2};}).filter(x=>x.q);}
+function renderErrors(){const all=errorRows(),open=all.filter(x=>!x.mastered),due=open.filter(x=>x.due<=now()),rec=open.filter(x=>x.recurrent),noCause=open.filter(x=>!x.cause);$('errOpen').textContent=open.length;$('errDue').textContent=due.length;$('errRecurrent').textContent=rec.length;$('errNoCause').textContent=noCause.length;const subject=$('errorSubject').value,cause=$('errorCause').value,status=$('errorStatus').value,q=String($('errorSearch').value||'').toLowerCase();let rows=all.filter(x=>status==='all'||(status==='open'&&!x.mastered)||(status==='due'&&!x.mastered&&x.due<=now())||(status==='recurrent'&&!x.mastered&&x.recurrent));if(subject!=='all')rows=rows.filter(x=>canon(x.subject)===subject);if(cause!=='all')rows=rows.filter(x=>cause==='none'?!x.cause:x.cause===cause);if(q)rows=rows.filter(x=>`${topicLabel(x.q)} ${x.q.text} ${subj(canon(x.subject)).name}`.toLowerCase().includes(q));rows.sort((a,b)=>(b.recurrent?1:0)-(a.recurrent?1:0)||(a.due<=now()?0:1)-(b.due<=now()?0:1)||b.wrong-a.wrong);$('errorList').innerHTML=rows.length?rows.slice(0,60).map(x=>`<article class="err ${x.recurrent?'recurrent':''}"><div><h4>${subj(canon(x.subject)).name} • ${topicLabel(x.q)}</h4><p>${x.q.text}</p><div class="badges"><span class="pill ${x.recurrent?'bad':''}">${x.wrong} erro(s)</span><span class="pill ${x.due<=now()?'warn':''}">${x.mastered?'dominado':dueLabel(x.due)}</span><span class="pill">${x.cause==='knowledge'?'não sabia a regra':x.cause==='confusion'?'confusão conceitual':x.cause==='reading'?'leitura/atenção':'causa não classificada'}</span></div><div class="rule-box"><b>Base:</b> ${sourceBase(x.q)}<br><b>Conceito:</b> ${topicLabel(x.q)}${usefulExplanation(x.q)?`<br><b>Regra:</b> ${usefulExplanation(x.q)}`:''}</div></div><div class="err-actions"><button class="btn primary" data-review-q="${x.q.id}">Revisar agora</button><button class="btn secondary" data-topic-q="${x.q.id}">Treinar conceito</button><a class="btn secondary" href="materiais.html?subject=${encodeURIComponent(canon(x.subject))}&q=${encodeURIComponent(topicLabel(x.q))}">Videoaula</a></div></article>`).join(''):'<div class="muted">Nenhum erro neste filtro.</div>';$$('[data-review-q]').forEach(b=>b.onclick=()=>startCustomReview(b.dataset.reviewQ));$$('[data-topic-q]').forEach(b=>b.onclick=()=>startTopicBlock(b.dataset.topicQ));renderConcepts();renderErrorCauseSummary();}
+function startCustomReview(id){const q=qById(id);if(!q)return;session={mode:'review',qs:[q],index:0,answers:{},startedAt:now(),questionStartedAt:now()};$('sessionSetup').classList.add('hidden');$('sessionResult').classList.add('hidden');$('sessionArea').classList.remove('hidden');page('questions');startTimer();renderQuestion();}
+function startTopicBlock(id){const q=qById(id);if(!q)return;const sid=canon(q.subject),tid=topicId(q);let qs=QUESTIONS.filter(x=>canon(x.subject)===sid&&topicId(x)===tid);qs=uniqueFamilies(qs).sort(()=>Math.random()-.5).slice(0,5);if(!qs.length)return;session={mode:'reinforcement',qs,index:0,answers:{},startedAt:now(),questionStartedAt:now()};$('sessionSetup').classList.add('hidden');$('sessionResult').classList.add('hidden');$('sessionArea').classList.remove('hidden');page('questions');startTimer();renderQuestion();}
+function renderConcepts(){const groups=new Map();for(const a of state.attempts){const sid=canon(a.subject),t=INTEL?.resolveTopic(sid,a.topic),key=`${sid}|${t?.id||a.topic||'geral'}`,g=groups.get(key)||{sid,label:t?.label||a.topic||'Geral',n:0,wrong:0,knowledge:0,confusion:0,reading:0};g.n++;if(!a.correct){g.wrong++;if(a.cause)g[a.cause]++;}groups.set(key,g);}const rows=[...groups.values()].filter(g=>g.wrong).sort((a,b)=>b.wrong-a.wrong).slice(0,12);$('conceptSummary').innerHTML=rows.length?rows.map(g=>`<div class="concept-row"><div><strong>${subj(g.sid).name} • ${g.label}</strong><small>${g.wrong} erro(s) em ${g.n} tentativa(s)</small></div><b>${Math.round((1-g.wrong/g.n)*100)}%</b><a class="mini-link" href="materiais.html?subject=${encodeURIComponent(g.sid)}&q=${encodeURIComponent(g.label)}">aula</a></div>`).join(''):'<div class="muted">Os conceitos aparecem aqui conforme os erros forem registrados.</div>';}
+function renderErrorCauseSummary(){const wrong=state.attempts.filter(a=>!a.correct),c={knowledge:0,confusion:0,reading:0,none:0};wrong.forEach(a=>a.cause?c[a.cause]++:c.none++);const total=wrong.length||1;$('errorCauseSummary').innerHTML=`<div class="cause-card"><strong>${c.knowledge}</strong><span>Não sabia a regra • ${Math.round(c.knowledge/total*100)}%</span></div><div class="cause-card"><strong>${c.confusion}</strong><span>Confusão conceitual • ${Math.round(c.confusion/total*100)}%</span></div><div class="cause-card"><strong>${c.reading}</strong><span>Leitura/atenção • ${Math.round(c.reading/total*100)}%</span></div><div class="cause-card"><strong>${c.none}</strong><span>Sem classificação • ${Math.round(c.none/total*100)}%</span></div>`;}
+function renderAnalytics(){const rows=SUBJECTS.map(s=>({s,st:stats(s.id)}));$('analyticsBody').innerHTML=rows.map(x=>`<tr><td><strong>${x.s.name}</strong></td><td>${x.s.q}/80</td><td>${x.st.n}</td><td>${x.st.n?pct(x.st.raw):'—'}</td><td>${pct(x.st.estimated)}</td><td>${x.st.wrong||0}</td></tr>`).join('');const c={knowledge:0,confusion:0,reading:0,none:0};state.attempts.filter(a=>!a.correct).forEach(a=>a.cause?c[a.cause]++:c.none++);$('causeBreakdown').innerHTML=`<div class="cause-card"><strong>${c.knowledge}</strong><span>Não sabia a regra</span></div><div class="cause-card"><strong>${c.confusion}</strong><span>Confusão conceitual</span></div><div class="cause-card"><strong>${c.reading}</strong><span>Leitura/atenção</span></div><div class="cause-card"><strong>${c.none}</strong><span>Sem classificação</span></div>`;}
+function renderAll(){renderDashboard();renderPlan();renderStudy();renderErrors();renderAnalytics();}
 
-    const ranking=subjectRanking().slice(0,4);
-    $('priorityList').innerHTML=ranking.map((x,i)=>{
-      const topic=x.topTopic?.topic?.label;
-      return `<div class="priority-row"><div class="priority-rank">${i+1}</div><div><strong>${x.s.name}</strong><small>${topic?`${topic} • `:''}${x.s.q} questões na prova • domínio ${fmtPct(x.st.estimated)} • ${x.st.n} respostas</small></div><div class="priority-value"><b>+${x.st.potential.toFixed(1)}</b><span>pontos recuperáveis*</span></div></div>`;
-    }).join('');
+function bind(){$$('[data-page]').forEach(b=>b.onclick=()=>page(b.dataset.page));$$('[data-go-page]').forEach(b=>b.onclick=()=>page(b.dataset.goPage));$('quickStudy').onclick=()=>startSession('adaptive');$('heroAdaptive').onclick=()=>startSession('adaptive');$('routineStart').onclick=()=>startSession('adaptive');$('quickReview').onclick=()=>page('errors');$('heroErrors').onclick=()=>page('errors');$('startDueReview').onclick=()=>startSession('review',10,'all');$('savePlan').onclick=()=>{state.profile.targetDate=$('targetDate').value||readCal().exam;state.profile.targetScore=clamp(Number($('targetScore').value||45),40,70);state.profile.dailyMinutes=clamp(Number($('dailyMinutes').value||60),20,300);state.profile.strategy=$('strategy').value;persist();renderAll();notice('Plano atualizado.');};$('saveCalendar').onclick=()=>{const c={edital:$('calEdital').value||OFFICIAL_CAL.edital,open:$('calOpen').value||OFFICIAL_CAL.open,close:$('calClose').value||OFFICIAL_CAL.close,exam:$('calExam').value||OFFICIAL_CAL.exam};localStorage.setItem(CAL_KEY,JSON.stringify(c));state.profile.targetDate=c.exam;persist();renderAll();notice('Calendário atualizado.');};$$('[data-subject-filter]').forEach(b=>b.onclick=()=>{state.settings.subjectFilter=b.dataset.subjectFilter;persist();$$('[data-subject-filter]').forEach(x=>x.classList.toggle('active',x===b));renderStudy();});$('trainSubject').onclick=()=>startSession('adaptive',10,selectedSubject);$$('[data-mode]').forEach(b=>b.onclick=()=>{selectedMode=b.dataset.mode;$$('[data-mode]').forEach(x=>x.classList.toggle('active',x===b));});$('startSession').onclick=()=>startSession(selectedMode,Number($('questionLimit').value),$('questionSubject').value);$('prevQuestion').onclick=()=>{if(session&&session.index>0){session.index--;session.questionStartedAt=now();renderQuestion();}};$('nextQuestion').onclick=nextQuestion;$('finishSession').onclick=finishSession;['errorSearch','errorSubject','errorCause','errorStatus'].forEach(id=>$(id).addEventListener(id==='errorSearch'?'input':'change',renderErrors));}
 
-    const due=o.due, minutes=state.profile.dailyMinutes||60, recs=recommendations(3);
-    const reviewMin=due?Math.max(10,Math.min(20,Math.round(minutes*.22))):Math.max(5,Math.round(minutes*.08));
-    const remaining=Math.max(10,minutes-reviewMin); const first=Math.round(remaining*.58),second=remaining-first;
-    const badge=$('routineBox')?.closest('.card')?.querySelector('.badge'); if(badge)badge.textContent=`${minutes} min hoje`;
-    if(INTEL && recs.length){
-      const a=recs[0],b=recs[1]||recs[0];
-      $('routineBox').innerHTML=`
-        <div class="routine-step"><b>1</b><div><strong>${reviewMin} min • ${due?`revisar até ${Math.min(due,6)} vencida(s)`:'recuperação ativa sem consulta'}</strong><span>${due?'Proteja pontos já conquistados antes de abrir conteúdo novo.':'Gere evidência real antes de consumir teoria.'}</span></div></div>
-        <div class="routine-step"><b>2</b><div><strong>${first} min • ${a.subjectName}: ${a.topic.label}</strong><span>${a.action.label} • ${INTEL.explainRecommendation(a)}</span></div></div>
-        <div class="routine-step"><b>3</b><div><strong>${second} min • ${b.subjectName}: ${b.topic.label}</strong><span>${b.action.label} • intercale outro ponto provável para reduzir falsa fluência.</span></div></div>`;
-    }else{
-      $('routineBox').innerHTML=`
-        <div class="routine-step"><b>1</b><div><strong>${reviewMin} min • ${due?`revisar até ${Math.min(due,6)} vencida(s)`:'recuperação ativa'}</strong><span>${due?'Comece pelo conteúdo em maior risco de esquecimento.':'Faça questões sem consulta para gerar diagnóstico real.'}</span></div></div>
-        <div class="routine-step"><b>2</b><div><strong>${first} min • ${ranking[0]?.s.name||'Ética'}</strong><span>Maior expectativa de ganho de pontos no momento.</span></div></div>
-        <div class="routine-step"><b>3</b><div><strong>${second} min • ${ranking[1]?.s.name||'Constitucional'}</strong><span>Intercale questões e correção causal; teoria apenas no ponto do erro.</span></div></div>`;
-    }
-    $('coreHeatmap').innerHTML=CORE.map(s=>{
-      const st=stats(s.id), pct=Math.round(st.estimated*100); const color=pct>=75?'#2c7a61':pct>=55?'#c99a4b':'#b64f49';
-      const top=INTEL?INTEL.rankTopics(state,{subject:s.id})[0]:null;
-      return `<button class="heat-cell" data-subject-open="${s.id}" style="--heat:${color}"><strong>${s.name}</strong><span>${top?top.topic.label:`${s.q} questões`}</span><b>${pct}%</b></button>`;
-    }).join('');
-    $$('[data-subject-open]').forEach(b=>b.onclick=()=>{selectedSubject=b.dataset.subjectOpen;renderStudy();page('study')});
-  }
-
-  function renderPlan(){
-    const ranking=subjectRanking(); const max=ranking[0]?.st.focus||1;
-    $('planRanking').innerHTML=ranking.map((x,i)=>`<div class="ranking-item"><div class="ranking-score">${i+1}</div><div><strong>${x.s.name}</strong><small>${x.topTopic?.topic?.label?`${x.topTopic.topic.label} • `:''}${x.s.q} questões • ${x.st.n} respondidas • ${x.st.open} erros abertos • ganho +${x.st.potential.toFixed(1)} pts*</small></div><div class="ranking-bar"><div style="width:${Math.round(x.st.focus/max*100)}%"></div></div></div>`).join('');
-    if(INTEL){
-      const rd=INTEL.readiness(state);
-      $('planDataQuality').textContent=rd.coverage<.25?'cobertura inicial':rd.coverage<.65?'diagnóstico em formação':'cobertura consistente';
-    }else $('planDataQuality').textContent=state.attempts.length<30?'dados iniciais':state.attempts.length<100?'amostra em formação':'amostra robusta';
-    $('targetDate').value=state.profile.targetDate; $('targetScore').value=state.profile.targetScore; $('dailyMinutes').value=state.profile.dailyMinutes; $('strategy').value=state.profile.strategy;
-  }
-
-  function renderStudy(){
-    const filter=state.settings.subjectFilter||'core';
-    $$('[data-subject-filter]').forEach(b=>b.classList.toggle('active',b.dataset.subjectFilter===filter));
-    const arr=filter==='core'?CORE:SUBJECTS;
-    $('subjectList').innerHTML=arr.map(s=>{const st=stats(s.id),bankCount=QUESTIONS.filter(q=>q.subject===s.id).length;return `<button class="subject-btn ${selectedSubject===s.id?'active':''}" data-subject="${s.id}"><div class="line1"><strong>${s.name}</strong><b>${s.q}Q</b></div><span>${st.n?`${fmtPct(st.estimated)} estimado • ${st.open} erros`:'sem diagnóstico'} • banco ${bankCount}</span></button>`}).join('');
-    $$('[data-subject]').forEach(b=>b.onclick=()=>{selectedSubject=b.dataset.subject;renderStudy()});
-    const s=subjectById(selectedSubject)||CORE[0], st=stats(s.id),bankCount=QUESTIONS.filter(q=>q.subject===s.id).length;
-    const top=INTEL?INTEL.rankTopics(state,{subject:s.id})[0]:null;
-    $('subjectTier').textContent=s.core?'NÚCLEO 62 • ALTA PRIORIDADE':'PESO BAIXO • COMPLEMENTAR'; $('subjectName').textContent=s.name; $('subjectWeight').textContent=`${s.q} questões`;
-    $('subjectEstimated').textContent=fmtPct(st.estimated); $('subjectSample').textContent=st.n; $('subjectErrors').textContent=st.open; $('subjectGain').textContent=`+${st.potential.toFixed(1)} pts`;
-    $('subjectMeterBar').style.width=`${Math.round(st.estimated*100)}%`;
-    if(bankCount===0) $('subjectAdvice').textContent=`Ainda não há questões de ${s.name} no banco ativo. Amplie o banco antes de interpretar ausência de desempenho como domínio.`;
-    else if(top) $('subjectAdvice').textContent=`Próximo alvo: ${top.topic.label}. ${top.action.label}. ${INTEL.explainRecommendation(top)}`;
-    else if(st.n<5) $('subjectAdvice').textContent=`Ainda há pouca amostra. Faça um diagnóstico curto de ${s.name} antes de decidir quanta teoria estudar.`;
-    else if(st.estimated<.55) $('subjectAdvice').textContent='Prioridade alta: use questões + correção pontual. Evite aula longa antes de identificar exatamente os temas que estão derrubando o desempenho.';
-    else if(st.estimated<.75) $('subjectAdvice').textContent='Faixa intermediária: mantenha blocos curtos e concentre revisão nos erros reincidentes.';
-    else $('subjectAdvice').textContent='Matéria em boa faixa de domínio: reduza volume e mantenha revisão espaçada para preservar pontos.';
-    const topics=INTEL?INTEL.topicObjects(s.id).map(t=>t.label):s.topics;
-    $('subjectTopics').innerHTML=topics.map(t=>`<span class="chip">${t}</span>`).join('');
-  }
-
-  function renderQuestionSelectors(){
-    const previous=$('questionSubject')?.value||'all';
-    $('questionSubject').innerHTML='<option value="all">Todas do núcleo</option>'+SUBJECTS.filter(s=>QUESTIONS.some(q=>q.subject===s.id)).map(s=>`<option value="${s.id}">${s.name} (${QUESTIONS.filter(q=>q.subject===s.id).length})</option>`).join('');
-    if([...$('questionSubject').options].some(o=>o.value===previous))$('questionSubject').value=previous;
-  }
-
-  function makePool(mode,limit,subject='all'){
-    if(mode==='review'){
-      const dueIds=Object.values(state.reviews).filter(r=>!r.mastered && r.due<=now()).sort((a,b)=>a.due-b.due).map(r=>r.qid);
-      return dueIds.map(questionById).filter(Boolean).slice(0,limit);
-    }
-    let allowedSubjects=state.profile.strategy==='balanced'?SUBJECTS:CORE;
-    let base=QUESTIONS.filter(q=>subject==='all'?allowedSubjects.some(s=>s.id===q.subject):q.subject===subject);
-    if(mode==='adaptive' && INTEL){
-      return INTEL.selectAdaptiveQuestions(base,state,{limit,strategy:state.profile.strategy,subject});
-    }
-    if(subject!=='all') return uniqueFamilies(shuffle(base)).slice(0,limit);
-    if(mode==='adaptive'){
-      const rank=subjectRanking(); let ordered=[];
-      rank.forEach(x=>{const qs=uniqueFamilies(shuffle(base.filter(q=>q.subject===x.s.id))); const denominator=allowedSubjects.reduce((a,s)=>a+s.q,0);ordered.push(...qs.slice(0,Math.max(1,Math.ceil(limit*(x.s.q/denominator)))))});
-      const unique=[...new Map(ordered.map(q=>[questionFamily(q),q])).values()];
-      if(unique.length<limit){const used=new Set(unique.map(questionFamily));const remaining=uniqueFamilies(shuffle(base.filter(q=>!used.has(questionFamily(q)))));unique.push(...remaining.slice(0,limit-unique.length));}
-      return unique.slice(0,limit);
-    }
-    if(mode==='exam'){
-      let out=[]; const denominator=allowedSubjects.reduce((a,s)=>a+s.q,0);
-      allowedSubjects.forEach(s=>{const take=Math.max(1,Math.round(limit*s.q/denominator));out.push(...uniqueFamilies(shuffle(base.filter(q=>q.subject===s.id))).slice(0,take))});
-      const unique=[...new Map(out.map(q=>[questionFamily(q),q])).values()];
-      if(unique.length<limit){const used=new Set(unique.map(questionFamily));const remaining=uniqueFamilies(shuffle(base.filter(q=>!used.has(questionFamily(q)))));unique.push(...remaining.slice(0,limit-unique.length));}
-      return shuffle(unique).slice(0,limit);
-    }
-    return uniqueFamilies(shuffle(base)).slice(0,limit);
-  }
-
-  function startSession(mode=selectedMode,limit=Number($('questionLimit').value||10),subject=$('questionSubject').value||'all'){
-    let qs=makePool(mode,limit,subject);
-    if(!qs.length && mode==='review'){
-      showNotice('Não há revisões vencidas. Iniciando bloco adaptativo.'); mode='adaptive'; qs=makePool(mode,limit,subject);
-    }
-    if(!qs.length){showNotice('Não há questões disponíveis neste filtro. Use a Central do Banco para ampliar a base.');return;}
-    if(qs.length<limit)showNotice(`Este filtro tem apenas ${qs.length} famílias de questões únicas disponíveis no banco atual.`);
-    session={mode,qs,index:0,answers:{},startedAt:now(),questionStartedAt:now()};
-    $('sessionSetup').classList.add('hidden'); $('sessionResult').classList.add('hidden'); $('sessionArea').classList.remove('hidden');
-    page('questions'); startTimer(); renderQuestion();
-  }
-  function startTimer(){ clearInterval(timerHandle); timerHandle=setInterval(()=>{if(!session)return;const sec=Math.floor((now()-session.startedAt)/1000);$('sessionTimer').textContent=`${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`},1000); }
-  function renderQuestion(){
-    const q=session.qs[session.index], ans=session.answers[q.id], answered=!!ans;
-    $('sessionModeLabel').textContent=session.mode.toUpperCase(); $('sessionProgress').textContent=`Questão ${session.index+1} de ${session.qs.length}`;
-    $('sessionDots').innerHTML=session.qs.map((x,i)=>`<button class="${i===session.index?'active':''} ${session.answers[x.id]?'done':''}" data-qindex="${i}">${i+1}</button>`).join('');
-    $$('[data-qindex]').forEach(b=>b.onclick=()=>{session.index=+b.dataset.qindex;session.questionStartedAt=now();renderQuestion()});
-    const s=subjectById(q.subject); $('questionSubjectLabel').textContent=s?.name||q.subject; $('questionTopicLabel').textContent=q.topic; $('questionText').textContent=q.text;
-    $('answerList').innerHTML=q.options.map((o,i)=>{let cls='';if(answered){if(i===q.correct)cls='correct';else if(i===ans.choice&&!ans.correct)cls='wrong';}return `<button class="answer-option ${cls}" data-answer="${i}" ${answered?'disabled':''}><b>${String.fromCharCode(65+i)})</b> ${o}</button>`}).join('');
-    $$('[data-answer]').forEach(b=>b.onclick=()=>answerQuestion(+b.dataset.answer));
-    $('feedbackBox').classList.toggle('hidden',!answered); $('errorCauseBox').classList.toggle('hidden',!answered||ans.correct);
-    if(answered){$('feedbackBox').className=`feedback-box ${ans.correct?'':'bad'}`;$('feedbackBox').textContent=`${ans.correct?'Correto.':'Errado.'} ${q.explanation}`;$$('[data-cause]').forEach(b=>b.classList.toggle('active',b.dataset.cause===ans.cause));}
-    $('prevQuestion').disabled=session.index===0; $('nextQuestion').textContent=session.index===session.qs.length-1?'Finalizar':'Próxima →';
-  }
-  function answerQuestion(choice){
-    const q=session.qs[session.index]; if(session.answers[q.id])return;
-    const correct=choice===q.correct; const elapsed=now()-session.questionStartedAt;
-    session.answers[q.id]={choice,correct,timeMs:elapsed,cause:null};
-    state.attempts.push({qid:q.id,ruleId:q.ruleId||null,subject:q.subject,topic:q.topic,correct,choice,timeMs:elapsed,mode:session.mode,ts:now(),cause:null,origin:q.origin||null});
-    updateReview(q,correct);
-    persist(); renderQuestion(); renderAll();
-  }
-  function updateReview(q,correct){
-    const r=state.reviews[q.id];
-    if(!correct){ state.reviews[q.id]={qid:q.id,subject:q.subject,topic:q.topic,due:now()+day,interval:1,streak:0,mastered:false,lastResult:false,lastSeen:now(),cause:r?.cause||null}; return; }
-    if(r){
-      const intervals=[3,7,14,30,60]; const streak=(r.streak||0)+1; const interval=intervals[Math.min(streak-1,intervals.length-1)];
-      state.reviews[q.id]={...r,due:now()+interval*day,interval,streak,mastered:streak>=4,lastResult:true,lastSeen:now()};
-    }
-  }
-  function setCause(cause){
-    if(!session)return; const q=session.qs[session.index], ans=session.answers[q.id]; if(!ans||ans.correct)return;
-    ans.cause=cause;
-    const last=[...state.attempts].reverse().find(a=>a.qid===q.id && a.ts>=session.startedAt); if(last)last.cause=cause;
-    if(state.reviews[q.id])state.reviews[q.id].cause=cause;
-    persist(); renderQuestion(); renderAll();
-  }
-  function nextQuestion(){
-    if(!session)return; if(session.index===session.qs.length-1){finishSession();return;} session.index++;session.questionStartedAt=now();renderQuestion();
-  }
-  function finishSession(){
-    if(!session)return; clearInterval(timerHandle);
-    const answered=Object.values(session.answers), total=answered.length, correct=answered.filter(a=>a.correct).length, duration=now()-session.startedAt;
-    state.sessions.unshift({id:`s-${now()}`,mode:session.mode,total,correct,duration,ts:now()}); state.sessions=state.sessions.slice(0,30); persist();
-    $('sessionArea').classList.add('hidden'); $('sessionResult').classList.remove('hidden');
-    const pct=total?Math.round(correct/total*100):0,o=overall();
-    const next=INTEL?recommendations(1)[0]:null;
-    $('sessionResult').innerHTML=`<p class="eyebrow">BLOCO CONCLUÍDO</p><h2>${correct}/${total} acertos</h2><p class="muted">O resultado já foi incorporado à projeção, à fila de revisão e à prioridade temática.${next?` Próximo alvo: ${next.subjectName} • ${next.topic.label}.`:''}</p><div class="result-summary"><div><span>Aproveitamento</span><strong>${pct}%</strong></div><div><span>Tempo</span><strong>${Math.round(duration/60000)} min</strong></div><div><span>Erros gerados</span><strong>${total-correct}</strong></div><div><span>P(≥40)</span><strong>${o.total<20?'—':fmtPct(o.passProbability)}</strong></div></div><div class="actions-row"><button class="btn primary" id="resultNext">Novo bloco adaptativo</button><button class="btn secondary" id="resultDash">Voltar ao painel</button></div>`;
-    $('resultNext').onclick=()=>{resetSessionUI();startSession('adaptive')}; $('resultDash').onclick=()=>{resetSessionUI();page('dashboard')};
-    session=null; renderAll();
-  }
-  function resetSessionUI(){$('sessionSetup').classList.remove('hidden');$('sessionArea').classList.add('hidden');$('sessionResult').classList.add('hidden')}
-
-  function renderReviews(){
-    const values=Object.values(state.reviews).filter(r=>!r.mastered).sort((a,b)=>a.due-b.due); const due=values.filter(r=>r.due<=now()); const week=values.filter(r=>r.due>now()&&r.due<=now()+7*day);
-    $('reviewDue').textContent=due.length; $('reviewWeek').textContent=week.length; $('errorKnowledge').textContent=values.filter(r=>r.cause==='knowledge').length; $('errorReading').textContent=values.filter(r=>r.cause==='reading').length;
-    $('reviewList').innerHTML=values.length?values.slice(0,30).map(r=>{const q=questionById(r.qid),s=subjectById(r.subject);return `<div class="review-item"><div><strong>${s?.name||r.subject} • ${r.topic}</strong><small>${q?.text||'Questão não disponível no banco atual'} • sequência ${r.streak||0}/4</small></div><span class="due-tag">${dueLabel(r.due)}</span></div>`}).join(''):'<div class="muted">Nenhum erro aberto. Quando uma questão for errada, ela entra automaticamente aqui.</div>';
-  }
-
-  function renderAnalytics(){
-    const rows=SUBJECTS.map(s=>({s,st:stats(s.id),top:INTEL?INTEL.rankTopics(state,{subject:s.id})[0]:null}));
-    $('analyticsBody').innerHTML=rows.map(x=>`<tr><td><strong>${x.s.name}</strong>${x.top?`<small style="display:block;color:#697386">${x.top.topic.label}</small>`:''}</td><td>${x.s.q}/80</td><td>${x.st.n}</td><td>${x.st.n?fmtPct(x.st.raw):'—'}</td><td>${fmtPct(x.st.estimated)}</td><td>+${x.st.potential.toFixed(1)}</td><td><span class="priority-pill">${x.s.core?Math.round(x.st.focus):'complementar'}</span></td></tr>`).join('');
-    const causes={knowledge:0,confusion:0,reading:0}; state.attempts.filter(a=>!a.correct&&a.cause).forEach(a=>causes[a.cause]++);
-    $('causeBreakdown').innerHTML=`<div class="cause-card"><strong>${causes.knowledge}</strong><span>Não sabia a regra</span></div><div class="cause-card"><strong>${causes.confusion}</strong><span>Confusão conceitual</span></div><div class="cause-card"><strong>${causes.reading}</strong><span>Leitura/atenção</span></div>`;
-    $('sessionHistory').innerHTML=state.sessions.length?state.sessions.slice(0,8).map(s=>`<div class="history-item"><strong>${s.mode} • ${s.correct}/${s.total}</strong><span>${new Date(s.ts).toLocaleDateString('pt-BR')} • ${Math.round(s.duration/60000)} min</span></div>`).join(''):'<div class="muted">Nenhum bloco concluído ainda.</div>';
-  }
-
-  function renderAll(){ renderDashboard(); renderPlan(); renderStudy(); renderReviews(); renderAnalytics(); }
-  function showNotice(msg){$('notice').textContent=msg;$('notice').classList.remove('hidden');setTimeout(()=>$('notice').classList.add('hidden'),5000)}
-  function installExtraLinks(){
-    const nav=document.querySelector('.nav'); if(!nav)return;
-    const tutor=nav.querySelector('a[href="ia.html"]');
-    if(!nav.querySelector('a[href="trilha.html"]')){const a=document.createElement('a');a.className='nav-item nav-link';a.href='trilha.html';a.innerHTML='<span>◎</span>Trilha de aprovação';nav.insertBefore(a,tutor||null);}
-    if(!nav.querySelector('a[href="bank.html"]')){const a=document.createElement('a');a.className='nav-item nav-link';a.href='bank.html';a.innerHTML='<span>▦</span>Banco de questões';nav.insertBefore(a,tutor||null);}
-  }
-
-  function bind(){
-    $$('.nav-item[data-page]').forEach(b=>b.onclick=()=>page(b.dataset.page)); $$('[data-go-page]').forEach(b=>b.onclick=()=>page(b.dataset.goPage));
-    $('quickStudy').onclick=()=>startSession('adaptive'); $('heroAdaptive').onclick=()=>startSession('adaptive'); $('routineStart').onclick=()=>startSession('adaptive');
-    $('heroDiagnostic').onclick=()=>startSession('core',10,'all'); $('quickReview').onclick=()=>startSession('review',10,'all'); $('startDueReview').onclick=()=>startSession('review',10,'all');
-    $('savePlan').onclick=()=>{state.profile.targetDate=$('targetDate').value||CFG.examDate;state.profile.targetScore=clamp(Number($('targetScore').value||45),40,70);state.profile.dailyMinutes=clamp(Number($('dailyMinutes').value||60),20,300);state.profile.strategy=$('strategy').value;persist();renderAll();showNotice('Estratégia atualizada.')};
-    $$('[data-subject-filter]').forEach(b=>b.onclick=()=>{state.settings.subjectFilter=b.dataset.subjectFilter;persist();renderStudy()});
-    $('trainSubject').onclick=()=>{page('questions');$('questionSubject').value=selectedSubject;selectedMode='adaptive';startSession('adaptive',10,selectedSubject)};
-    $('diagnoseSubject').onclick=()=>{page('questions');$('questionSubject').value=selectedSubject;startSession('adaptive',5,selectedSubject)};
-    $$('[data-mode]').forEach(b=>b.onclick=()=>{selectedMode=b.dataset.mode;$$('[data-mode]').forEach(x=>x.classList.toggle('active',x===b))});
-    $('startSession').onclick=()=>startSession(selectedMode,Number($('questionLimit').value),$('questionSubject').value);
-    $('prevQuestion').onclick=()=>{if(session&&session.index>0){session.index--;session.questionStartedAt=now();renderQuestion()}}; $('nextQuestion').onclick=nextQuestion; $('finishSession').onclick=finishSession;
-    $$('[data-cause]').forEach(b=>b.onclick=()=>setCause(b.dataset.cause));
-    $('loginGoogle').onclick=loginGoogle; $('logoutGoogle').onclick=()=>auth?.signOut();
-  }
-
-  async function loadQuestionBank(){
-    try{
-      const bank=await import('./question-bank.js'); const imported=await bank.getAllQuestions();
-      const merged=new Map(BUILTIN_QUESTIONS.map(q=>[q.id,q])); imported.forEach(q=>merged.set(q.id,q)); QUESTIONS=[...merged.values()];
-      return imported.length;
-    }catch(e){console.warn('Banco IndexedDB indisponível',e);QUESTIONS=[...BUILTIN_QUESTIONS];return 0;}
-  }
-
-  async function initFirebase(){
-    try{
-      if(!window.firebase || !window.OAB_FIREBASE_CONFIG) return;
-      if(!firebase.apps.length) firebase.initializeApp(window.OAB_FIREBASE_CONFIG);
-      auth=firebase.auth(); db=firebase.firestore();
-      auth.onAuthStateChanged(async user=>{
-        currentUser=user;
-        if(!user){$('userName').textContent=state.profile.name||'Usuário local';$('userAvatar').textContent=(state.profile.name||'U')[0].toUpperCase();$('syncStatus').textContent='Dados salvos neste navegador';$('loginGoogle').classList.remove('hidden');$('logoutGoogle').classList.add('hidden');return;}
-        $('userName').textContent=user.displayName||user.email||'Conta Google';$('userAvatar').textContent=(user.displayName||user.email||'U')[0].toUpperCase();$('syncStatus').textContent='Sincronizando…';$('loginGoogle').classList.add('hidden');$('logoutGoogle').classList.remove('hidden');
-        try{
-          const doc=await db.collection('users').doc(user.uid).collection('state').doc('main').get();
-          if(doc.exists){const cloud=doc.data(); if((cloud.updatedAt||0)>(state.updatedAt||0)){state={...defaultState(),...cloud,profile:{...defaultState().profile,...(cloud.profile||{})},settings:{...defaultState().settings,...(cloud.settings||{})}};localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}}
-          else await db.collection('users').doc(user.uid).collection('state').doc('main').set(state);
-          $('syncStatus').textContent='Sincronizado com a nuvem';renderAll();
-        }catch(e){$('syncStatus').textContent='Conta conectada • modo local';}
-      });
-    }catch(e){ console.warn('Firebase indisponível',e); }
-  }
-  async function loginGoogle(){
-    if(!auth){showNotice('Firebase não carregou. O sistema continua funcionando localmente.');return;}
-    try{const provider=new firebase.auth.GoogleAuthProvider();await auth.signInWithPopup(provider)}catch(e){showNotice('Não foi possível concluir o login Google.')}
-  }
-
-  async function bootstrap(){
-    const imported=await loadQuestionBank(); installExtraLinks(); renderQuestionSelectors(); bind(); renderAll(); initFirebase();
-    if(INTEL?.EXAM?.status==='awaiting-48-edital') showNotice('48º EOU: estratégia calibrada no 47º e no histórico OAB 32–47; recalibrar após o edital de 21/09/2026.');
-    else if(imported) showNotice(`Banco ampliado: ${imported} questões importadas carregadas.`);
-  }
-  bootstrap();
-})();
+async function bootstrap(){try{const imported=await getAllQuestions();const map=new Map(BUILTIN.map(q=>[q.id,q]));imported.forEach(q=>map.set(q.id,q));QUESTIONS=[...map.values()];}catch(e){console.warn('Banco ampliado indisponível; usando base local.',e);QUESTIONS=[...BUILTIN];}renderQuestionSelectors();bind();renderAll();if(INTEL?.EXAM?.status==='awaiting-48-edital')notice('48º EOU: edital previsto para 21/09/2026; calendário oficial pode ser ajustado se a OAB alterar as datas.');}
+bootstrap();
