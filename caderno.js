@@ -6,7 +6,8 @@ import { getAllQuestions } from './question-bank.js';
 const $=id=>document.getElementById(id);
 const K='oab-aprova-notebook-v1',MAIN='oab-aprova-premium-v1',DAY=86400000;
 const S=window.OAB_SUBJECTS||[],I=window.OAB_INTELLIGENCE||null;
-let data=load(),selected=data.selected||'etica',questions=[...(window.OAB_QUESTIONS||[])],currentUser=null,auth=null,db=null,cloudTimer=null,noteTimer=null;
+const requestedSubject=new URLSearchParams(location.search).get('subject');
+let data=load(),selected=S.some(s=>s.id===requestedSubject)?requestedSubject:(data.selected||'etica'),questions=[...(window.OAB_QUESTIONS||[])],currentUser=null,auth=null,db=null,cloudTimer=null,noteTimer=null;
 
 function base(){return {version:2,notes:{},cards:[],selected:'etica',updatedAt:Date.now()};}
 function normalize(v){const b=base(),d={...b,...(v||{})};d.notes=d.notes&&typeof d.notes==='object'?d.notes:{};d.cards=Array.isArray(d.cards)?d.cards:[];return d;}
@@ -14,7 +15,6 @@ function load(){try{return normalize(JSON.parse(localStorage.getItem(K)||'null')
 function save({cloud=true}={}){data.selected=selected;data.updatedAt=Date.now();localStorage.setItem(K,JSON.stringify(data));$('saved').textContent='salvo agora';if(cloud&&currentUser&&db){clearTimeout(cloudTimer);cloudTimer=setTimeout(async()=>{try{await setDoc(doc(db,'users',currentUser.uid,'notebook','main'),data);$('syncStatus').textContent='Caderno sincronizado com a nuvem.';}catch{$('syncStatus').textContent='Salvo localmente • nuvem indisponível.';}},600);}renderMetrics();}
 function esc(s){return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
 function main(){try{return JSON.parse(localStorage.getItem(MAIN)||'{}')}catch{return {}}}
-function subName(id){return S.find(s=>s.id===id)?.name||I?.SUBJECTS?.[id]?.name||id;}
 function causeLabel(c){return c==='knowledge'?'Regra desconhecida':c==='confusion'?'Confusão conceitual':c==='reading'?'Leitura/atenção':'Não classificado';}
 function dueLabel(ts){const d=Math.ceil((Number(ts||0)-Date.now())/DAY);return d<=0?'vencido':d===1?'amanhã':`em ${d} dias`;}
 
@@ -33,7 +33,7 @@ $('saveNote').onclick=()=>{data.notes[selected]=$('notes').value;save();};
 $('addCard').onclick=()=>{const text=$('notes'),sel=text.value.slice(text.selectionStart,text.selectionEnd).trim(),front=prompt('Frente do flashcard:',sel||'Qual é a regra?');if(!front)return;const back=prompt('Verso / resposta:',sel||'');if(!back)return;data.cards.push({id:'c-'+Date.now(),subject:selected,front,back,createdAt:Date.now(),due:Date.now(),streak:0,mastered:false});save();renderCards();};
 $('export').onclick=()=>{const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='oab-aprova-caderno.json';a.click();URL.revokeObjectURL(a.href);};
 
-async function initFirebase(){try{const app=getApps()[0]||initializeApp(window.OAB_FIREBASE_CONFIG);auth=getAuth(app);db=getFirestore(app);onAuthStateChanged(auth,async user=>{currentUser=user;$('loginGoogle').classList.toggle('hidden',!!user);$('logoutGoogle').classList.toggle('hidden',!user);if(!user){$('syncStatus').textContent='Caderno salvo neste navegador.';return;}$('syncStatus').textContent='Sincronizando caderno…';try{const ref=doc(db,'users',user.uid,'notebook','main'),snap=await getDoc(ref);if(snap.exists()&&Number(snap.data()?.updatedAt||0)>Number(data.updatedAt||0)){data=normalize(snap.data());selected=data.selected||selected;localStorage.setItem(K,JSON.stringify(data));render();}else await setDoc(ref,data);$('syncStatus').textContent='Caderno sincronizado com a nuvem.';}catch{$('syncStatus').textContent='Conta conectada • caderno local.';}});$('loginGoogle').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(()=>{});$('logoutGoogle').onclick=()=>signOut(auth);}catch{$('syncStatus').textContent='Caderno local • Firebase indisponível.';}}
+async function initFirebase(){try{const app=getApps()[0]||initializeApp(window.OAB_FIREBASE_CONFIG);auth=getAuth(app);db=getFirestore(app);onAuthStateChanged(auth,async user=>{currentUser=user;$('loginGoogle').classList.toggle('hidden',!!user);$('logoutGoogle').classList.toggle('hidden',!user);if(!user){$('syncStatus').textContent='Caderno salvo neste navegador.';return;}$('syncStatus').textContent='Sincronizando caderno…';try{const ref=doc(db,'users',user.uid,'notebook','main'),snap=await getDoc(ref);if(snap.exists()&&Number(snap.data()?.updatedAt||0)>Number(data.updatedAt||0)){data=normalize(snap.data());selected=S.some(s=>s.id===requestedSubject)?requestedSubject:(data.selected||selected);localStorage.setItem(K,JSON.stringify(data));render();}else await setDoc(ref,data);$('syncStatus').textContent='Caderno sincronizado com a nuvem.';}catch{$('syncStatus').textContent='Conta conectada • caderno local.';}});$('loginGoogle').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(()=>{});$('logoutGoogle').onclick=()=>signOut(auth);}catch{$('syncStatus').textContent='Caderno local • Firebase indisponível.';}}
 
 try{const imported=await getAllQuestions();const m=new Map(questions.map(q=>[q.id,q]));imported.forEach(q=>m.set(q.id,q));questions=[...m.values()];}catch{}
 render();initFirebase();
