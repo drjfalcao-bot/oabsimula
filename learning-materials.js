@@ -4,7 +4,7 @@
   // Catálogo pedagógico derivado do acervo privado importado. Não contém links,
   // IDs de arquivos ou conteúdo proprietário; serve para orientar o motor de estudo.
   window.OAB_LEARNING_MATERIALS = {
-    version: 2,
+    version: 3,
     lastScan: '2026-09-11',
     privacy: 'private-source-metadata-only',
     cycle: [
@@ -147,6 +147,56 @@
           {id:'controle_constitucionalidade', label:'Controle de constitucionalidade', priority:3, aliases:['controle_de_constitucionalidade']},
           {id:'remedios_constitucionais', label:'Remédios constitucionais', priority:3, aliases:['remedios_constitucionais']},
           {id:'ordem_economica_social', label:'Ordem econômica e social', priority:3}
+        ]
+      },
+      tributario: {
+        indexedFrom: ['CEISC', 'VDE'],
+        formats: ['Aula teórica', 'TAQ', 'PDF'],
+        items: [
+          {id:'conceito_especies_tributarias', label:'Conceito e espécies tributárias', priority:3},
+          {id:'competencia_tributaria', label:'Competência tributária', priority:2, aliases:['competencia_tributaria']},
+          {id:'principios_tributarios', label:'Princípios e limitações ao poder de tributar', priority:3},
+          {id:'imunidades', label:'Imunidades tributárias', priority:3, aliases:['imunidades']},
+          {id:'obrigacao_tributaria', label:'Obrigação tributária, fato gerador e sujeitos', priority:2},
+          {id:'reforma_principios', label:'Novos princípios da Reforma Tributária', priority:1}
+        ]
+      },
+      penal: {
+        indexedFrom: ['CEISC', 'VDE'],
+        formats: ['Aula teórica', 'TAQ', 'PDF'],
+        items: [
+          {id:'teoria_crime', label:'Teoria do crime', priority:3, aliases:['teoria_do_crime']},
+          {id:'concurso_pessoas', label:'Concurso de pessoas', priority:3, aliases:['concurso_de_pessoas']},
+          {id:'penas', label:'Penas e aplicação da pena', priority:2, aliases:['penas']},
+          {id:'extincao_punibilidade', label:'Extinção da punibilidade e prescrição', priority:2, aliases:['extincao_da_punibilidade']},
+          {id:'crimes_pessoa', label:'Crimes contra a pessoa', priority:2, aliases:['crimes_contra_a_pessoa']},
+          {id:'crimes_patrimoniais', label:'Crimes patrimoniais', priority:3, aliases:['crimes_patrimoniais']},
+          {id:'dignidade_sexual', label:'Crimes contra a dignidade sexual', priority:3},
+          {id:'administracao_publica', label:'Crimes contra a Administração Pública e Justiça', priority:1}
+        ]
+      },
+      civil: {
+        indexedFrom: ['CEISC', 'VDE'],
+        formats: ['Aula teórica', 'TAQ', 'PDF'],
+        items: [
+          {id:'obrigacoes', label:'Obrigações', priority:3, aliases:['obrigacoes']},
+          {id:'contratos', label:'Contratos', priority:3, aliases:['contratos']},
+          {id:'responsabilidade_civil', label:'Responsabilidade civil', priority:3, aliases:['responsabilidade_civil']},
+          {id:'prescricao_decadencia', label:'Prescrição e decadência', priority:2, aliases:['prescricao_e_decadencia']},
+          {id:'direitos_reais', label:'Direitos reais, posse e propriedade', priority:3, aliases:['direitos_reais']},
+          {id:'familia_sucessoes', label:'Família e sucessões', priority:3, aliases:['familia_e_sucessoes']},
+          {id:'pessoas_negocio_juridico', label:'Pessoas e negócio jurídico', priority:3}
+        ]
+      },
+      trabalho: {
+        indexedFrom: ['CEISC', 'VDE'],
+        formats: ['Aula teórica', 'TAQ', 'PDF'],
+        items: [
+          {id:'relacao_emprego', label:'Relação de emprego', priority:3, aliases:['relacao_de_emprego']},
+          {id:'contrato_trabalho', label:'Contrato de trabalho', priority:3},
+          {id:'jornada', label:'Jornada de trabalho', priority:3, aliases:['jornada']},
+          {id:'remuneracao', label:'Remuneração e salário', priority:3, aliases:['remuneracao']},
+          {id:'prescricao_trabalhista', label:'Prescrição trabalhista', priority:2}
         ]
       }
     }
