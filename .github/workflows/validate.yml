@@ -42,11 +42,32 @@ jobs:
           node - <<'NODE'
           const fs=require('fs');
           const src=fs.readFileSync('materiais.js','utf8');
+          const html=fs.readFileSync('materiais.html','utf8');
           const ids=[...src.matchAll(/folder:'([A-Za-z0-9_-]{15,})'/g)].map(x=>x[1]);
           if(ids.length<20) throw new Error(`Catálogo de videoaulas incompleto: ${ids.length} pastas`);
           if(new Set(ids).size!==ids.length) throw new Error('Catálogo de videoaulas contém pastas duplicadas');
           if(/accessToken|drive\.readonly|signInWithPopup|GoogleAuthProvider/.test(src)) throw new Error('Videoaulas não devem depender de OAuth/scanner no cliente');
-          console.log(`Catálogo ao vivo: ${ids.length} pastas de videoaulas.`);
+          if(/drive\.google\.com\/embeddedfolderview/i.test(src+html)) throw new Error('Videoaulas não podem voltar ao embed privado instável do Drive');
+          if(/<iframe\b/i.test(html)) throw new Error('Página de videoaulas não deve incorporar pasta privada em iframe');
+          if(!src.includes('drive.google.com/drive/folders/')) throw new Error('Abertura direta da pasta original do Drive ausente');
+          console.log(`Catálogo direto: ${ids.length} pastas de videoaulas.`);
+          NODE
+      - name: Validate error and reinforcement engine
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const app=fs.readFileSync('app.js','utf8');
+          const guided=fs.readFileSync('questao-guiada.js','utf8');
+          for(const [name,src] of [['app.js',app],['questao-guiada.js',guided]]){
+            if(src.includes('cause:old?.cause||null')) throw new Error(`${name}: novo erro ainda herda causa anterior`);
+            if(!src.includes('mastered:streak>=6')) throw new Error(`${name}: ciclo 3/7/14/30/60 não chega à confirmação final de domínio`);
+            if(!src.includes('conceptKeyQ')) throw new Error(`${name}: chave estável de conceito ausente`);
+            if(!src.includes('conceptWrong')) throw new Error(`${name}: reincidência conceitual ausente`);
+            if(!src.includes('cause:null')) throw new Error(`${name}: causa do erro atual não reinicia sem classificação`);
+          }
+          if(!app.includes('recurrentConceptCount')) throw new Error('Painel não mede reincidência por conceito');
+          if(fs.existsSync('review-remediation.js')) throw new Error('Interceptor antigo de revisão voltou ao projeto');
+          console.log('Motor de erros: causa atual, reincidência conceitual e SRS validados.');
           NODE
       - name: Validate calibrated editorial seed
         run: |
@@ -97,11 +118,12 @@ jobs:
           if(mod.OFFICIAL_FGV_ACTIVE_TARGET!==397) throw new Error('Total válido FGV divergente');
           console.log('Catálogo FGV íntegro.');
           NODE
-      - name: Validate HTML IDs and complete AI removal
+      - name: Validate HTML IDs, routes and complete AI removal
         run: |
           python - <<'PY'
           from pathlib import Path
           import re, sys
+          root=Path('.')
           pages=['index.html','questao-guiada.html','bank.html','segunda-fase.html','trilha.html','cronograma.html','caderno.html','materiais.html']
           failed=False
           forbidden=('ia.html','Professor IA','Tutor IA','Fábrica IA')
@@ -114,12 +136,19 @@ jobs:
               for term in forbidden:
                   if term in text:
                       print(name,'ainda contém referência removida:',term); failed=True
-          removed=['ia.html','ia.js','professor-bridge.js','functions/professor-api.js','fabrica.html','fabrica.js','guided-commentary-guard.js','functions/index.js','functions/question-engine.js','gemini-provider.js']
+              for target in re.findall(r'(?:href|src)=["\']([^"\']+)["\']',text):
+                  target=target.split('?',1)[0].split('#',1)[0]
+                  if not target or target.startswith(('http:','https:','mailto:','tel:','data:','about:','javascript:','/')):
+                      continue
+                  if not (root/target).exists():
+                      print(name,'rota local inexistente:',target); failed=True
+          removed=['ia.html','ia.js','professor-bridge.js','functions/professor-api.js','fabrica.html','fabrica.js','guided-commentary-guard.js','functions/index.js','functions/question-engine.js','gemini-provider.js','review-remediation.js']
           for name in removed:
               if Path(name).exists(): print(name,'deveria ter sido removido'); failed=True
           pkg=Path('functions/package.json').read_text(encoding='utf-8')
           if 'openai' in pkg.lower(): print('functions/package.json ainda depende de OpenAI'); failed=True
           if failed: sys.exit(1)
+          print('IDs, rotas locais e remoções validados.')
           PY
       - name: Validate 1st phase distribution and 2nd phase rubrics
         run: |
