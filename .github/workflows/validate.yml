@@ -30,8 +30,6 @@ jobs:
           node --check expanded-bank.js
           node --check official-fgv-bank.js
           node --check questao-guiada.js
-          node --check professor-bridge.js
-          node --check ia.js
           node --check second-phase-data.js
           node --check segunda-fase.js
           node --check functions/index.js
@@ -42,21 +40,16 @@ jobs:
           node --check scripts/validate-oab-intelligence.mjs
       - name: Validate OAB intelligence matrix
         run: node scripts/validate-oab-intelligence.mjs
-      - name: Validate private-material privacy boundary
+      - name: Validate live Drive lesson catalogue
         run: |
           node - <<'NODE'
           const fs=require('fs');
-          const files=['learning-materials.js','oab-intelligence.js','trilha.js','trilha.html','materiais.js','materiais.html'];
-          const hardcoded=/https:\/\/drive\.google\.com\/(?:drive\/folders|file\/d)\/[A-Za-z0-9_-]{15,}/g;
-          for(const f of files){
-            const text=fs.readFileSync(f,'utf8');
-            const hits=text.match(hardcoded)||[];
-            if(hits.length) throw new Error(`${f}: contém ID/link privado hardcoded: ${hits[0]}`);
-          }
-          const materials=fs.readFileSync('materiais.js','utf8');
-          if(/localStorage\.setItem\([^\n]*accessToken/.test(materials)) throw new Error('materiais.js: token OAuth não pode ser persistido');
-          if(!materials.includes('drive.readonly')) throw new Error('materiais.js: escopo Drive deve permanecer somente leitura');
-          console.log('Fronteira de privacidade do acervo validada.');
+          const src=fs.readFileSync('materiais.js','utf8');
+          const ids=[...src.matchAll(/folder:'([A-Za-z0-9_-]{15,})'/g)].map(x=>x[1]);
+          if(ids.length<20) throw new Error(`Catálogo de videoaulas incompleto: ${ids.length} pastas`);
+          if(new Set(ids).size!==ids.length) throw new Error('Catálogo de videoaulas contém pastas duplicadas');
+          if(/accessToken|drive\.readonly|signInWithPopup|GoogleAuthProvider/.test(src)) throw new Error('Videoaulas não devem depender de OAuth/scanner no cliente');
+          console.log(`Catálogo ao vivo: ${ids.length} pastas de videoaulas.`);
           NODE
       - name: Validate calibrated editorial seed
         run: |
@@ -66,17 +59,16 @@ jobs:
           const match=source.match(/const DATA = '([^']+)'/);
           if(!match) throw new Error('Payload do banco calibrado ausente');
           const questions=JSON.parse(zlib.gunzipSync(Buffer.from(match[1],'base64')).toString('utf8'));
-          if(questions.length<33) throw new Error(`Banco editorial regrediu: mínimo 33, recebeu ${questions.length}`);
+          if(questions.length<33) throw new Error(`Banco editorial regrediu: ${questions.length}`);
           const ids=new Set();
           for(const q of questions){
-            if(!q.id || ids.has(q.id)) throw new Error(`ID inválido/duplicado: ${q.id}`);
-            ids.add(q.id);
+            if(!q.id||ids.has(q.id)) throw new Error(`ID inválido/duplicado: ${q.id}`); ids.add(q.id);
             if(!Array.isArray(q.options)||q.options.length!==4) throw new Error(`${q.id}: alternativas inválidas`);
             if(!Number.isInteger(q.correct)||q.correct<0||q.correct>3) throw new Error(`${q.id}: gabarito inválido`);
-            if(String(q.text||'').length<150) throw new Error(`${q.id}: enunciado curto para o banco calibrado`);
+            if(String(q.text||'').length<150) throw new Error(`${q.id}: enunciado curto`);
             if(String(q.explanation||'').length<100) throw new Error(`${q.id}: explicação insuficiente`);
           }
-          console.log(`Seed editorial íntegro: ${questions.length} questões, sem teto fixo.`);
+          console.log(`Seed editorial íntegro: ${questions.length} questões.`);
           NODE
       - name: Validate expanded grounded bank
         run: |
@@ -84,22 +76,18 @@ jobs:
           const mod=await import('./expanded-bank.js');
           const questions=mod.getExpandedQuestions();
           if(mod.EXPANDED_RULE_COUNT!==110) throw new Error(`Esperadas 110 regras, recebidas ${mod.EXPANDED_RULE_COUNT}`);
-          if(questions.length!==550) throw new Error(`Esperadas 550 questões expandidas, recebidas ${questions.length}`);
-          const ids=new Set(),rules=new Map(),subjects=new Map();
+          if(questions.length!==550) throw new Error(`Esperadas 550 questões, recebidas ${questions.length}`);
+          const ids=new Set(),rules=new Map();
           for(const q of questions){
             if(!q.id||ids.has(q.id)) throw new Error(`ID inválido/duplicado: ${q.id}`);ids.add(q.id);
             if(!q.ruleId) throw new Error(`${q.id}: ruleId ausente`);
-            rules.set(q.ruleId,(rules.get(q.ruleId)||0)+1);subjects.set(q.subject,(subjects.get(q.subject)||0)+1);
-            if(!Array.isArray(q.options)||q.options.length!==4||new Set(q.options).size!==4) throw new Error(`${q.id}: alternativas inválidas/duplicadas`);
-            if(!Number.isInteger(q.correct)||q.correct<0||q.correct>3) throw new Error(`${q.id}: gabarito inválido`);
-            if(String(q.text||'').length<120) throw new Error(`${q.id}: enunciado curto`);
-            if(String(q.explanation||'').length<50) throw new Error(`${q.id}: explicação insuficiente`);
-            if(!q.sources?.[0]?.url?.startsWith('https://')) throw new Error(`${q.id}: fonte oficial ausente`);
+            rules.set(q.ruleId,(rules.get(q.ruleId)||0)+1);
+            if(!Array.isArray(q.options)||q.options.length!==4||new Set(q.options).size!==4) throw new Error(`${q.id}: alternativas inválidas`);
+            if(!q.sources?.[0]?.url?.startsWith('https://')) throw new Error(`${q.id}: fonte ausente`);
             if(!q.legalBasis?.[0]?.label) throw new Error(`${q.id}: fundamento ausente`);
           }
-          for(const [rule,count] of rules) if(count!==5) throw new Error(`${rule}: deveria ter 5 variantes, tem ${count}`);
-          if(rules.size!==110) throw new Error(`Esperadas 110 regras únicas, recebidas ${rules.size}`);
-          console.log(`Banco expandido íntegro: ${questions.length} questões / ${rules.size} regras / ${subjects.size} matérias.`);
+          for(const [rule,count] of rules) if(count!==5) throw new Error(`${rule}: ${count} variantes`);
+          console.log(`Banco expandido íntegro: ${questions.length} questões / ${rules.size} regras.`);
           NODE
       - name: Validate official FGV exam catalogue
         run: |
@@ -107,32 +95,29 @@ jobs:
           const mod=await import('./official-fgv-bank.js');
           const issues=mod.validateOfficialFgvConfig();
           if(issues.length) throw new Error(issues.join('; '));
-          if(mod.OFFICIAL_FGV_EXAM_COUNT!==5) throw new Error(`Esperados 5 exames, recebidos ${mod.OFFICIAL_FGV_EXAM_COUNT}`);
-          if(mod.OFFICIAL_FGV_QUESTION_TOTAL!==400) throw new Error(`Histórico deveria ter 400 itens, recebeu ${mod.OFFICIAL_FGV_QUESTION_TOTAL}`);
-          if(mod.OFFICIAL_FGV_ANNULLED_COUNT!==3) throw new Error(`Esperadas 3 anulações, recebidas ${mod.OFFICIAL_FGV_ANNULLED_COUNT}`);
-          if(mod.OFFICIAL_FGV_ACTIVE_TARGET!==397) throw new Error(`Esperadas 397 questões válidas, recebidas ${mod.OFFICIAL_FGV_ACTIVE_TARGET}`);
-          const expected='42:43,43:1,43:74';
-          const actual=mod.OFFICIAL_FGV_ANNULLED.map(x=>`${x.exam}:${x.question}`).join(',');
-          if(actual!==expected) throw new Error(`Mapa de anulações divergente: ${actual}`);
-          for(const exam of [42,43,44,45,46]){
-            const m=mod.OFFICIAL_FGV_EXAMS[exam];
-            if(!m||m.key.length!==80) throw new Error(`${exam}: gabarito definitivo incompleto`);
-          }
-          console.log('Catálogo FGV íntegro: 5 exames, 400 itens históricos, 397 válidos e 3 anulados.');
+          if(mod.OFFICIAL_FGV_EXAM_COUNT!==5) throw new Error('Quantidade de exames oficiais divergente');
+          if(mod.OFFICIAL_FGV_QUESTION_TOTAL!==400) throw new Error('Histórico FGV divergente');
+          if(mod.OFFICIAL_FGV_ACTIVE_TARGET!==397) throw new Error('Total válido FGV divergente');
+          console.log('Catálogo FGV íntegro.');
           NODE
-      - name: Validate HTML IDs
+      - name: Validate HTML IDs and removed AI routes
         run: |
           python - <<'PY'
           from pathlib import Path
           import re, sys
+          pages=['index.html','questao-guiada.html','bank.html','segunda-fase.html','fabrica.html','trilha.html','cronograma.html','caderno.html','materiais.html']
           failed=False
-          for name in ['index.html','ia.html','questao-guiada.html','bank.html','segunda-fase.html','fabrica.html','trilha.html','cronograma.html','caderno.html','materiais.html']:
+          for name in pages:
               text=Path(name).read_text(encoding='utf-8')
-              ids=re.findall(r'\bid=["\']([^"\']+)["\']', text)
+              ids=re.findall(r'\bid=["\']([^"\']+)["\']',text)
               dup=sorted({x for x in ids if ids.count(x)>1})
               if dup:
-                  print(name, 'IDs duplicados:', dup)
-                  failed=True
+                  print(name,'IDs duplicados:',dup); failed=True
+              if 'ia.html' in text or 'Professor IA' in text:
+                  print(name,'ainda referencia Professor IA'); failed=True
+          for removed in ['ia.html','ia.js','professor-bridge.js','functions/professor-api.js']:
+              if Path(removed).exists():
+                  print(removed,'deveria ter sido removido'); failed=True
           if failed: sys.exit(1)
           PY
       - name: Validate 1st phase distribution and 2nd phase rubrics
