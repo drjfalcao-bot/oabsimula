@@ -22,6 +22,9 @@ jobs:
           node --check oab-intelligence.js
           node --check cronograma.js
           node --check fabrica.js
+          node --check caderno.js
+          node --check materiais.js
+          node --check trilha.js
           node --check question-bank.js
           node --check fgv-bank.js
           node --check expanded-bank.js
@@ -39,6 +42,22 @@ jobs:
           node --check scripts/validate-oab-intelligence.mjs
       - name: Validate OAB intelligence matrix
         run: node scripts/validate-oab-intelligence.mjs
+      - name: Validate private-material privacy boundary
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const files=['learning-materials.js','oab-intelligence.js','trilha.js','trilha.html','materiais.js','materiais.html'];
+          const hardcoded=/https:\/\/drive\.google\.com\/(?:drive\/folders|file\/d)\/[A-Za-z0-9_-]{15,}/g;
+          for(const f of files){
+            const text=fs.readFileSync(f,'utf8');
+            const hits=text.match(hardcoded)||[];
+            if(hits.length) throw new Error(`${f}: contém ID/link privado hardcoded: ${hits[0]}`);
+          }
+          const materials=fs.readFileSync('materiais.js','utf8');
+          if(/localStorage\.setItem\([^\n]*accessToken/.test(materials)) throw new Error('materiais.js: token OAuth não pode ser persistido');
+          if(!materials.includes('drive.readonly')) throw new Error('materiais.js: escopo Drive deve permanecer somente leitura');
+          console.log('Fronteira de privacidade do acervo validada.');
+          NODE
       - name: Validate calibrated editorial seed
         run: |
           node - <<'NODE'
@@ -107,7 +126,7 @@ jobs:
           from pathlib import Path
           import re, sys
           failed=False
-          for name in ['index.html','ia.html','questao-guiada.html','bank.html','segunda-fase.html','fabrica.html','trilha.html','cronograma.html']:
+          for name in ['index.html','ia.html','questao-guiada.html','bank.html','segunda-fase.html','fabrica.html','trilha.html','cronograma.html','caderno.html','materiais.html']:
               text=Path(name).read_text(encoding='utf-8')
               ids=re.findall(r'\bid=["\']([^"\']+)["\']', text)
               dup=sorted({x for x in ids if ids.count(x)>1})
