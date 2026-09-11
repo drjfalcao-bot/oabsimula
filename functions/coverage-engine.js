@@ -1,7 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-import { topicPlan } from './oab-blueprint.js';
+import { topicPlan, initialCoverageTarget, chooseCoverageTopic } from './oab-blueprint.js';
 
 if(!getApps().length) initializeApp();
 const db=getFirestore();
@@ -21,13 +21,21 @@ export const getOabCoveragePlan=onCall({region:'southamerica-east1'},async reque
   let unmapped=0;
   for(const doc of snap.docs){const q=doc.data(),m=nearest(q.topic,plan);if(m)counts[m.topic]++;else unmapped++;}
   const totalMapped=Object.values(counts).reduce((a,b)=>a+b,0);
-  const targetBase=Math.max(120,totalMapped);
+  const targetBase=initialCoverageTarget(subject,20)||60;
   const rows=plan.map(p=>{
     const actual=counts[p.topic]||0;
-    const desired=Math.max(5,Math.round(targetBase*p.share));
+    const desired=Math.max(3,Math.round(targetBase*p.share));
     const gap=Math.max(0,desired-actual);
     const coverage=desired?Math.min(1,actual/desired):1;
-    return {...p,actual,desired,gap,coverage};
-  }).sort((a,b)=>b.gap-a.gap||b.share-a.share);
-  return {subject,total:snap.size,mapped:totalMapped,unmapped,coverage:rows.length?rows.reduce((n,x)=>n+x.coverage*x.share,0):0,plan:rows,suggested:rows.find(x=>x.gap>0)||rows[0]||null,method:'alvo mínimo de 120 questões por disciplina núcleo, distribuídas proporcionalmente à incidência histórica OAB 32–47'};
+    const expectedNow=Math.max(1,totalMapped*p.share);
+    const representation=actual/expectedNow;
+    return {...p,actual,desired,gap,coverage,representation};
+  }).sort((a,b)=>b.gap-a.gap||a.representation-b.representation||b.share-a.share);
+  const suggested=chooseCoverageTopic(subject,counts);
+  return {
+    subject,total:snap.size,mapped:totalMapped,unmapped,targetBase,
+    coverage:rows.length?rows.reduce((n,x)=>n+x.coverage*x.share,0):0,
+    plan:rows,suggested,
+    method:`meta inicial de 20 provas equivalentes (${targetBase} questões nesta disciplina), distribuída pela incidência histórica OAB 32–47; após saturação, crescimento pelo tema proporcionalmente mais sub-representado`
+  };
 });
