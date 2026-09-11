@@ -3,12 +3,17 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChang
 import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js';
 
+await import('./data.js');
+await import('./learning-materials.js');
+await import('./oab-intelligence.js');
+
 const STATE_KEY = 'oab-aprova-premium-v1';
 const CONTEXT_KEY = 'oab-aprova-professor-context-v1';
 const CHAT_KEY = 'oab-aprova-professor-chat-v1';
 const MAX_MESSAGES = 24;
 const GUIDED_CONTEXT_TTL = 6 * 60 * 60 * 1000;
 const $ = (id) => document.getElementById(id);
+const INTEL = window.OAB_INTELLIGENCE || null;
 
 const app = getApps()[0] || initializeApp(window.OAB_FIREBASE_CONFIG);
 const auth = getAuth(app);
@@ -43,9 +48,41 @@ function normalizeText(value, max = 1200) {
 }
 
 function prettySubject(value) {
-  return String(value || 'Geral OAB')
-    .replace(/[-_]/g, ' ')
-    .replace(/\b\w/g, c => c.toUpperCase());
+  if (INTEL) {
+    try {
+      const id = INTEL.canonicalSubject(value);
+      if (INTEL.SUBJECTS?.[id]?.name) return INTEL.SUBJECTS[id].name;
+    } catch {}
+  }
+  return String(value || 'Geral OAB').replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function adaptiveSnapshot(source) {
+  if (!INTEL) return null;
+  try {
+    const strategy = source?.profile?.strategy === 'balanced' ? 'balanced' : 'core';
+    const readiness = INTEL.readiness(source || {});
+    const recommendations = INTEL.recommendations(source || {}, { strategy, limit: 4 }).map(r => ({
+      subject: r.subjectName,
+      topic: r.topic.label,
+      historicalShare: Math.round(r.topic.historicalShare * 100),
+      mastery: Math.round(r.stats.estimated * 100),
+      sample: r.stats.n,
+      due: r.stats.due,
+      recoverable: Number(r.recoverable.toFixed(2)),
+      action: r.action.label,
+      reason: INTEL.explainRecommendation(r)
+    }));
+    return {
+      projected: Number(readiness.projected.toFixed(1)),
+      coverage: Math.round(readiness.coverage * 100),
+      robust: Math.round(readiness.robust * 100),
+      fragilePoints: Number(readiness.fragilePoints.toFixed(1)),
+      recommendations
+    };
+  } catch {
+    return null;
+  }
 }
 
 function computeStudySnapshot(source = state) {
@@ -64,11 +101,7 @@ function computeStudySnapshot(source = state) {
 
   const weakSubjects = Object.entries(bySubject)
     .filter(([, v]) => v.total >= 2)
-    .map(([subject, v]) => ({
-      subject: prettySubject(subject),
-      accuracy: Math.round((v.correct / v.total) * 100),
-      total: v.total
-    }))
+    .map(([subject, v]) => ({ subject: prettySubject(subject), accuracy: Math.round((v.correct / v.total) * 100), total: v.total }))
     .sort((a, b) => a.accuracy - b.accuracy || b.total - a.total)
     .slice(0, 5);
 
@@ -86,7 +119,8 @@ function computeStudySnapshot(source = state) {
     errorCauses: causes,
     openReviews,
     dueReviews,
-    guidedAnswered: Number(source?.guided?.answered || 0)
+    guidedAnswered: Number(source?.guided?.answered || 0),
+    adaptive: adaptiveSnapshot(source)
   };
 }
 
@@ -96,10 +130,16 @@ function renderStudySummary() {
   $('dueReviews').textContent = String(s.dueReviews);
 
   if (!s.recentAttempts) {
-    $('studySummary').textContent = 'Ainda há pouco histórico. O professor usará a conversa e a questão atual para conduzir o estudo.';
+    const top = s.adaptive?.recommendations?.[0];
+    $('studySummary').textContent = top ? `Ainda há pouca amostra. O primeiro alvo diagnóstico é ${top.subject} — ${top.topic}.` : 'Ainda há pouco histórico. O professor usará a conversa e a questão atual para conduzir o estudo.';
     return;
   }
 
+  const top = s.adaptive?.recommendations?.[0];
+  if (top) {
+    $('studySummary').textContent = `${s.recentAttempts} tentativas recentes, ${s.openReviews} revisões abertas. Prioridade calculada: ${top.subject} — ${top.topic} (${top.action}).`;
+    return;
+  }
   const weakest = s.weakSubjects[0];
   const weakText = weakest ? ` Ponto mais fraco recente: ${weakest.subject} (${weakest.accuracy}% em ${weakest.total} questões).` : '';
   $('studySummary').textContent = `${s.recentAttempts} tentativas recentes, ${s.openReviews} revisões abertas.${weakText}`;
@@ -144,7 +184,7 @@ function renderContext() {
     const option = [...$('subject').options].find(o => o.textContent.toLowerCase() === String(subject).toLowerCase());
     if (option) $('subject').value = option.value;
   }
-  $('subtitle').textContent = 'A questão, sua resposta e seu histórico já estão carregados no contexto do professor.';
+  $('subtitle').textContent = 'A questão, sua resposta, causa do erro e prioridade adaptativa estão carregadas no contexto do professor.';
 }
 
 function renderMessages() {
@@ -154,8 +194,8 @@ function renderMessages() {
   if (!messages.length) {
     const q = currentQuestion();
     const initial = q
-      ? `Questão carregada. Você marcou ${q.selectedLetter || 'uma alternativa'} e o gabarito é ${q.correctLetter || 'o registrado no banco'}. Posso explicar o ponto exato do erro, testar o mesmo conceito ou transformar isso em revisão ativa.`
-      : 'Posso explicar conceitos, revisar seus erros, testar recuperação ativa e escolher a prioridade de estudo a partir do seu histórico no OAB APROVA.';
+      ? `Questão carregada. Você marcou ${q.selectedLetter || 'uma alternativa'} e o gabarito é ${q.correctLetter || 'o registrado no banco'}. Posso localizar o desvio, testar o mesmo conceito ou transformar isso em revisão ativa.`
+      : 'Posso explicar conceitos, revisar erros, testar recuperação ativa e escolher a próxima ação pelo mesmo motor adaptativo da Trilha.';
     appendMessageElement('assistant', initial);
     return;
   }
@@ -192,13 +232,13 @@ function buildQuestionBlock() {
     'QUESTÃO ATUAL DO OAB APROVA:',
     q.qid ? `ID: ${normalizeText(q.qid, 140)}` : '',
     normalizeText(q.question, 1250),
-    'ALTERNATIVAS:',
-    options,
+    'ALTERNATIVAS:', options,
     `RESPOSTA DO ALUNO: ${q.selectedLetter || 'não registrada'}`,
     `GABARITO FIXO DO BANCO: ${q.correctLetter || 'não informado'}`,
     `RESULTADO: ${q.wasCorrect ? 'acertou' : 'errou'}`,
     q.errorCause ? `CAUSA DO ERRO DECLARADA: ${normalizeText(q.errorCause, 80)}` : '',
-    q.editorialNote ? `COMENTÁRIO EDITORIAL: ${normalizeText(q.editorialNote, 500)}` : ''
+    q.editorialNote ? `COMENTÁRIO EDITORIAL: ${normalizeText(q.editorialNote, 500)}` : '',
+    q.intelligence ? `SINAL ESTRATÉGICO: ${JSON.stringify(q.intelligence)}` : ''
   ].filter(Boolean).join('\n');
 }
 
@@ -206,7 +246,10 @@ function buildStudyBlock() {
   const s = computeStudySnapshot();
   const weak = s.weakSubjects.map(x => `${x.subject}: ${x.accuracy}%/${x.total}q`).join('; ') || 'sem amostra suficiente';
   const causes = Object.entries(s.errorCauses).map(([k, v]) => `${k}:${v}`).join(', ') || 'sem classificação suficiente';
-  return `PERFIL PEDAGÓGICO RECENTE: ${s.recentAttempts} tentativas; acerto ${s.recentAccuracy ?? 's/d'}%; ${s.dueReviews} revisões vencidas; ${s.openReviews} revisões abertas; matérias mais frágeis: ${weak}; causas de erro: ${causes}.`;
+  const adaptive = s.adaptive;
+  const queue = adaptive?.recommendations?.map((x,i)=>`${i+1}) ${x.subject} — ${x.topic}: domínio ${x.mastery}%, incidência ${x.historicalShare}% da matéria, ação ${x.action}, +${x.recoverable} pt recuperável*`).join('; ') || 'fila adaptativa ainda sem dados';
+  const model = adaptive ? ` Projeção modelada ${adaptive.projected}/80; cobertura diagnóstica ${adaptive.coverage}%; domínio robusto ${adaptive.robust}%; pontos frágeis ${adaptive.fragilePoints}. Fila adaptativa: ${queue}.` : '';
+  return `PERFIL PEDAGÓGICO RECENTE: ${s.recentAttempts} tentativas; acerto ${s.recentAccuracy ?? 's/d'}%; ${s.dueReviews} revisões vencidas; ${s.openReviews} revisões abertas; matérias mais frágeis por acerto bruto: ${weak}; causas de erro: ${causes}.${model}`;
 }
 
 function buildConversationBlock() {
@@ -216,9 +259,9 @@ function buildConversationBlock() {
 }
 
 function buildContextForModel() {
-  const instruction = 'MODO PROFESSOR OAB APROVA. Use o histórico para decidir profundidade e próxima ação. Não altere o gabarito fornecido pelo banco. Diferencie regra, exceção e pegadilha FGV. Se o aluno errou, localize o desvio de raciocínio antes de despejar teoria. Prefira recuperação ativa: depois de explicar, faça uma pergunta curta ou proponha uma ação de estudo. Não invente artigo, súmula, precedente ou prazo; quando não tiver segurança numérica, explique a regra sem numeração.';
+  const instruction = 'MODO PROFESSOR OAB APROVA. A prioridade de estudo deve seguir o motor adaptativo fornecido, não simples percentual bruto. Incidência histórica é sinal estratégico, não regra jurídica nem previsão determinística. Use o histórico para decidir profundidade e próxima ação. Não altere o gabarito fornecido pelo banco. Diferencie regra, exceção e pegadilha FGV. Se o aluno errou, trate a causa declarada: conhecimento = regra mínima + recuperação; confusão = contraste de institutos; leitura = dado decisivo + técnica. Prefira recuperação ativa. Não invente artigo, súmula, precedente, prazo ou quórum; quando não tiver segurança numérica, explique a regra sem numeração.';
   const blocks = [instruction, buildStudyBlock(), buildQuestionBlock(), buildConversationBlock()].filter(Boolean);
-  return blocks.join('\n\n').slice(0, 5000);
+  return blocks.join('\n\n').slice(0, 6500);
 }
 
 function ensureGeminiLoaded() {
@@ -240,7 +283,7 @@ async function askWithGemini(question) {
   const gemini = await ensureGeminiLoaded();
   if (!gemini?.isConnected()) throw new Error('Gemini não conectado.');
   return gemini.generate({
-    system: 'Você é o Professor IA do OAB APROVA. Ensine para aprovação na 1ª fase da OAB. Seja claro, juridicamente rigoroso e objetivo. Nas questões, explique o ponto de discriminação entre alternativas e nunca altere o gabarito fornecido. Não invente artigo, súmula, precedente ou prazo. Use recuperação ativa: após explicar, faça uma pergunta curta quando isso ajudar a fixação.',
+    system: 'Você é o Professor IA do OAB APROVA. Ensine para aprovação na 1ª fase da OAB. Use a fila adaptativa enviada como estratégia; não confunda incidência histórica com norma. Seja juridicamente rigoroso. Nas questões, explique o ponto de discriminação e nunca altere o gabarito fornecido. Não invente artigo, súmula, precedente, prazo ou quórum. Use recuperação ativa e adapte a intervenção à causa do erro.',
     prompt: `MATÉRIA/ÁREA: ${$('subject').value}\n\n${buildContextForModel()}\n\nPERGUNTA DO ALUNO: ${question}`,
     maxOutputTokens: 1800,
     temperature: 0.15
@@ -249,11 +292,7 @@ async function askWithGemini(question) {
 
 async function askWithCentral(question) {
   if (!auth.currentUser) throw new Error('Entre com Google ou conecte seu Gemini para usar o Professor IA.');
-  const result = await tutorOab({
-    subject: $('subject').value,
-    question,
-    context: buildContextForModel()
-  });
+  const result = await tutorOab({ subject: $('subject').value, question, context: buildContextForModel() });
   return result.data?.answer || 'Não recebi uma resposta do professor.';
 }
 
@@ -265,7 +304,7 @@ async function askProfessor(rawQuestion) {
   $('ask').disabled = true;
   addMessage('user', question);
   $('question').value = '';
-  const thinking = appendMessageElement('assistant', 'Analisando seu histórico e a questão…', 'thinking');
+  const thinking = appendMessageElement('assistant', 'Analisando seu histórico, fila adaptativa e questão…', 'thinking');
 
   try {
     const gemini = await ensureGeminiLoaded().catch(() => null);
