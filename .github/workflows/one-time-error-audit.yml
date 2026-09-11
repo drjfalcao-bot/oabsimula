@@ -49,7 +49,6 @@ jobs:
             r"function startTopicBlock\(id\)\{.*?\}\nfunction renderConcepts",
             "function startTopicBlock(id){const q=qById(id);if(!q)return;const key=conceptKeyQ(q);let qs=QUESTIONS.filter(x=>conceptKeyQ(x)===key);qs=uniqueFamilies(qs).sort(()=>Math.random()-.5).slice(0,5);if(!qs.length){notice('Não há questões suficientes deste conceito.');return;}session={mode:'reinforcement',qs,index:0,answers:{},startedAt:now(),questionStartedAt:now()};$('sessionSetup').classList.add('hidden');$('sessionResult').classList.add('hidden');$('sessionArea').classList.remove('hidden');page('questions');startTimer();renderQuestion();}\nfunction renderConcepts",
             'app topic block')
-          # Exibe reincidência conceitual no cartão do erro sem reescrever a tela inteira.
           s=s.replace("${x.wrong} erro(s)</span><span class=\"pill ${x.due<=now()?'warn':''}\">", "${x.wrong} erro(s) na questão</span><span class=\"pill ${x.conceptWrong>=2?'bad':''}\">${x.conceptWrong} erro(s) no conceito</span><span class=\"pill ${x.due<=now()?'warn':''}\">")
           s=s.replace('<b>Base:</b> ${sourceBase(x.q)}','<b>Base de revisão:</b> ${sourceBase(x.q)}')
           p.write_text(s,encoding='utf-8')
@@ -67,19 +66,16 @@ jobs:
             r"function sameConcept\(\)\{.*?\}\nfunction reinforce",
             "function sameConcept(){const key=conceptKeyQ(current);return QUESTIONS.filter(q=>q.id!==current.id&&conceptKeyQ(q)===key);}\nfunction reinforce",
             'guided reinforcement')
-          # Usa fundamento específico da própria questão quando existir.
           s=s.replace("function useful(q){", "function legalBasis(q){const rows=(q?.legalBasis||[]).map(x=>typeof x==='string'?x:(x?.label||x?.title||'')).filter(Boolean);return rows.length?rows.slice(0,3).join(' • '):null;}\nfunction useful(q){")
           s=s.replace("${escapeHtml(BASES[canon(q.subject)]||'Legislação específica do instituto cobrado.')}", "${escapeHtml(legalBasis(q)||BASES[canon(q.subject)]||'Legislação específica do instituto cobrado.')}")
           p.write_text(s,encoding='utf-8')
 
-          # O antigo interceptor não era carregado e só duplicava regra de revisão.
           Path('review-remediation.js').unlink(missing_ok=True)
 
-          # Reforça o CI: sem embed privado, sem rotas locais quebradas e sem interceptor órfão.
           p=Path('.github/workflows/validate.yml'); s=p.read_text(encoding='utf-8')
           s=s.replace("if(/accessToken|drive\\.readonly|signInWithPopup|GoogleAuthProvider/.test(src)) throw new Error('Videoaulas não devem depender de OAuth/scanner no cliente');", "if(/accessToken|drive\\.readonly|signInWithPopup|GoogleAuthProvider|embeddedfolderview/.test(src)) throw new Error('Videoaulas não devem depender de OAuth/scanner/embed privado');")
           marker='      - name: Validate 1st phase distribution and 2nd phase rubrics\n'
-          extra=r'''      - name: Validate local routes
+          extra="""      - name: Validate local routes
         run: |
           python - <<'PY2'
           from pathlib import Path
@@ -88,17 +84,17 @@ jobs:
           missing=[]
           for f in list(root.glob('*.html'))+list(root.glob('*.js')):
               text=f.read_text(encoding='utf-8')
-              for target in re.findall(r'''(?:href|src)=["']([^"']+)["']''',text):
+              for target in re.findall(r\"(?:href|src)=[\\\"']([^\\\"']+)[\\\"']\",text):
                   target=target.split('?',1)[0].split('#',1)[0]
                   if not target or target.startswith(('http:','https:','mailto:','tel:','data:','about:')): continue
                   if target.startswith('/'): continue
                   if not (root/target).exists(): missing.append(f'{f}: {target}')
           if Path('review-remediation.js').exists(): missing.append('review-remediation.js deveria ter sido removido')
           if missing:
-              print('\n'.join(missing));sys.exit(1)
+              print('\\n'.join(missing));sys.exit(1)
           print('Rotas locais íntegras.')
           PY2
-'''
+"""
           if marker not in s: raise SystemExit('validate marker not found')
           s=s.replace(marker,extra+marker)
           p.write_text(s,encoding='utf-8')
