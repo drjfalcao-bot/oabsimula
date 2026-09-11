@@ -19,35 +19,12 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
           p=Path('app.js')
           s=p.read_text(encoding='utf-8')
-          old=r"async function bootstrap\(\)\{try\{const imported=await getAllQuestions\(\);const map=new Map\(BUILTIN\.map\(q=>\[q\.id,q\]\)\);imported\.forEach\(q=>map\.set\(q\.id,q\)\);QUESTIONS=\[\.\.\.map\.values\(\)\];\}catch\(e\)\{console\.warn\('Banco ampliado indisponível; usando base local\.',e\);QUESTIONS=\[\.\.\.BUILTIN\];\}renderQuestionSelectors\(\);bind\(\);renderAll\(\);if\(INTEL\?\.EXAM\?\.status==='awaiting-48-edital'\)notice\('48º EOU: edital previsto para 21/09/2026; calendário oficial pode ser ajustado se a OAB alterar as datas\.'\);\}\nbootstrap\(\);"
-          new="""async function hydrateQuestionBank(){
-  try{
-    const imported=await getAllQuestions();
-    const map=new Map(BUILTIN.map(q=>[q.id,q]));
-    imported.forEach(q=>map.set(q.id,q));
-    QUESTIONS=[...map.values()];
-    renderQuestionSelectors();
-    renderAll();
-  }catch(e){
-    console.warn('Banco ampliado indisponível; usando base local.',e);
-    QUESTIONS=[...BUILTIN];
-  }
-}
-function bootstrap(){
-  renderQuestionSelectors();
-  bind();
-  renderAll();
-  if(INTEL?.EXAM?.status==='awaiting-48-edital') notice('48º EOU: edital previsto para 21/09/2026; calendário oficial pode ser ajustado se a OAB alterar as datas.');
-  hydrateQuestionBank();
-}
-bootstrap();"""
-          ns,n=re.subn(old,new,s,count=1)
-          if n!=1:
-            raise SystemExit(f'bootstrap patch failed: {n}')
-          p.write_text(ns,encoding='utf-8')
+          old="async function bootstrap(){try{const imported=await getAllQuestions();const map=new Map(BUILTIN.map(q=>[q.id,q]));imported.forEach(q=>map.set(q.id,q));QUESTIONS=[...map.values()];}catch(e){console.warn('Banco ampliado indisponível; usando base local.',e);QUESTIONS=[...BUILTIN];}renderQuestionSelectors();bind();renderAll();if(INTEL?.EXAM?.status==='awaiting-48-edital')notice('48º EOU: edital previsto para 21/09/2026; calendário oficial pode ser ajustado se a OAB alterar as datas.');}\nbootstrap();"
+          new="async function hydrateQuestionBank(){try{const imported=await getAllQuestions();const map=new Map(BUILTIN.map(q=>[q.id,q]));imported.forEach(q=>map.set(q.id,q));QUESTIONS=[...map.values()];renderQuestionSelectors();renderAll();}catch(e){console.warn('Banco ampliado indisponível; usando base local.',e);QUESTIONS=[...BUILTIN];}}\nfunction bootstrap(){renderQuestionSelectors();bind();renderAll();if(INTEL?.EXAM?.status==='awaiting-48-edital')notice('48º EOU: edital previsto para 21/09/2026; calendário oficial pode ser ajustado se a OAB alterar as datas.');hydrateQuestionBank();}\nbootstrap();"
+          if old not in s: raise SystemExit('bootstrap antigo não encontrado')
+          p.write_text(s.replace(old,new,1),encoding='utf-8')
           PY
           node --check app.js
           rm -f .github/workflows/fix-immediate-nav.yml
