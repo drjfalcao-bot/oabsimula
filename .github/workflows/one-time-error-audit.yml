@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   patch:
-    if: ${{ github.event.head_commit.message == 'run: apply error review patch' }}
+    if: github.event.head_commit.message == 'run apply error review patch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,5 +29,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
-          git commit -m 'fix: harden error review and lesson access'
+          git commit -m 'fix error review and lesson access'
           git push
