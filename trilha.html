@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b1726" />
+  <title>OAB APROVA | Trilha guiada</title>
+  <meta name="description" content="Trilha de estudo adaptativa do OAB APROVA, conectando diagnóstico, teoria direcionada, consolidação, questões e revisão espaçada." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Libre+Caslon+Display&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body{background:#eef2f5;color:#0b1726}.trail-wrap{max-width:1240px;margin:0 auto;padding:24px}.trail-top{display:flex;gap:18px;align-items:flex-start;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap}.trail-actions{display:flex;gap:8px;flex-wrap:wrap}.trail-hero{background:linear-gradient(135deg,#0b1726,#1e344d);color:#fff;border-radius:24px;padding:28px;display:grid;grid-template-columns:1.4fr .8fr;gap:20px;margin-bottom:16px}.trail-hero h1{margin:6px 0 10px;font-size:clamp(30px,4vw,50px)}.trail-hero p{color:#d7e3ed;max-width:760px}.hero-stat{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:18px;padding:18px;display:grid;gap:8px;align-content:center}.hero-stat strong{font-size:34px}.hero-stat span{color:#cbd8e3}.trail-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}.trail-card{background:#fff;border:1px solid #e0d8ca;border-radius:20px;padding:20px}.trail-card h2,.trail-card h3{margin-top:0}.next-box{display:grid;gap:12px}.next-subject{font-size:26px;font-weight:800}.reason{background:#f5f1e9;border-radius:14px;padding:14px;color:#374151}.cycle{display:grid;gap:10px}.cycle-step{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;border:1px solid #e6dfd4;border-radius:16px;padding:13px}.cycle-step b{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#0b1726;color:#fff}.cycle-step strong{display:block}.cycle-step span{display:block;color:#667085;font-size:13px;margin-top:2px}.cycle-step small{white-space:nowrap;color:#667085}.coverage{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.source-card{border:1px solid #e6dfd4;border-radius:16px;padding:15px}.source-card .tag{display:inline-flex;padding:4px 8px;border-radius:999px;background:#eef2f5;font-size:11px;font-weight:800;letter-spacing:.05em}.source-card ul{margin:10px 0 0;padding-left:18px;color:#475467}.subject-cloud{display:flex;gap:8px;flex-wrap:wrap}.subject-chip{border:1px solid #d7dce2;background:#fff;border-radius:999px;padding:8px 11px;font:inherit;cursor:pointer}.subject-chip.active{background:#0b1726;color:#fff;border-color:#0b1726}.resource-list{display:grid;gap:8px;margin-top:12px}.resource{border:1px solid #e6dfd4;border-radius:14px;padding:12px}.resource strong{display:block}.resource span{font-size:13px;color:#667085}.privacy-note{font-size:13px;color:#667085;margin-top:10px}.mini-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}@media(max-width:900px){.trail-hero,.trail-grid{grid-template-columns:1fr}.coverage{grid-template-columns:1fr}.cycle-step{grid-template-columns:40px 1fr}.cycle-step small{grid-column:2}}
+  </style>
+</head>
+<body>
+  <main class="trail-wrap">
+    <header class="trail-top">
+      <div>
+        <p class="eyebrow">OAB APROVA PREMIUM</p>
+        <h1 style="margin:0">Trilha guiada</h1>
+        <p class="muted" style="margin:6px 0 0">O acervo importado passa a orientar o método de estudo, sem virar uma pasta de arquivos soltos.</p>
+      </div>
+      <div class="trail-actions">
+        <a class="btn secondary" href="index.html">Painel</a>
+        <a class="btn secondary" href="questao-guiada.html">Questão guiada</a>
+        <a class="btn secondary" href="cronograma.html">Cronograma</a>
+      </div>
+    </header>
+
+    <section class="trail-hero">
+      <div>
+        <p class="eyebrow light">CICLO ADAPTATIVO + ACERVO REAL</p>
+        <h1>Estudar o que precisa, na ordem certa.</h1>
+        <p>O sistema cruza seu desempenho com a cobertura já importada. A sequência padrão é: medir primeiro, estudar a lacuna, consolidar, resolver novamente e programar a revisão.</p>
+        <div class="mini-actions">
+          <a class="btn light" href="questao-guiada.html">Começar por uma questão</a>
+          <a class="btn hero-outline" href="index.html">Ver desempenho</a>
+        </div>
+      </div>
+      <div class="hero-stat">
+        <span>Próxima matéria sugerida</span>
+        <strong id="heroSubject">Calculando…</strong>
+        <span id="heroReason">Usando seu histórico local de respostas.</span>
+      </div>
+    </section>
+
+    <div class="trail-grid">
+      <section class="trail-card">
+        <p class="eyebrow">PRÓXIMO BLOCO</p>
+        <div class="next-box">
+          <div class="next-subject" id="nextSubject">—</div>
+          <div class="reason" id="nextReason">Carregando diagnóstico…</div>
+          <div class="cycle" id="cycle"></div>
+        </div>
+      </section>
+
+      <aside class="trail-card">
+        <p class="eyebrow">MATÉRIA</p>
+        <h3>Escolha uma área</h3>
+        <div class="subject-cloud" id="subjectCloud"></div>
+        <div class="resource-list" id="resourceList"></div>
+        <p class="privacy-note">O catálogo público guarda apenas metadados pedagógicos. Links privados e arquivos dos cursos não são expostos no repositório.</p>
+      </aside>
+    </div>
+
+    <section class="trail-card" style="margin-top:16px">
+      <div class="card-head">
+        <div><p class="eyebrow">COBERTURA JÁ IDENTIFICADA</p><h2>O que o acervo acrescenta ao método</h2></div>
+        <span class="badge">atualizado em 11/09/2026</span>
+      </div>
+      <div class="coverage" id="coverage"></div>
+    </section>
+  </main>
+
+  <script src="learning-materials.js"></script>
+  <script>
+    (() => {
+      'use strict';
+      const catalog = window.OAB_LEARNING_MATERIALS;
+      const stateKey = 'oab-aprova-premium-v1';
+      const normalize = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+      const aliases = {
+        etica:'etica', constitucional:'constitucional', penal:'penal', processo_penal:'processo_penal', proc_penal:'processo_penal', tributario:'tributario', trabalho:'trabalho', processo_trabalho:'processo_trabalho', proc_trabalho:'processo_trabalho', civil:'civil', processo_civil:'processo_civil', proc_civil:'processo_civil', administrativo:'administrativo', empresarial:'empresarial', eleitoral:'eleitoral', financeiro:'financeiro', previdenciario:'previdenciario', direitos_humanos:'direitos_humanos'
+      };
+      let state = null;
+      try { state = JSON.parse(localStorage.getItem(stateKey) || 'null'); } catch(e) {}
+      const attempts = Array.isArray(state?.attempts) ? state.attempts : [];
+      const subjects = Object.keys(catalog.subjectNames);
+
+      function canonical(id){
+        const n = normalize(id);
+        return aliases[n] || n;
+      }
+
+      function subjectStats(id){
+        const a = attempts.filter(x => canonical(x.subject) === id);
+        const correct = a.filter(x => x.correct).length;
+        const estimated = (correct + 2) / (a.length + 5);
+        return {n:a.length, correct, estimated};
+      }
+
+      function availableScore(id){
+        let score = 0;
+        if(catalog.sources.ceisc.subjects.includes(id)) score += 2;
+        if(catalog.sources.vde.theorySubjects.includes(id)) score += 2;
+        return score;
+      }
+
+      function recommendation(){
+        const ranked = subjects.map(id => {
+          const st = subjectStats(id);
+          const availability = availableScore(id);
+          const uncertainty = 1 / Math.sqrt(st.n + 1);
+          const deficit = 1 - st.estimated;
+          return {id, st, availability, priority:deficit * 2 + uncertainty + availability * .15};
+        }).filter(x => x.availability > 0).sort((a,b) => b.priority - a.priority);
+        return ranked[0] || {id:'etica',st:{n:0,estimated:.4},availability:2};
+      }
+
+      function resourceItems(id){
+        const out = [];
+        if(catalog.sources.vde.theorySubjects.includes(id)) {
+          out.push({title:'Aula teórica disponível no acervo VDE',detail:'Usar após o diagnóstico, somente no ponto de lacuna.'});
+          out.push({title:'Resumo / mapa mental / caderno legislativo',detail:'Usar para consolidação e recuperação ativa.'});
+          out.push({title:'Revisão e simulados VDE',detail:'Usar depois de nova bateria de questões.'});
+        }
+        if(catalog.sources.ceisc.subjects.includes(id)) {
+          out.push({title:'Trilha disciplinar CEISC',detail:'Conteúdo da matéria já identificado no acervo importado.'});
+          out.push({title:'Bateria de questões + checkpoint',detail:'Base para prática deliberada e revisão guiada.'});
+        }
+        if(!out.length) out.push({title:'Cobertura ainda em expansão',detail:'Esta área será enriquecida conforme novos arquivos forem importados.'});
+        return out;
+      }
+
+      function renderCycle(){
+        document.getElementById('cycle').innerHTML = catalog.cycle.map((step,i) => `
+          <div class="cycle-step">
+            <b>${i+1}</b>
+            <div><strong>${step.label}</strong><span>${step.description}</span></div>
+            <small>~${step.minutes} min</small>
+          </div>`).join('');
+      }
+
+      function renderSubject(id){
+        const name = catalog.subjectNames[id] || id;
+        const st = subjectStats(id);
+        document.querySelectorAll('.subject-chip').forEach(b => b.classList.toggle('active', b.dataset.subject === id));
+        document.getElementById('resourceList').innerHTML = resourceItems(id).map(r => `<div class="resource"><strong>${r.title}</strong><span>${r.detail}</span></div>`).join('');
+        document.getElementById('nextSubject').textContent = name;
+        document.getElementById('nextReason').textContent = st.n
+          ? `Você respondeu ${st.n} questão(ões) nesta matéria. Domínio estimado: ${Math.round(st.estimated*100)}%. O bloco abaixo alterna recuperação, teoria e prática para transformar erro em retenção.`
+          : 'Ainda há pouca ou nenhuma amostra nesta matéria. Por isso o bloco começa com diagnóstico curto antes de qualquer teoria.';
+      }
+
+      function renderCoverage(){
+        const vde = catalog.sources.vde;
+        const ceisc = catalog.sources.ceisc;
+        document.getElementById('coverage').innerHTML = `
+          <div class="source-card"><span class="tag">VDE</span><h3>${vde.name}</h3><ul>${vde.collections.map(x=>`<li>${x}</li>`).join('')}</ul><p class="muted small">Aulas teóricas já identificadas em ${vde.theorySubjects.length} matérias; a cobertura aumenta conforme a cópia avança.</p></div>
+          <div class="source-card"><span class="tag">CEISC</span><h3>${ceisc.name}</h3><ul>${ceisc.collections.map(x=>`<li>${x}</li>`).join('')}</ul><p class="muted small">Estrutura disciplinar já identificada em ${ceisc.subjects.length} matérias.</p></div>`;
+      }
+
+      const rec = recommendation();
+      const recName = catalog.subjectNames[rec.id] || rec.id;
+      document.getElementById('heroSubject').textContent = recName;
+      document.getElementById('heroReason').textContent = rec.st.n
+        ? `Prioridade combinando déficit de domínio, incerteza e material disponível.`
+        : 'Sem amostra suficiente: começar medindo antes de estudar teoria.';
+
+      document.getElementById('subjectCloud').innerHTML = subjects.filter(id => availableScore(id) > 0).map(id => `<button class="subject-chip" data-subject="${id}">${catalog.subjectNames[id]}</button>`).join('');
+      document.querySelectorAll('.subject-chip').forEach(btn => btn.addEventListener('click', () => renderSubject(btn.dataset.subject)));
+      renderCycle();
+      renderCoverage();
+      renderSubject(rec.id);
+    })();
+  </script>
+</body>
+</html>
