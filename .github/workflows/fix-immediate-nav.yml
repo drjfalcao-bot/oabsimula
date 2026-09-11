@@ -9,7 +9,6 @@ permissions:
 
 jobs:
   patch:
-    if: ${{ github.event.head_commit.message == 'run immediate nav fix' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,7 +37,6 @@ jobs:
   }
 }
 function bootstrap(){
-  // A interface precisa funcionar antes de qualquer chamada de rede/IndexedDB/Firebase.
   renderQuestionSelectors();
   bind();
   renderAll();
