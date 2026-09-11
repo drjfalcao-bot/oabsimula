@@ -1,3 +1,8 @@
+export const OAB_SUBJECT_WEIGHTS = Object.freeze({
+  etica:8,constitucional:6,civil:6,'processo-civil':6,penal:6,'processo-penal':6,
+  trabalho:5,'processo-trabalho':5,administrativo:5,tributario:5,empresarial:4
+});
+
 export const OAB_TOPIC_BLUEPRINT = {
   etica:[['Prerrogativas',19],['Infrações, sanções e processo disciplinar',19],['Inscrição e exercício profissional',16],['Sociedade de advogados',15],['Honorários advocatícios',14],['Mandato e procuração',10],['Incompatibilidades e impedimentos',10],['Publicidade profissional',10],['Deveres e responsabilidade profissional',9],['Organização da OAB',7]],
   constitucional:[['Organização do Estado e federalismo',21],['Controle de constitucionalidade',19],['Poderes e processo legislativo',16],['Direitos fundamentais',14],['Ordem social e econômica',13],['Judiciário e funções essenciais',10],['Remédios constitucionais',7],['Nacionalidade e direitos políticos',6]],
@@ -18,15 +23,25 @@ export function topicPlan(subject){
   return rows.map(([topic,count])=>({topic,count,share:count/total}));
 }
 
+export function initialCoverageTarget(subject,examEquivalents=20){
+  return (OAB_SUBJECT_WEIGHTS[subject]||0)*examEquivalents;
+}
+
 export function chooseCoverageTopic(subject,counts={}){
   const rows=topicPlan(subject);
   if(!rows.length)return null;
   const totalBank=Object.values(counts).reduce((n,v)=>n+Number(v||0),0);
-  return rows.map(x=>{
+  const targetBase=initialCoverageTarget(subject,20)||Math.max(60,totalBank);
+  const initial=rows.map(x=>{
     const actual=Number(counts[x.topic]||0);
-    const expected=Math.max(3,totalBank*x.share);
-    const deficit=expected-actual;
-    const coldStart=totalBank<20?x.share*20-actual:deficit;
-    return {...x,actual,expected,deficit:coldStart};
-  }).sort((a,b)=>b.deficit-a.deficit)[0];
+    const desired=Math.max(3,Math.round(targetBase*x.share));
+    return {...x,actual,desired,gap:Math.max(0,desired-actual)};
+  });
+  const withGap=initial.filter(x=>x.gap>0).sort((a,b)=>b.gap-a.gap||b.share-a.share);
+  if(withGap.length)return withGap[0];
+  // Depois de completar 20 provas equivalentes, continua crescendo sem distorcer a matriz.
+  return initial.map(x=>{
+    const expectedNow=Math.max(1,totalBank*x.share);
+    return {...x,representation:x.actual/expectedNow};
+  }).sort((a,b)=>a.representation-b.representation||b.share-a.share)[0];
 }
