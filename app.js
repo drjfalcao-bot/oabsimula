@@ -3,6 +3,7 @@
   const CFG = window.OAB_CONFIG;
   const SUBJECTS = window.OAB_SUBJECTS;
   const CORE = SUBJECTS.filter(s => s.core);
+  const INTEL = window.OAB_INTELLIGENCE || null;
   const BUILTIN_QUESTIONS = [...window.OAB_QUESTIONS];
   let QUESTIONS = [...BUILTIN_QUESTIONS];
   const STORAGE_KEY = 'oab-aprova-premium-v1';
@@ -15,9 +16,14 @@
   const subjectById = id => SUBJECTS.find(s=>s.id===id);
   const questionById = id => QUESTIONS.find(q=>q.id===id);
   const shuffle = arr => [...arr].sort(()=>Math.random()-.5);
+  const questionFamily = q => q?.ruleId || q?.sourceQuestionId || q?.officialQuestionId || q?.id;
+  const uniqueFamilies = arr => {
+    const seen=new Set();
+    return arr.filter(q=>{const k=questionFamily(q);if(seen.has(k))return false;seen.add(k);return true;});
+  };
 
   const defaultState = () => ({
-    version:2,
+    version:3,
     profile:{name:'Usuário local',targetDate:CFG.examDate,targetScore:CFG.safeTarget,dailyMinutes:60,strategy:'core'},
     attempts:[],reviews:{},sessions:[],settings:{subjectFilter:'core'},createdAt:now(),updatedAt:now()
   });
@@ -62,10 +68,10 @@
   }
   function normalCDF(z){ return .5*(1+erf(z/Math.sqrt(2))); }
   function attemptsFor(subjectId){ return state.attempts.filter(a=>a.subject===subjectId); }
-  function stats(subjectId){
+
+  function legacyStats(subjectId){
     const a=attemptsFor(subjectId), n=a.length, correct=a.filter(x=>x.correct).length, wrong=n-correct;
     const raw=n?correct/n:0;
-    // Posterior Beta(2+acertos, 3+erros). Prior conservador com média inicial de 40%.
     const alpha=correct+2, beta=wrong+3, sum=alpha+beta;
     const estimated=alpha/sum;
     const open=Object.values(state.reviews).filter(r=>r.subject===subjectId && !r.mastered).length;
@@ -77,10 +83,18 @@
     const errorPressure=open/(n+4);
     const uncertainty=Math.sqrt((alpha*beta)/(sum*sum*(sum+1)));
     const focus=s.q*(.55+deficit*2.2)*(1+errorPressure*.8)*(1+uncertainty*1.8);
-    // Variância preditiva beta-binomial para as q questões esperadas da matéria no exame.
     const predictiveVar=s.q*alpha*beta*(sum+s.q)/(sum*sum*(sum+1));
     return {n,correct,wrong,raw,estimated,alpha,beta,open,due,potential,focus,uncertainty,predictiveVar};
   }
+
+  function stats(subjectId){
+    if(!INTEL) return legacyStats(subjectId);
+    const base=INTEL.subjectStats(state,subjectId);
+    const topics=INTEL.rankTopics(state,{subject:subjectId});
+    const focus=topics.slice(0,3).reduce((n,x)=>n+x.score,0) || (subjectById(subjectId)?.q||1)*(1-base.estimated);
+    return {...base,focus};
+  }
+
   function overall(){
     const total=state.attempts.length, correct=state.attempts.filter(a=>a.correct).length;
     const accuracy=total?correct/total:0;
@@ -99,10 +113,22 @@
     const open=Object.values(state.reviews).filter(r=>!r.mastered).length;
     return {total,correct,accuracy,projected,variance,sd,passProbability,safeProbability,low90,high90,coreMastery,due,open};
   }
-  function dataConfidence(){ return clamp(state.attempts.length/120,0,1); }
+  function dataConfidence(){
+    if(INTEL) return clamp(INTEL.readiness(state).coverage,0,1);
+    return clamp(state.attempts.length/120,0,1);
+  }
   function subjectRanking(){
+    if(INTEL){
+      return INTEL.rankSubjects(state,{strategy:state.profile.strategy}).map(r=>({
+        s:subjectById(r.id)||{id:r.id,name:r.name,q:r.q,core:r.core},
+        st:{...r.stats,focus:r.focus,potential:r.potential},topTopic:r.topTopic
+      }));
+    }
     const base=(state.profile.strategy==='balanced'?SUBJECTS:CORE);
     return base.map(s=>({s,st:stats(s.id)})).sort((a,b)=>b.st.focus-a.st.focus);
+  }
+  function recommendations(limit=4){
+    return INTEL?INTEL.recommendations(state,{strategy:state.profile.strategy,limit}):[];
   }
   function daysToExam(){
     const d = new Date(`${state.profile.targetDate || CFG.examDate}T12:00:00`);
@@ -137,7 +163,7 @@
     $('projectedScore').textContent=o.projected.toFixed(1);
     $('scoreRing').style.setProperty('--pct',`${clamp(o.projected/80,0,1)*360}deg`);
     const conf=dataConfidence();
-    $('projectionConfidence').textContent=o.total<20?(conf<.15?'projeção inicial • aumente a amostra':'projeção preliminar • quase calibrada'):`P(≥40) ${fmtPct(o.passProbability)} • faixa 90% ${o.low90.toFixed(0)}–${o.high90.toFixed(0)}`;
+    $('projectionConfidence').textContent=o.total<20?(conf<.15?'projeção inicial • aumente a amostra':'projeção preliminar • cobertura em formação'):`P(≥40) ${fmtPct(o.passProbability)} • faixa 90% ${o.low90.toFixed(0)}–${o.high90.toFixed(0)}`;
     const r=riskInfo(o);
     $('riskLabel').textContent=r.label; $('riskText').textContent=r.text;
     $('riskDot').className=`status-dot ${r.kind}`;
@@ -149,26 +175,42 @@
     $('metricCore').textContent=fmtPct(o.coreMastery);
 
     const ranking=subjectRanking().slice(0,4);
-    $('priorityList').innerHTML=ranking.map((x,i)=>`<div class="priority-row"><div class="priority-rank">${i+1}</div><div><strong>${x.s.name}</strong><small>${x.s.q} questões na prova • domínio estimado ${fmtPct(x.st.estimated)} • ${x.st.n} respostas</small></div><div class="priority-value"><b>+${x.st.potential.toFixed(1)}</b><span>pontos potenciais</span></div></div>`).join('');
-    const due=o.due, minutes=state.profile.dailyMinutes||60;
-    const reviewMin=due?Math.max(10,Math.min(20,Math.round(minutes*.25))):Math.max(5,Math.round(minutes*.1));
+    $('priorityList').innerHTML=ranking.map((x,i)=>{
+      const topic=x.topTopic?.topic?.label;
+      return `<div class="priority-row"><div class="priority-rank">${i+1}</div><div><strong>${x.s.name}</strong><small>${topic?`${topic} • `:''}${x.s.q} questões na prova • domínio ${fmtPct(x.st.estimated)} • ${x.st.n} respostas</small></div><div class="priority-value"><b>+${x.st.potential.toFixed(1)}</b><span>pontos recuperáveis*</span></div></div>`;
+    }).join('');
+
+    const due=o.due, minutes=state.profile.dailyMinutes||60, recs=recommendations(3);
+    const reviewMin=due?Math.max(10,Math.min(20,Math.round(minutes*.22))):Math.max(5,Math.round(minutes*.08));
     const remaining=Math.max(10,minutes-reviewMin); const first=Math.round(remaining*.58),second=remaining-first;
     const badge=$('routineBox')?.closest('.card')?.querySelector('.badge'); if(badge)badge.textContent=`${minutes} min hoje`;
-    $('routineBox').innerHTML=`
-      <div class="routine-step"><b>1</b><div><strong>${reviewMin} min • ${due?`revisar até ${Math.min(due,6)} vencida(s)`:'recuperação ativa'}</strong><span>${due?'Comece pelo conteúdo em maior risco de esquecimento.':'Faça questões sem consulta para gerar diagnóstico real.'}</span></div></div>
-      <div class="routine-step"><b>2</b><div><strong>${first} min • ${ranking[0]?.s.name||'Ética'}</strong><span>Maior expectativa de ganho de pontos no momento.</span></div></div>
-      <div class="routine-step"><b>3</b><div><strong>${second} min • ${ranking[1]?.s.name||'Constitucional'}</strong><span>Intercale questões e correção causal; teoria apenas no ponto do erro.</span></div></div>`;
+    if(INTEL && recs.length){
+      const a=recs[0],b=recs[1]||recs[0];
+      $('routineBox').innerHTML=`
+        <div class="routine-step"><b>1</b><div><strong>${reviewMin} min • ${due?`revisar até ${Math.min(due,6)} vencida(s)`:'recuperação ativa sem consulta'}</strong><span>${due?'Proteja pontos já conquistados antes de abrir conteúdo novo.':'Gere evidência real antes de consumir teoria.'}</span></div></div>
+        <div class="routine-step"><b>2</b><div><strong>${first} min • ${a.subjectName}: ${a.topic.label}</strong><span>${a.action.label} • ${INTEL.explainRecommendation(a)}</span></div></div>
+        <div class="routine-step"><b>3</b><div><strong>${second} min • ${b.subjectName}: ${b.topic.label}</strong><span>${b.action.label} • intercale outro ponto provável para reduzir falsa fluência.</span></div></div>`;
+    }else{
+      $('routineBox').innerHTML=`
+        <div class="routine-step"><b>1</b><div><strong>${reviewMin} min • ${due?`revisar até ${Math.min(due,6)} vencida(s)`:'recuperação ativa'}</strong><span>${due?'Comece pelo conteúdo em maior risco de esquecimento.':'Faça questões sem consulta para gerar diagnóstico real.'}</span></div></div>
+        <div class="routine-step"><b>2</b><div><strong>${first} min • ${ranking[0]?.s.name||'Ética'}</strong><span>Maior expectativa de ganho de pontos no momento.</span></div></div>
+        <div class="routine-step"><b>3</b><div><strong>${second} min • ${ranking[1]?.s.name||'Constitucional'}</strong><span>Intercale questões e correção causal; teoria apenas no ponto do erro.</span></div></div>`;
+    }
     $('coreHeatmap').innerHTML=CORE.map(s=>{
       const st=stats(s.id), pct=Math.round(st.estimated*100); const color=pct>=75?'#2c7a61':pct>=55?'#c99a4b':'#b64f49';
-      return `<button class="heat-cell" data-subject-open="${s.id}" style="--heat:${color}"><strong>${s.name}</strong><span>${s.q} questões</span><b>${pct}%</b></button>`;
+      const top=INTEL?INTEL.rankTopics(state,{subject:s.id})[0]:null;
+      return `<button class="heat-cell" data-subject-open="${s.id}" style="--heat:${color}"><strong>${s.name}</strong><span>${top?top.topic.label:`${s.q} questões`}</span><b>${pct}%</b></button>`;
     }).join('');
     $$('[data-subject-open]').forEach(b=>b.onclick=()=>{selectedSubject=b.dataset.subjectOpen;renderStudy();page('study')});
   }
 
   function renderPlan(){
     const ranking=subjectRanking(); const max=ranking[0]?.st.focus||1;
-    $('planRanking').innerHTML=ranking.map((x,i)=>`<div class="ranking-item"><div class="ranking-score">${i+1}</div><div><strong>${x.s.name}</strong><small>${x.s.q} questões • ${x.st.n} respondidas • ${x.st.open} erros abertos • ganho potencial +${x.st.potential.toFixed(1)} pts</small></div><div class="ranking-bar"><div style="width:${Math.round(x.st.focus/max*100)}%"></div></div></div>`).join('');
-    $('planDataQuality').textContent=state.attempts.length<30?'dados iniciais':state.attempts.length<100?'amostra em formação':'amostra robusta';
+    $('planRanking').innerHTML=ranking.map((x,i)=>`<div class="ranking-item"><div class="ranking-score">${i+1}</div><div><strong>${x.s.name}</strong><small>${x.topTopic?.topic?.label?`${x.topTopic.topic.label} • `:''}${x.s.q} questões • ${x.st.n} respondidas • ${x.st.open} erros abertos • ganho +${x.st.potential.toFixed(1)} pts*</small></div><div class="ranking-bar"><div style="width:${Math.round(x.st.focus/max*100)}%"></div></div></div>`).join('');
+    if(INTEL){
+      const rd=INTEL.readiness(state);
+      $('planDataQuality').textContent=rd.coverage<.25?'cobertura inicial':rd.coverage<.65?'diagnóstico em formação':'cobertura consistente';
+    }else $('planDataQuality').textContent=state.attempts.length<30?'dados iniciais':state.attempts.length<100?'amostra em formação':'amostra robusta';
     $('targetDate').value=state.profile.targetDate; $('targetScore').value=state.profile.targetScore; $('dailyMinutes').value=state.profile.dailyMinutes; $('strategy').value=state.profile.strategy;
   }
 
@@ -179,11 +221,18 @@
     $('subjectList').innerHTML=arr.map(s=>{const st=stats(s.id),bankCount=QUESTIONS.filter(q=>q.subject===s.id).length;return `<button class="subject-btn ${selectedSubject===s.id?'active':''}" data-subject="${s.id}"><div class="line1"><strong>${s.name}</strong><b>${s.q}Q</b></div><span>${st.n?`${fmtPct(st.estimated)} estimado • ${st.open} erros`:'sem diagnóstico'} • banco ${bankCount}</span></button>`}).join('');
     $$('[data-subject]').forEach(b=>b.onclick=()=>{selectedSubject=b.dataset.subject;renderStudy()});
     const s=subjectById(selectedSubject)||CORE[0], st=stats(s.id),bankCount=QUESTIONS.filter(q=>q.subject===s.id).length;
+    const top=INTEL?INTEL.rankTopics(state,{subject:s.id})[0]:null;
     $('subjectTier').textContent=s.core?'NÚCLEO 62 • ALTA PRIORIDADE':'PESO BAIXO • COMPLEMENTAR'; $('subjectName').textContent=s.name; $('subjectWeight').textContent=`${s.q} questões`;
     $('subjectEstimated').textContent=fmtPct(st.estimated); $('subjectSample').textContent=st.n; $('subjectErrors').textContent=st.open; $('subjectGain').textContent=`+${st.potential.toFixed(1)} pts`;
     $('subjectMeterBar').style.width=`${Math.round(st.estimated*100)}%`;
-    $('subjectAdvice').textContent=bankCount===0?`Ainda não há questões de ${s.name} no banco. Importe um pacote na Central do Banco antes de diagnosticar esta matéria.`:st.n<5?`Ainda há pouca amostra. Faça um diagnóstico curto de ${s.name} antes de decidir quanta teoria estudar.`:st.estimated<.55?'Prioridade alta: use questões + correção pontual. Evite aula longa antes de identificar exatamente os temas que estão derrubando o desempenho.':st.estimated<.75?'Faixa intermediária: mantenha blocos curtos e concentre revisão nos erros reincidentes.':'Matéria em boa faixa de domínio: reduza volume e mantenha revisão espaçada para preservar pontos.';
-    $('subjectTopics').innerHTML=s.topics.map(t=>`<span class="chip">${t}</span>`).join('');
+    if(bankCount===0) $('subjectAdvice').textContent=`Ainda não há questões de ${s.name} no banco ativo. Amplie o banco antes de interpretar ausência de desempenho como domínio.`;
+    else if(top) $('subjectAdvice').textContent=`Próximo alvo: ${top.topic.label}. ${top.action.label}. ${INTEL.explainRecommendation(top)}`;
+    else if(st.n<5) $('subjectAdvice').textContent=`Ainda há pouca amostra. Faça um diagnóstico curto de ${s.name} antes de decidir quanta teoria estudar.`;
+    else if(st.estimated<.55) $('subjectAdvice').textContent='Prioridade alta: use questões + correção pontual. Evite aula longa antes de identificar exatamente os temas que estão derrubando o desempenho.';
+    else if(st.estimated<.75) $('subjectAdvice').textContent='Faixa intermediária: mantenha blocos curtos e concentre revisão nos erros reincidentes.';
+    else $('subjectAdvice').textContent='Matéria em boa faixa de domínio: reduza volume e mantenha revisão espaçada para preservar pontos.';
+    const topics=INTEL?INTEL.topicObjects(s.id).map(t=>t.label):s.topics;
+    $('subjectTopics').innerHTML=topics.map(t=>`<span class="chip">${t}</span>`).join('');
   }
 
   function renderQuestionSelectors(){
@@ -199,22 +248,25 @@
     }
     let allowedSubjects=state.profile.strategy==='balanced'?SUBJECTS:CORE;
     let base=QUESTIONS.filter(q=>subject==='all'?allowedSubjects.some(s=>s.id===q.subject):q.subject===subject);
-    if(subject!=='all') return shuffle(base).slice(0,limit);
+    if(mode==='adaptive' && INTEL){
+      return INTEL.selectAdaptiveQuestions(base,state,{limit,strategy:state.profile.strategy,subject});
+    }
+    if(subject!=='all') return uniqueFamilies(shuffle(base)).slice(0,limit);
     if(mode==='adaptive'){
       const rank=subjectRanking(); let ordered=[];
-      rank.forEach(x=>{const qs=shuffle(base.filter(q=>q.subject===x.s.id)); const denominator=allowedSubjects.reduce((a,s)=>a+s.q,0);ordered.push(...qs.slice(0,Math.max(1,Math.ceil(limit*(x.s.q/denominator)))))});
-      const unique=[...new Map(ordered.map(q=>[q.id,q])).values()];
-      if(unique.length<limit){const remaining=shuffle(base.filter(q=>!unique.some(u=>u.id===q.id)));unique.push(...remaining.slice(0,limit-unique.length));}
+      rank.forEach(x=>{const qs=uniqueFamilies(shuffle(base.filter(q=>q.subject===x.s.id))); const denominator=allowedSubjects.reduce((a,s)=>a+s.q,0);ordered.push(...qs.slice(0,Math.max(1,Math.ceil(limit*(x.s.q/denominator)))))});
+      const unique=[...new Map(ordered.map(q=>[questionFamily(q),q])).values()];
+      if(unique.length<limit){const used=new Set(unique.map(questionFamily));const remaining=uniqueFamilies(shuffle(base.filter(q=>!used.has(questionFamily(q)))));unique.push(...remaining.slice(0,limit-unique.length));}
       return unique.slice(0,limit);
     }
     if(mode==='exam'){
       let out=[]; const denominator=allowedSubjects.reduce((a,s)=>a+s.q,0);
-      allowedSubjects.forEach(s=>{const take=Math.max(1,Math.round(limit*s.q/denominator));out.push(...shuffle(base.filter(q=>q.subject===s.id)).slice(0,take))});
-      const unique=[...new Map(out.map(q=>[q.id,q])).values()];
-      if(unique.length<limit){const remaining=shuffle(base.filter(q=>!unique.some(u=>u.id===q.id)));unique.push(...remaining.slice(0,limit-unique.length));}
+      allowedSubjects.forEach(s=>{const take=Math.max(1,Math.round(limit*s.q/denominator));out.push(...uniqueFamilies(shuffle(base.filter(q=>q.subject===s.id))).slice(0,take))});
+      const unique=[...new Map(out.map(q=>[questionFamily(q),q])).values()];
+      if(unique.length<limit){const used=new Set(unique.map(questionFamily));const remaining=uniqueFamilies(shuffle(base.filter(q=>!used.has(questionFamily(q)))));unique.push(...remaining.slice(0,limit-unique.length));}
       return shuffle(unique).slice(0,limit);
     }
-    return shuffle(base).slice(0,limit);
+    return uniqueFamilies(shuffle(base)).slice(0,limit);
   }
 
   function startSession(mode=selectedMode,limit=Number($('questionLimit').value||10),subject=$('questionSubject').value||'all'){
@@ -223,7 +275,7 @@
       showNotice('Não há revisões vencidas. Iniciando bloco adaptativo.'); mode='adaptive'; qs=makePool(mode,limit,subject);
     }
     if(!qs.length){showNotice('Não há questões disponíveis neste filtro. Use a Central do Banco para ampliar a base.');return;}
-    if(qs.length<limit)showNotice(`Este filtro tem apenas ${qs.length} questões únicas disponíveis no banco atual.`);
+    if(qs.length<limit)showNotice(`Este filtro tem apenas ${qs.length} famílias de questões únicas disponíveis no banco atual.`);
     session={mode,qs,index:0,answers:{},startedAt:now(),questionStartedAt:now()};
     $('sessionSetup').classList.add('hidden'); $('sessionResult').classList.add('hidden'); $('sessionArea').classList.remove('hidden');
     page('questions'); startTimer(); renderQuestion();
@@ -245,7 +297,7 @@
     const q=session.qs[session.index]; if(session.answers[q.id])return;
     const correct=choice===q.correct; const elapsed=now()-session.questionStartedAt;
     session.answers[q.id]={choice,correct,timeMs:elapsed,cause:null};
-    state.attempts.push({qid:q.id,subject:q.subject,topic:q.topic,correct,choice,timeMs:elapsed,mode:session.mode,ts:now(),cause:null});
+    state.attempts.push({qid:q.id,ruleId:q.ruleId||null,subject:q.subject,topic:q.topic,correct,choice,timeMs:elapsed,mode:session.mode,ts:now(),cause:null,origin:q.origin||null});
     updateReview(q,correct);
     persist(); renderQuestion(); renderAll();
   }
@@ -262,7 +314,7 @@
     ans.cause=cause;
     const last=[...state.attempts].reverse().find(a=>a.qid===q.id && a.ts>=session.startedAt); if(last)last.cause=cause;
     if(state.reviews[q.id])state.reviews[q.id].cause=cause;
-    persist(); renderQuestion();
+    persist(); renderQuestion(); renderAll();
   }
   function nextQuestion(){
     if(!session)return; if(session.index===session.qs.length-1){finishSession();return;} session.index++;session.questionStartedAt=now();renderQuestion();
@@ -273,7 +325,8 @@
     state.sessions.unshift({id:`s-${now()}`,mode:session.mode,total,correct,duration,ts:now()}); state.sessions=state.sessions.slice(0,30); persist();
     $('sessionArea').classList.add('hidden'); $('sessionResult').classList.remove('hidden');
     const pct=total?Math.round(correct/total*100):0,o=overall();
-    $('sessionResult').innerHTML=`<p class="eyebrow">BLOCO CONCLUÍDO</p><h2>${correct}/${total} acertos</h2><p class="muted">O resultado já foi incorporado à projeção e à fila de revisão.</p><div class="result-summary"><div><span>Aproveitamento</span><strong>${pct}%</strong></div><div><span>Tempo</span><strong>${Math.round(duration/60000)} min</strong></div><div><span>Erros gerados</span><strong>${total-correct}</strong></div><div><span>P(≥40)</span><strong>${o.total<20?'—':fmtPct(o.passProbability)}</strong></div></div><div class="actions-row"><button class="btn primary" id="resultNext">Novo bloco adaptativo</button><button class="btn secondary" id="resultDash">Voltar ao painel</button></div>`;
+    const next=INTEL?recommendations(1)[0]:null;
+    $('sessionResult').innerHTML=`<p class="eyebrow">BLOCO CONCLUÍDO</p><h2>${correct}/${total} acertos</h2><p class="muted">O resultado já foi incorporado à projeção, à fila de revisão e à prioridade temática.${next?` Próximo alvo: ${next.subjectName} • ${next.topic.label}.`:''}</p><div class="result-summary"><div><span>Aproveitamento</span><strong>${pct}%</strong></div><div><span>Tempo</span><strong>${Math.round(duration/60000)} min</strong></div><div><span>Erros gerados</span><strong>${total-correct}</strong></div><div><span>P(≥40)</span><strong>${o.total<20?'—':fmtPct(o.passProbability)}</strong></div></div><div class="actions-row"><button class="btn primary" id="resultNext">Novo bloco adaptativo</button><button class="btn secondary" id="resultDash">Voltar ao painel</button></div>`;
     $('resultNext').onclick=()=>{resetSessionUI();startSession('adaptive')}; $('resultDash').onclick=()=>{resetSessionUI();page('dashboard')};
     session=null; renderAll();
   }
@@ -286,8 +339,8 @@
   }
 
   function renderAnalytics(){
-    const rows=SUBJECTS.map(s=>({s,st:stats(s.id)}));
-    $('analyticsBody').innerHTML=rows.map(x=>`<tr><td><strong>${x.s.name}</strong></td><td>${x.s.q}/80</td><td>${x.st.n}</td><td>${x.st.n?fmtPct(x.st.raw):'—'}</td><td>${fmtPct(x.st.estimated)}</td><td>+${x.st.potential.toFixed(1)}</td><td><span class="priority-pill">${x.s.core?Math.round(x.st.focus):'complementar'}</span></td></tr>`).join('');
+    const rows=SUBJECTS.map(s=>({s,st:stats(s.id),top:INTEL?INTEL.rankTopics(state,{subject:s.id})[0]:null}));
+    $('analyticsBody').innerHTML=rows.map(x=>`<tr><td><strong>${x.s.name}</strong>${x.top?`<small style="display:block;color:#697386">${x.top.topic.label}</small>`:''}</td><td>${x.s.q}/80</td><td>${x.st.n}</td><td>${x.st.n?fmtPct(x.st.raw):'—'}</td><td>${fmtPct(x.st.estimated)}</td><td>+${x.st.potential.toFixed(1)}</td><td><span class="priority-pill">${x.s.core?Math.round(x.st.focus):'complementar'}</span></td></tr>`).join('');
     const causes={knowledge:0,confusion:0,reading:0}; state.attempts.filter(a=>!a.correct&&a.cause).forEach(a=>causes[a.cause]++);
     $('causeBreakdown').innerHTML=`<div class="cause-card"><strong>${causes.knowledge}</strong><span>Não sabia a regra</span></div><div class="cause-card"><strong>${causes.confusion}</strong><span>Confusão conceitual</span></div><div class="cause-card"><strong>${causes.reading}</strong><span>Leitura/atenção</span></div>`;
     $('sessionHistory').innerHTML=state.sessions.length?state.sessions.slice(0,8).map(s=>`<div class="history-item"><strong>${s.mode} • ${s.correct}/${s.total}</strong><span>${new Date(s.ts).toLocaleDateString('pt-BR')} • ${Math.round(s.duration/60000)} min</span></div>`).join(''):'<div class="muted">Nenhum bloco concluído ainda.</div>';
@@ -295,9 +348,11 @@
 
   function renderAll(){ renderDashboard(); renderPlan(); renderStudy(); renderReviews(); renderAnalytics(); }
   function showNotice(msg){$('notice').textContent=msg;$('notice').classList.remove('hidden');setTimeout(()=>$('notice').classList.add('hidden'),5000)}
-  function installBankLink(){
-    const nav=document.querySelector('.nav'); if(!nav||document.querySelector('a[href="bank.html"]'))return;
-    const tutor=nav.querySelector('a[href="ia.html"]'); const a=document.createElement('a'); a.className='nav-item nav-link';a.href='bank.html';a.innerHTML='<span>▦</span>Banco de questões';nav.insertBefore(a,tutor||null);
+  function installExtraLinks(){
+    const nav=document.querySelector('.nav'); if(!nav)return;
+    const tutor=nav.querySelector('a[href="ia.html"]');
+    if(!nav.querySelector('a[href="trilha.html"]')){const a=document.createElement('a');a.className='nav-item nav-link';a.href='trilha.html';a.innerHTML='<span>◎</span>Trilha de aprovação';nav.insertBefore(a,tutor||null);}
+    if(!nav.querySelector('a[href="bank.html"]')){const a=document.createElement('a');a.className='nav-item nav-link';a.href='bank.html';a.innerHTML='<span>▦</span>Banco de questões';nav.insertBefore(a,tutor||null);}
   }
 
   function bind(){
@@ -306,8 +361,8 @@
     $('heroDiagnostic').onclick=()=>startSession('core',10,'all'); $('quickReview').onclick=()=>startSession('review',10,'all'); $('startDueReview').onclick=()=>startSession('review',10,'all');
     $('savePlan').onclick=()=>{state.profile.targetDate=$('targetDate').value||CFG.examDate;state.profile.targetScore=clamp(Number($('targetScore').value||45),40,70);state.profile.dailyMinutes=clamp(Number($('dailyMinutes').value||60),20,300);state.profile.strategy=$('strategy').value;persist();renderAll();showNotice('Estratégia atualizada.')};
     $$('[data-subject-filter]').forEach(b=>b.onclick=()=>{state.settings.subjectFilter=b.dataset.subjectFilter;persist();renderStudy()});
-    $('trainSubject').onclick=()=>{page('questions');$('questionSubject').value=selectedSubject;selectedMode='core';startSession('core',10,selectedSubject)};
-    $('diagnoseSubject').onclick=()=>{page('questions');$('questionSubject').value=selectedSubject;startSession('core',5,selectedSubject)};
+    $('trainSubject').onclick=()=>{page('questions');$('questionSubject').value=selectedSubject;selectedMode='adaptive';startSession('adaptive',10,selectedSubject)};
+    $('diagnoseSubject').onclick=()=>{page('questions');$('questionSubject').value=selectedSubject;startSession('adaptive',5,selectedSubject)};
     $$('[data-mode]').forEach(b=>b.onclick=()=>{selectedMode=b.dataset.mode;$$('[data-mode]').forEach(x=>x.classList.toggle('active',x===b))});
     $('startSession').onclick=()=>startSession(selectedMode,Number($('questionLimit').value),$('questionSubject').value);
     $('prevQuestion').onclick=()=>{if(session&&session.index>0){session.index--;session.questionStartedAt=now();renderQuestion()}}; $('nextQuestion').onclick=nextQuestion; $('finishSession').onclick=finishSession;
@@ -347,8 +402,9 @@
   }
 
   async function bootstrap(){
-    const imported=await loadQuestionBank(); installBankLink(); renderQuestionSelectors(); bind(); renderAll(); initFirebase();
-    if(imported)showNotice(`Banco ampliado: ${imported} questões importadas carregadas.`);
+    const imported=await loadQuestionBank(); installExtraLinks(); renderQuestionSelectors(); bind(); renderAll(); initFirebase();
+    if(INTEL?.EXAM?.status==='awaiting-48-edital') showNotice('48º EOU: estratégia calibrada no 47º e no histórico OAB 32–47; recalibrar após o edital de 21/09/2026.');
+    else if(imported) showNotice(`Banco ampliado: ${imported} questões importadas carregadas.`);
   }
   bootstrap();
 })();
