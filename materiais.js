@@ -44,7 +44,9 @@ function populate(){
 
 function render(){
   const q=norm($('search').value),subject=$('subjectFilter').value;
-  const rows=folders.filter(f=>(subject==='all'||f.id===subject)&&(!q||norm(`${f.name} ${topicsFor(f.id).join(' ')}`).includes(q)));
+  // Se uma matéria veio definida pelo treino/erro, ela sempre deve aparecer.
+  // O nome do conceito pode diferir do título da aula e não pode bloquear acesso à pasta.
+  const rows=folders.filter(f=>subject!=='all'?f.id===subject:(!q||norm(`${f.name} ${topicsFor(f.id).join(' ')}`).includes(q)));
   $('library').innerHTML=rows.length?rows.map(f=>{
     const topics=topicsFor(f.id),url=driveUrl(f);
     return `<article class="course">
@@ -52,7 +54,7 @@ function render(){
       <div class="tags">${topics.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
       <div class="course-actions"><a class="btn primary" target="_blank" rel="noopener noreferrer" href="${url}">Abrir aulas no Drive</a></div>
     </article>`;
-  }).join(''):'<div class="empty">Nenhuma matéria corresponde ao filtro. Limpe a busca para ver a pasta da disciplina.</div>';
+  }).join(''):'<div class="empty">Nenhuma matéria corresponde ao filtro.</div>';
 }
 
 populate();
