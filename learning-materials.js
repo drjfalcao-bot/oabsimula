@@ -4,7 +4,7 @@
   // Catálogo pedagógico derivado do acervo privado importado. Não contém links,
   // IDs de arquivos ou conteúdo proprietário; serve para orientar o motor de estudo.
   window.OAB_LEARNING_MATERIALS = {
-    version: 3,
+    version: 4,
     lastScan: '2026-09-11',
     privacy: 'private-source-metadata-only',
     cycle: [
@@ -197,6 +197,31 @@
           {id:'jornada', label:'Jornada de trabalho', priority:3, aliases:['jornada']},
           {id:'remuneracao', label:'Remuneração e salário', priority:3, aliases:['remuneracao']},
           {id:'prescricao_trabalhista', label:'Prescrição trabalhista', priority:2}
+        ]
+      },
+      processo_civil: {
+        indexedFrom: ['CEISC'],
+        formats: ['Aula teórica', 'TAQ', 'PDF'],
+        items: [
+          {id:'competencia', label:'Competência', priority:1, aliases:['competencia']},
+          {id:'tutela_provisoria', label:'Tutela provisória', priority:3, aliases:['tutela_provisoria']},
+          {id:'procedimento_comum', label:'Procedimento comum', priority:3, aliases:['procedimento_comum']},
+          {id:'recursos', label:'Recursos', priority:3, aliases:['recursos']},
+          {id:'cumprimento_sentenca', label:'Cumprimento de sentença', priority:3, aliases:['cumprimento_de_sentenca']},
+          {id:'execucao', label:'Execução', priority:3, aliases:['execucao']},
+          {id:'juizados_especiais', label:'Juizados Especiais Cíveis', priority:3}
+        ]
+      },
+      processo_trabalho: {
+        indexedFrom: ['CEISC', 'VDE'],
+        formats: ['Aula teórica', 'TAQ', 'PDF'],
+        items: [
+          {id:'competencia', label:'Competência da Justiça do Trabalho', priority:2, aliases:['competencia']},
+          {id:'procedimentos', label:'Procedimentos trabalhistas', priority:3, aliases:['procedimentos']},
+          {id:'audiencia', label:'Audiência', priority:3, aliases:['audiencia']},
+          {id:'provas', label:'Provas', priority:3, aliases:['provas']},
+          {id:'recursos', label:'Recursos trabalhistas', priority:3, aliases:['recursos']},
+          {id:'execucao_trabalhista', label:'Execução trabalhista', priority:3, aliases:['execucao_trabalhista']}
         ]
       }
     }
