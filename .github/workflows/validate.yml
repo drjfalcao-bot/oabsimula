@@ -18,6 +18,10 @@ jobs:
         run: |
           node --check app.js
           node --check data.js
+          node --check learning-materials.js
+          node --check oab-intelligence.js
+          node --check cronograma.js
+          node --check fabrica.js
           node --check question-bank.js
           node --check fgv-bank.js
           node --check expanded-bank.js
@@ -27,10 +31,14 @@ jobs:
           node --check ia.js
           node --check second-phase-data.js
           node --check segunda-fase.js
-          node --check fabrica.js
           node --check functions/index.js
           node --check functions/main.js
           node --check functions/question-engine.js
+          node --check functions/oab-blueprint.js
+          node --check functions/coverage-engine.js
+          node --check scripts/validate-oab-intelligence.mjs
+      - name: Validate OAB intelligence matrix
+        run: node scripts/validate-oab-intelligence.mjs
       - name: Validate calibrated editorial seed
         run: |
           node - <<'NODE'
@@ -99,7 +107,7 @@ jobs:
           from pathlib import Path
           import re, sys
           failed=False
-          for name in ['index.html','ia.html','questao-guiada.html','bank.html','segunda-fase.html','fabrica.html']:
+          for name in ['index.html','ia.html','questao-guiada.html','bank.html','segunda-fase.html','fabrica.html','trilha.html','cronograma.html']:
               text=Path(name).read_text(encoding='utf-8')
               ids=re.findall(r'\bid=["\']([^"\']+)["\']', text)
               dup=sorted({x for x in ids if ids.count(x)>1})
