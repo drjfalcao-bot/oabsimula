@@ -21,7 +21,6 @@ jobs:
           node --check learning-materials.js
           node --check oab-intelligence.js
           node --check cronograma.js
-          node --check fabrica.js
           node --check caderno.js
           node --check materiais.js
           node --check trilha.js
@@ -105,17 +104,19 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import re, sys
-          pages=['index.html','questao-guiada.html','bank.html','segunda-fase.html','fabrica.html','trilha.html','cronograma.html','caderno.html','materiais.html']
+          pages=['index.html','questao-guiada.html','bank.html','segunda-fase.html','trilha.html','cronograma.html','caderno.html','materiais.html']
           failed=False
+          forbidden=('ia.html','Professor IA','Tutor IA','Fábrica IA')
           for name in pages:
               text=Path(name).read_text(encoding='utf-8')
               ids=re.findall(r'\bid=["\']([^"\']+)["\']',text)
               dup=sorted({x for x in ids if ids.count(x)>1})
               if dup:
                   print(name,'IDs duplicados:',dup); failed=True
-              if 'ia.html' in text or 'Professor IA' in text:
-                  print(name,'ainda referencia Professor IA'); failed=True
-          for removed in ['ia.html','ia.js','professor-bridge.js','functions/professor-api.js']:
+              for term in forbidden:
+                  if term in text:
+                      print(name,'ainda contém referência removida:',term); failed=True
+          for removed in ['ia.html','ia.js','professor-bridge.js','functions/professor-api.js','fabrica.html','fabrica.js','guided-commentary-guard.js']:
               if Path(removed).exists():
                   print(removed,'deveria ter sido removido'); failed=True
           if failed: sys.exit(1)
