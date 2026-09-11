@@ -1,284 +1,53 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#0b1726" />
-  <title>OAB APROVA | 48º Exame</title>
-  <meta name="description" content="Sistema adaptativo para a 1ª fase da OAB: incidência FGV, diagnóstico temático, questões, revisão espaçada, caderno de erros e projeção de pontos." />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Libre+Caslon+Display&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css" />
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b1726">
+<title>OAB APROVA | 48º Exame</title>
+<meta name="description" content="Sistema adaptativo para a 1ª fase da OAB com calendário oficial, diagnóstico de erros, reforço de conceitos, questões e revisão espaçada.">
+<link rel="stylesheet" href="styles.css">
+<style>
+.hidden{display:none!important}.calendar-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.date-card{border:1px solid #e3e7eb;border-radius:15px;padding:14px;background:#fff}.date-card span{display:block;font-size:9px;text-transform:uppercase;font-weight:900;color:#687588}.date-card strong{display:block;font-size:18px;margin:5px 0}.date-card small{color:#687588}.calendar-edit{display:grid;grid-template-columns:repeat(4,1fr) auto;gap:9px;align-items:end;margin-top:12px}.error-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.error-card{border:1px solid #e1e6ea;border-radius:14px;padding:13px;background:#fff}.error-card span{font-size:9px;text-transform:uppercase;font-weight:900;color:#687588}.error-card strong{display:block;font-size:22px;margin-top:4px}.filters{display:grid;grid-template-columns:1.2fr repeat(3,.8fr);gap:9px;margin:12px 0}.error-list{display:grid;gap:9px}.err{border:1px solid #e1e5e9;border-radius:15px;padding:14px;background:#fff;display:grid;grid-template-columns:1fr auto;gap:12px}.err.recurrent{border-left:4px solid #b64f49}.err h4{margin:0 0 5px}.err p{font-size:11px;color:#5e6b79;margin:4px 0;line-height:1.45}.badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.pill{font-size:9px;font-weight:800;padding:4px 7px;border-radius:999px;background:#eef2f5;color:#31506e}.pill.bad{background:#fff0ee;color:#8f3030}.pill.warn{background:#fff4d8;color:#6f5421}.err-actions{display:flex;gap:6px;flex-wrap:wrap;align-content:start;justify-content:flex-end}.concept-list{display:grid;gap:7px}.concept-row{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;border-top:1px solid #edf0f2;padding:10px 0}.concept-row small{display:block;color:#687588;margin-top:2px}.rule-box{margin-top:12px;padding:12px;border-radius:12px;background:#f7f9fb;border-left:3px solid #315f8a;font-size:11px;line-height:1.5}.feedback-tools{display:grid;gap:10px;margin-top:12px}.cause-buttons{display:flex;gap:7px;flex-wrap:wrap}.cause-buttons button.active{background:#0e2134;color:#fff}.question-feedback{padding:15px;border-radius:14px;background:#f2faf6;border:1px solid #c8e3d6}.question-feedback.bad{background:#fff5f4;border-color:#ebc5c1}.question-feedback h4{margin:0 0 6px}.question-feedback p{font-size:12px;line-height:1.5}.top-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.top-meta .exam-chip{white-space:nowrap}@media(max-width:1000px){.calendar-grid,.error-grid{grid-template-columns:1fr 1fr}.calendar-edit,.filters{grid-template-columns:1fr 1fr}.err{grid-template-columns:1fr}.err-actions{justify-content:flex-start}}@media(max-width:620px){.calendar-grid,.error-grid,.calendar-edit,.filters{grid-template-columns:1fr}.concept-row{grid-template-columns:1fr}.top-meta{align-items:stretch}}
+</style>
 </head>
 <body>
-  <div class="app-shell">
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="brand-mark">OA</div>
-        <div>
-          <strong>OAB APROVA</strong>
-          <span>48º Exame • 1ª fase</span>
-        </div>
-      </div>
+<div class="app-shell">
+<aside class="sidebar">
+<div class="brand"><div class="brand-mark">OA</div><div><strong>OAB APROVA</strong><span>48º Exame • 1ª fase</span></div></div>
+<nav class="nav" aria-label="Navegação principal">
+<button class="nav-item active" data-page="dashboard"><span>◫</span>Painel</button>
+<button class="nav-item" data-page="plan"><span>◎</span>Plano</button>
+<button class="nav-item" data-page="study"><span>▤</span>Matérias</button>
+<button class="nav-item" data-page="questions"><span>✓</span>Questões</button>
+<button class="nav-item" data-page="errors"><span>↺</span>Erros e reforço</button>
+<button class="nav-item" data-page="analytics"><span>⌁</span>Desempenho</button>
+<a class="nav-item nav-link" href="questao-guiada.html"><span>⌕</span>Questão Guiada</a>
+<a class="nav-item nav-link" href="trilha.html"><span>◉</span>Trilha</a>
+<a class="nav-item nav-link" href="caderno.html"><span>▤</span>Caderno</a>
+<a class="nav-item nav-link" href="materiais.html"><span>▶</span>Videoaulas</a>
+<a class="nav-item nav-link" href="bank.html"><span>▦</span>Banco</a>
+</nav>
+<div class="sidebar-foot"><div class="user-card"><div class="avatar">OA</div><div><strong>Progresso local</strong><span>salvo neste navegador</span></div></div></div>
+</aside>
+<main class="main">
+<header class="topbar"><div><p class="eyebrow" id="pageEyebrow">CENTRAL DE APROVAÇÃO</p><h1 id="pageTitle">Painel de aprovação</h1></div><div class="top-meta"><span class="exam-chip"><b id="daysToExam">—</b> dias para a prova</span><button class="btn secondary" id="quickReview">Revisar erros</button><button class="btn primary" id="quickStudy">Estudar agora</button></div></header>
+<div class="notice hidden" id="notice"></div>
 
-      <nav class="nav" aria-label="Navegação principal">
-        <button class="nav-item active" data-page="dashboard"><span>◫</span>Painel</button>
-        <button class="nav-item" data-page="plan"><span>◎</span>Plano adaptativo</button>
-        <button class="nav-item" data-page="study"><span>▤</span>Matérias</button>
-        <button class="nav-item" data-page="questions"><span>✓</span>Questões</button>
-        <button class="nav-item" data-page="errors"><span>↺</span>Revisões</button>
-        <button class="nav-item" data-page="analytics"><span>⌁</span>Desempenho</button>
-        <a class="nav-item nav-link" href="questao-guiada.html"><span>⌕</span>Questão Guiada</a>
-        <a class="nav-item nav-link" href="trilha.html"><span>◉</span>Trilha de aprovação</a>
-        <a class="nav-item nav-link" href="caderno.html"><span>▤</span>Caderno inteligente</a>
-        <a class="nav-item nav-link" href="materiais.html"><span>▶</span>Aulas</a>
-        <a class="nav-item nav-link" href="bank.html"><span>▦</span>Banco de questões</a>
-        <a class="nav-item nav-link" href="ia.html"><span>✦</span>Professor IA</a>
-      </nav>
+<section class="page active" data-view="dashboard">
+<article class="card" style="margin-bottom:14px"><div class="card-head"><div><p class="eyebrow">CALENDÁRIO OFICIAL • 48º EOU</p><h3>Próximos marcos</h3></div><span class="badge" id="calendarStatus">carregando</span></div><div class="calendar-grid"><div class="date-card"><span>Edital</span><strong id="editalCountdown">—</strong><small id="editalDateLabel">21/09/2026</small></div><div class="date-card"><span>Inscrições abrem</span><strong id="inscriptionOpenCountdown">—</strong><small id="inscriptionOpenLabel">28/09/2026</small></div><div class="date-card"><span>Inscrições encerram</span><strong id="inscriptionCloseCountdown">—</strong><small id="inscriptionCloseLabel">05/10/2026</small></div><div class="date-card"><span>1ª fase</span><strong id="examCountdown">—</strong><small id="examDateLabel">10/01/2027</small></div></div><details style="margin-top:10px"><summary class="text-btn">Ajustar datas se a OAB alterar o cronograma</summary><div class="calendar-edit"><label>Edital<input type="date" id="calEdital"></label><label>Abre inscrição<input type="date" id="calOpen"></label><label>Encerra inscrição<input type="date" id="calClose"></label><label>Prova<input type="date" id="calExam"></label><button class="btn primary" id="saveCalendar">Salvar</button></div></details></article>
+<div class="hero-grid"><article class="hero-card"><div class="hero-copy"><p class="eyebrow light">NÚCLEO 62 • ERRO DIAGNOSTICADO</p><h2>O erro precisa virar regra recuperável.</h2><p>O sistema mede o que tu errou, por que errou, quantas vezes reincidiu e quando precisa rever. Questão errada sem reforço não conta como estudo concluído.</p><div class="hero-actions"><button class="btn light" id="heroAdaptive">Bloco adaptativo</button><button class="btn hero-outline" id="heroErrors">Atacar erros</button></div></div><div class="score-orbit"><div class="score-ring" id="scoreRing"><div><span>projeção</span><strong id="projectedScore">—</strong><small>/80</small></div></div><p id="projectionConfidence">Aguardando dados</p></div></article><article class="card status-card"><div class="card-head"><div><p class="eyebrow">STATUS</p><h3 id="riskLabel">Sem diagnóstico</h3></div><span class="status-dot neutral" id="riskDot"></span></div><p class="muted" id="riskText">Resolva questões para formar amostra.</p><div class="mini-grid"><div><span>Meta segura</span><strong id="safeTarget">45</strong></div><div><span>Revisões vencidas</span><strong id="dashboardDue">0</strong></div></div></article></div>
+<div class="metric-grid"><article class="metric-card"><span>Questões resolvidas</span><strong id="metricAttempts">0</strong><small id="metricSessions">0 sessões</small></article><article class="metric-card"><span>Aproveitamento</span><strong id="metricAccuracy">0%</strong><small>acerto bruto</small></article><article class="metric-card"><span>Erros reincidentes</span><strong id="metricRecurrent">0</strong><small>errados 2+ vezes</small></article><article class="metric-card"><span>Sem causa classificada</span><strong id="metricUnclassified">0</strong><small>precisam diagnóstico</small></article></div>
+<div class="content-grid two-thirds"><article class="card"><div class="card-head"><div><p class="eyebrow">PRIORIDADE</p><h3>Próximo ponto provável</h3></div><button class="text-btn" data-go-page="plan">Ver plano</button></div><div id="priorityList" class="priority-list"></div></article><article class="card"><div class="card-head"><div><p class="eyebrow">ROTINA</p><h3>Bloco recomendado</h3></div></div><div id="routineBox" class="routine"></div><button class="btn primary full" id="routineStart">Executar</button></article></div>
+</section>
 
-      <div class="sidebar-foot">
-        <div class="user-card">
-          <div class="avatar" id="userAvatar">U</div>
-          <div>
-            <strong id="userName">Usuário local</strong>
-            <span id="syncStatus">Dados salvos neste navegador</span>
-          </div>
-        </div>
-        <button class="ghost-btn full" id="loginGoogle">Entrar com Google</button>
-        <button class="ghost-btn full hidden" id="logoutGoogle">Sair da conta</button>
-      </div>
-    </aside>
+<section class="page" data-view="plan"><div class="section-intro"><div><p class="eyebrow">ALGORITMO</p><h2>Plano adaptativo</h2></div><p>Prioridade = peso na prova + incidência histórica + domínio + causa dos erros + revisão vencida.</p></div><div class="content-grid two-thirds"><article class="card"><div class="card-head"><div><p class="eyebrow">FILA</p><h3>Matérias e temas</h3></div></div><div id="planRanking" class="ranking-list"></div></article><article class="card"><label>Data da prova<input type="date" id="targetDate" value="2027-01-10"></label><label>Meta segura<input type="number" id="targetScore" min="40" max="70" value="45"></label><label>Minutos por dia<input type="number" id="dailyMinutes" min="20" max="300" value="60"></label><label>Estratégia<select id="strategy"><option value="core">Núcleo 62</option><option value="balanced">Todas as matérias</option></select></label><button class="btn primary full" id="savePlan">Salvar</button></article></div></section>
 
-    <main class="main">
-      <header class="topbar">
-        <div>
-          <p class="eyebrow" id="pageEyebrow">CENTRAL DE APROVAÇÃO</p>
-          <h1 id="pageTitle">Painel de aprovação</h1>
-        </div>
-        <div class="top-actions">
-          <span class="exam-chip"><b id="daysToExam">—</b> dias para a prova</span>
-          <button class="btn secondary" id="quickReview">Revisar vencidas</button>
-          <button class="btn primary" id="quickStudy">Estudar agora</button>
-        </div>
-      </header>
+<section class="page" data-view="study"><div class="study-layout"><aside class="card subject-list-card"><div class="card-head"><div><p class="eyebrow">MATÉRIAS</p><h3>Mapa</h3></div></div><div class="filter-tabs"><button class="active" data-subject-filter="core">Núcleo 62</button><button data-subject-filter="all">Todas</button></div><div id="subjectList" class="subject-list"></div></aside><article class="card subject-detail"><div class="card-head"><div><p class="eyebrow" id="subjectTier">ALTA PRIORIDADE</p><h2 id="subjectName">Ética</h2></div><span class="question-weight" id="subjectWeight">8 questões</span></div><div class="metric-grid compact"><div><span>Domínio</span><strong id="subjectEstimated">—</strong></div><div><span>Amostra</span><strong id="subjectSample">0</strong></div><div><span>Erros abertos</span><strong id="subjectErrors">0</strong></div><div><span>Ganho potencial</span><strong id="subjectGain">—</strong></div></div><div class="subject-advice" id="subjectAdvice"></div><h4>Temas</h4><div class="chips" id="subjectTopics"></div><div class="actions-row"><button class="btn primary" id="trainSubject">Treinar</button><a class="btn secondary" id="videoSubject" href="materiais.html">Videoaulas</a></div></article></div></section>
 
-      <div class="notice hidden" id="notice"></div>
+<section class="page" data-view="questions"><div id="sessionSetup" class="session-setup"><article class="card setup-main"><p class="eyebrow">SESSÃO</p><h2>Escolha o bloco</h2><div class="mode-grid"><button class="mode-card active" data-mode="adaptive"><strong>Adaptativo</strong><span>Maior valor esperado.</span></button><button class="mode-card" data-mode="review"><strong>Erros/Revisão</strong><span>Vencidos e reincidentes primeiro.</span></button><button class="mode-card" data-mode="exam"><strong>Mini-simulado</strong><span>Mistura proporcional.</span></button></div></article><article class="card setup-side"><label>Quantidade<select id="questionLimit"><option>5</option><option selected>10</option><option>15</option><option>20</option></select></label><label>Matéria<select id="questionSubject"><option value="all">Todas</option></select></label><button class="btn primary full" id="startSession">Começar</button></article></div><div id="sessionArea" class="session-area hidden"><aside class="card session-sidebar"><p class="eyebrow" id="sessionModeLabel">ADAPTATIVO</p><h3 id="sessionProgress">Questão 1</h3><div id="sessionDots" class="session-dots"></div><div class="timer-box"><span>Tempo</span><strong id="sessionTimer">00:00</strong></div><button class="btn secondary full" id="finishSession">Finalizar</button></aside><article class="card question-card"><div class="question-meta"><span id="questionSubjectLabel"></span><span id="questionTopicLabel"></span></div><h2 id="questionText"></h2><div id="answerList" class="answer-list"></div><div id="feedbackBox" class="hidden"></div><div class="question-nav"><button class="btn secondary" id="prevQuestion">← Anterior</button><button class="btn primary" id="nextQuestion">Próxima →</button></div></article></div><div id="sessionResult" class="card hidden"></div></section>
 
-      <section class="page active" data-view="dashboard">
-        <div class="hero-grid">
-          <article class="hero-card">
-            <div class="hero-copy">
-              <p class="eyebrow light">NÚCLEO 62 • INCIDÊNCIA FGV</p>
-              <h2>Priorize o ponto provável, não o volume de matéria.</h2>
-              <p>O motor cruza peso da disciplina, incidência temática histórica, desempenho recente, causa dos erros, revisões vencidas e material disponível. A distribuição do 47º EOU é a base operacional até a publicação do edital do 48º.</p>
-              <div class="hero-actions">
-                <button class="btn light" id="heroAdaptive">Iniciar bloco adaptativo</button>
-                <button class="btn hero-outline" id="heroDiagnostic">Diagnóstico rápido</button>
-              </div>
-            </div>
-            <div class="score-orbit">
-              <div class="score-ring" id="scoreRing">
-                <div>
-                  <span>projeção</span>
-                  <strong id="projectedScore">—</strong>
-                  <small>/ 80</small>
-                </div>
-              </div>
-              <p id="projectionConfidence">Aguardando dados</p>
-            </div>
-          </article>
+<section class="page" data-view="errors"><div class="section-intro"><div><p class="eyebrow">CONTROLE DE ERROS</p><h2>Erro → causa → conceito → reforço</h2></div><p>Reincidência tem prioridade maior que erro isolado. O objetivo é encerrar a falha conceitual, não apenas repetir a mesma questão.</p></div><div class="error-grid"><div class="error-card"><span>Abertos</span><strong id="errOpen">0</strong></div><div class="error-card"><span>Vencidos</span><strong id="errDue">0</strong></div><div class="error-card"><span>Reincidentes</span><strong id="errRecurrent">0</strong></div><div class="error-card"><span>Sem causa</span><strong id="errNoCause">0</strong></div></div><article class="card" style="margin-top:14px"><div class="card-head"><div><p class="eyebrow">FILTROS</p><h3>Caderno de falhas</h3></div><button class="btn primary" id="startDueReview">Revisar prioridade agora</button></div><div class="filters"><input id="errorSearch" placeholder="Buscar tema ou questão"><select id="errorSubject"><option value="all">Todas as matérias</option></select><select id="errorCause"><option value="all">Todas as causas</option><option value="knowledge">Não sabia a regra</option><option value="confusion">Confundi conceitos</option><option value="reading">Leitura/atenção</option><option value="none">Sem causa</option></select><select id="errorStatus"><option value="open">Abertos</option><option value="due">Vencidos</option><option value="recurrent">Reincidentes</option><option value="all">Todos</option></select></div><div id="errorList" class="error-list"></div></article><div class="content-grid two-thirds" style="margin-top:14px"><article class="card"><div class="card-head"><div><p class="eyebrow">CONCEITOS</p><h3>Onde os erros se concentram</h3></div></div><div id="conceptSummary" class="concept-list"></div></article><article class="card"><div class="card-head"><div><p class="eyebrow">CAUSA</p><h3>Perfil de falha</h3></div></div><div id="errorCauseSummary"></div></article></div></section>
 
-          <article class="card status-card">
-            <div class="card-head">
-              <div>
-                <p class="eyebrow">STATUS</p>
-                <h3 id="riskLabel">Sem diagnóstico</h3>
-              </div>
-              <span class="status-dot neutral" id="riskDot"></span>
-            </div>
-            <p class="muted" id="riskText">Responda questões suficientes para o sistema separar domínio real de falsa segurança.</p>
-            <div class="threshold">
-              <div class="threshold-track">
-                <span class="pass-line" style="left:50%"></span>
-                <div id="scoreBar"></div>
-              </div>
-              <div class="threshold-labels"><span>0</span><span>40 = aprovação</span><span>80</span></div>
-            </div>
-            <div class="mini-grid">
-              <div><span>Meta segura</span><strong id="safeTarget">45</strong></div>
-              <div><span>Margem atual</span><strong id="scoreMargin">—</strong></div>
-            </div>
-          </article>
-        </div>
-
-        <div class="metric-grid">
-          <article class="metric-card"><span>Questões resolvidas</span><strong id="metricAttempts">0</strong><small id="metricSessions">0 sessões</small></article>
-          <article class="metric-card"><span>Aproveitamento</span><strong id="metricAccuracy">0%</strong><small>acerto bruto</small></article>
-          <article class="metric-card"><span>Revisões vencidas</span><strong id="metricDue">0</strong><small id="metricOpenErrors">0 erros abertos</small></article>
-          <article class="metric-card"><span>Núcleo 62</span><strong id="metricCore">0%</strong><small>domínio estimado</small></article>
-        </div>
-
-        <div class="content-grid two-thirds">
-          <article class="card">
-            <div class="card-head">
-              <div><p class="eyebrow">PRIORIDADE DE HOJE</p><h3>Onde está o próximo ponto</h3></div>
-              <button class="text-btn" data-go-page="plan">Ver plano</button>
-            </div>
-            <div class="priority-list" id="priorityList"></div>
-          </article>
-
-          <article class="card">
-            <div class="card-head"><div><p class="eyebrow">ROTINA</p><h3>Bloco recomendado</h3></div><span class="badge">30–45 min</span></div>
-            <div class="routine" id="routineBox"></div>
-            <button class="btn primary full" id="routineStart">Executar bloco</button>
-          </article>
-        </div>
-
-        <article class="card">
-          <div class="card-head">
-            <div><p class="eyebrow">MAPA DO NÚCLEO</p><h3>11 matérias que concentram 62 questões</h3></div>
-            <span class="badge dark">77,5% da prova</span>
-          </div>
-          <div class="subject-heatmap" id="coreHeatmap"></div>
-        </article>
-      </section>
-
-      <section class="page" data-view="plan">
-        <div class="section-intro">
-          <div><p class="eyebrow">ALGORITMO DE GANHO</p><h2>Plano adaptativo</h2></div>
-          <p>A fila combina valor esperado na prova, déficit de domínio, incerteza da amostra, causa dos erros e dívida de revisão. Estrelas do curso e disponibilidade de material entram apenas como sinais secundários.</p>
-        </div>
-        <div class="content-grid two-thirds">
-          <article class="card">
-            <div class="card-head"><div><p class="eyebrow">RANKING</p><h3>Fila inteligente</h3></div><span class="badge" id="planDataQuality">dados iniciais</span></div>
-            <div id="planRanking" class="ranking-list"></div>
-          </article>
-          <article class="card">
-            <div class="card-head"><div><p class="eyebrow">CONFIGURAÇÃO</p><h3>Meta pessoal</h3></div></div>
-            <label>Data da prova<input type="date" id="targetDate" value="2027-01-10"></label>
-            <label>Meta segura de pontos<input type="number" id="targetScore" min="40" max="70" value="45"></label>
-            <label>Tempo diário disponível<input type="number" id="dailyMinutes" min="20" max="300" step="10" value="60"></label>
-            <label>Estratégia<select id="strategy"><option value="core">Núcleo 62 — foco máximo</option><option value="balanced">Núcleo 62 + matérias leves</option></select></label>
-            <button class="btn primary full" id="savePlan">Salvar estratégia</button>
-          </article>
-        </div>
-        <article class="card">
-          <div class="card-head"><div><p class="eyebrow">CICLO</p><h3>Sequência de aprendizagem rápida</h3></div></div>
-          <div class="method-grid">
-            <div><b>1</b><strong>Diagnóstico</strong><span>Questão antes da teoria para produzir evidência real.</span></div>
-            <div><b>2</b><strong>Correção causal</strong><span>Distinguir desconhecimento, confusão conceitual e leitura.</span></div>
-            <div><b>3</b><strong>Teoria cirúrgica</strong><span>Estudar somente a regra que explica o erro, não a disciplina inteira.</span></div>
-            <div><b>4</b><strong>Recuperação espaçada</strong><span>Aplicar novamente sem consulta e espaçar conforme o domínio.</span></div>
-          </div>
-        </article>
-      </section>
-
-      <section class="page" data-view="study">
-        <div class="study-layout">
-          <aside class="card subject-list-card">
-            <div class="card-head"><div><p class="eyebrow">MATÉRIAS</p><h3>Mapa completo</h3></div></div>
-            <div class="filter-tabs"><button class="active" data-subject-filter="core">Núcleo 62</button><button data-subject-filter="all">Todas</button></div>
-            <div id="subjectList" class="subject-list"></div>
-          </aside>
-          <article class="card subject-detail">
-            <div class="card-head">
-              <div><p class="eyebrow" id="subjectTier">ALTA PRIORIDADE</p><h2 id="subjectName">Ética</h2></div>
-              <span class="question-weight" id="subjectWeight">8 questões</span>
-            </div>
-            <div class="metric-grid compact">
-              <div><span>Estimativa</span><strong id="subjectEstimated">—</strong></div>
-              <div><span>Amostra</span><strong id="subjectSample">0</strong></div>
-              <div><span>Erros abertos</span><strong id="subjectErrors">0</strong></div>
-              <div><span>Ganho potencial</span><strong id="subjectGain">—</strong></div>
-            </div>
-            <div class="subject-meter"><div id="subjectMeterBar"></div></div>
-            <div class="subject-advice" id="subjectAdvice"></div>
-            <h4>Temas essenciais</h4>
-            <div class="chips" id="subjectTopics"></div>
-            <div class="actions-row">
-              <button class="btn primary" id="trainSubject">Treinar esta matéria</button>
-              <button class="btn secondary" id="diagnoseSubject">Diagnóstico de 5</button>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <section class="page" data-view="questions">
-        <div id="sessionSetup" class="session-setup">
-          <article class="card setup-main">
-            <p class="eyebrow">SESSÃO</p>
-            <h2>Escolha o tipo de bloco</h2>
-            <div class="mode-grid" id="modeGrid">
-              <button class="mode-card active" data-mode="adaptive"><strong>Adaptativo</strong><span>Escolhe questões pelos temas com maior valor esperado.</span></button>
-              <button class="mode-card" data-mode="core"><strong>Núcleo 62</strong><span>Mistura as matérias de maior peso sem priorização temática.</span></button>
-              <button class="mode-card" data-mode="review"><strong>Revisão SRS</strong><span>Somente itens vencidos do caderno.</span></button>
-              <button class="mode-card" data-mode="exam"><strong>Mini-simulado</strong><span>Distribuição proporcional à prova.</span></button>
-            </div>
-          </article>
-          <article class="card setup-side">
-            <label>Quantidade<select id="questionLimit"><option>5</option><option selected>10</option><option>15</option><option>20</option></select></label>
-            <label>Matéria<select id="questionSubject"><option value="all">Todas do núcleo</option></select></label>
-            <button class="btn primary full" id="startSession">Começar</button>
-          </article>
-        </div>
-
-        <div id="sessionArea" class="session-area hidden">
-          <aside class="card session-sidebar">
-            <p class="eyebrow" id="sessionModeLabel">ADAPTATIVO</p>
-            <h3 id="sessionProgress">Questão 1 de 10</h3>
-            <div class="session-dots" id="sessionDots"></div>
-            <div class="timer-box"><span>Tempo</span><strong id="sessionTimer">00:00</strong></div>
-            <button class="btn secondary full" id="finishSession">Finalizar bloco</button>
-          </aside>
-          <article class="card question-card">
-            <div class="question-meta"><span id="questionSubjectLabel">Ética</span><span id="questionTopicLabel">Publicidade</span></div>
-            <h2 id="questionText"></h2>
-            <div class="answer-list" id="answerList"></div>
-            <div class="feedback-box hidden" id="feedbackBox"></div>
-            <div class="error-cause hidden" id="errorCauseBox">
-              <p>Qual foi a causa principal do erro?</p>
-              <div><button data-cause="knowledge">Não sabia a regra</button><button data-cause="confusion">Confundi conceitos</button><button data-cause="reading">Leitura/atenção</button></div>
-            </div>
-            <div class="question-actions">
-              <button class="text-btn" id="prevQuestion">← Anterior</button>
-              <button class="btn primary" id="nextQuestion">Próxima →</button>
-            </div>
-          </article>
-        </div>
-
-        <article id="sessionResult" class="card result-card hidden"></article>
-      </section>
-
-      <section class="page" data-view="errors">
-        <div class="section-intro"><div><p class="eyebrow">MEMÓRIA</p><h2>Revisão espaçada</h2></div><p>O erro só é encerrado depois de reaparecer e ser acertado. Marcar manualmente como “visto” não produz domínio.</p></div>
-        <div class="metric-grid">
-          <article class="metric-card"><span>Vencidas hoje</span><strong id="reviewDue">0</strong><small>prioridade máxima</small></article>
-          <article class="metric-card"><span>Próximas 7 dias</span><strong id="reviewWeek">0</strong><small>fila programada</small></article>
-          <article class="metric-card"><span>Erros de conhecimento</span><strong id="errorKnowledge">0</strong><small>exigem teoria curta</small></article>
-          <article class="metric-card"><span>Erros de leitura</span><strong id="errorReading">0</strong><small>exigem técnica de prova</small></article>
-        </div>
-        <article class="card"><div class="card-head"><div><p class="eyebrow">FILA</p><h3>Itens para revisar</h3></div><button class="btn primary" id="startDueReview">Revisar vencidas</button></div><div id="reviewList" class="review-list"></div></article>
-      </section>
-
-      <section class="page" data-view="analytics">
-        <div class="section-intro"><div><p class="eyebrow">MÉTRICAS</p><h2>Desempenho por matéria</h2></div><p>A estimativa é conservadora, pondera evidência recente e evita concluir domínio com amostra pequena. O tema mais prioritário de cada matéria permanece visível.</p></div>
-        <article class="card"><div class="analytics-table-wrap"><table class="analytics-table"><thead><tr><th>Matéria</th><th>Peso</th><th>Amostra</th><th>Acerto bruto</th><th>Domínio estimado</th><th>Ganho potencial</th><th>Prioridade</th></tr></thead><tbody id="analyticsBody"></tbody></table></div></article>
-        <div class="content-grid two-thirds">
-          <article class="card"><div class="card-head"><div><p class="eyebrow">ERROS</p><h3>Causa raiz</h3></div></div><div id="causeBreakdown" class="cause-grid"></div></article>
-          <article class="card"><div class="card-head"><div><p class="eyebrow">HISTÓRICO</p><h3>Últimos blocos</h3></div></div><div id="sessionHistory" class="history-list"></div></article>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="firebase-config.js"></script>
-  <script src="data.js"></script>
-  <script src="learning-materials.js"></script>
-  <script src="oab-intelligence.js"></script>
-  <script src="app.js"></script>
-</body>
-</html>
+<section class="page" data-view="analytics"><article class="card"><div class="card-head"><div><p class="eyebrow">DESEMPENHO</p><h3>Por matéria</h3></div></div><div class="table-wrap"><table><thead><tr><th>Matéria</th><th>Peso</th><th>Amostra</th><th>Acerto</th><th>Domínio</th><th>Erros</th></tr></thead><tbody id="analyticsBody"></tbody></table></div></article><article class="card" style="margin-top:14px"><div class="card-head"><div><p class="eyebrow">CAUSAS</p><h3>Por que os erros acontecem</h3></div></div><div id="causeBreakdown" class="cause-breakdown"></div></article></section>
+</main></div>
+<script src="data.js"></script><script src="learning-materials.js"></script><script src="oab-intelligence.js"></script><script type="module" src="app.js"></script>
+</body></html>
