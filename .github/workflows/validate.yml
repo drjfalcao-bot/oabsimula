@@ -31,9 +31,7 @@ jobs:
           node --check questao-guiada.js
           node --check second-phase-data.js
           node --check segunda-fase.js
-          node --check functions/index.js
           node --check functions/main.js
-          node --check functions/question-engine.js
           node --check functions/oab-blueprint.js
           node --check functions/coverage-engine.js
           node --check scripts/validate-oab-intelligence.mjs
@@ -99,7 +97,7 @@ jobs:
           if(mod.OFFICIAL_FGV_ACTIVE_TARGET!==397) throw new Error('Total válido FGV divergente');
           console.log('Catálogo FGV íntegro.');
           NODE
-      - name: Validate HTML IDs and removed AI routes
+      - name: Validate HTML IDs and complete AI removal
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -116,9 +114,11 @@ jobs:
               for term in forbidden:
                   if term in text:
                       print(name,'ainda contém referência removida:',term); failed=True
-          for removed in ['ia.html','ia.js','professor-bridge.js','functions/professor-api.js','fabrica.html','fabrica.js','guided-commentary-guard.js']:
-              if Path(removed).exists():
-                  print(removed,'deveria ter sido removido'); failed=True
+          removed=['ia.html','ia.js','professor-bridge.js','functions/professor-api.js','fabrica.html','fabrica.js','guided-commentary-guard.js','functions/index.js','functions/question-engine.js','gemini-provider.js']
+          for name in removed:
+              if Path(name).exists(): print(name,'deveria ter sido removido'); failed=True
+          pkg=Path('functions/package.json').read_text(encoding='utf-8')
+          if 'openai' in pkg.lower(): print('functions/package.json ainda depende de OpenAI'); failed=True
           if failed: sys.exit(1)
           PY
       - name: Validate 1st phase distribution and 2nd phase rubrics
