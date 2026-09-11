@@ -383,9 +383,10 @@
     const topicRank=rankTopics(state,{strategy});
     const topicScore=new Map(topicRank.map(x=>[`${x.subject}|${x.topic.id}`,x.score]));
     const candidates=(questions||[]).filter(q=>allowed.has(canonicalSubject(q.subject))).map(q=>{
-      const sid=canonicalSubject(q.subject),t=resolveTopic(sid,q.topic),base=topicScore.get(`${sid}|${t?.id||'geral'}`)||SUBJECTS[sid]?.q||1;
+      const sid=canonicalSubject(q.subject),t=resolveTopic(sid,q.topic);
+      const base=topicScore.get(`${sid}|${t?.id||'geral'}`) || (SUBJECTS[sid]?.q||1)*.15;
       const repetition=seen.get(q.id)||0;
-      const novelty=repetition===0?1:repetition===1?.52:.28;
+      const novelty=repetition===0 ? 1 : repetition===1 ? .52 : .28;
       const jitter=.94+Math.random()*.12;
       return {q,score:base*sourceQuality(q)*novelty*jitter,topicId:t?.id||'geral',sid,key:questionKey(q)};
     }).sort((a,b)=>b.score-a.score);
