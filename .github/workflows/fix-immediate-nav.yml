@@ -1,0 +1,62 @@
+name: Fix immediate panel navigation
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ github.event.head_commit.message == 'run immediate nav fix' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Decouple navigation from question bank loading
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('app.js')
+          s=p.read_text(encoding='utf-8')
+          old=r"async function bootstrap\(\)\{try\{const imported=await getAllQuestions\(\);const map=new Map\(BUILTIN\.map\(q=>\[q\.id,q\]\)\);imported\.forEach\(q=>map\.set\(q\.id,q\)\);QUESTIONS=\[\.\.\.map\.values\(\)\];\}catch\(e\)\{console\.warn\('Banco ampliado indisponível; usando base local\.',e\);QUESTIONS=\[\.\.\.BUILTIN\];\}renderQuestionSelectors\(\);bind\(\);renderAll\(\);if\(INTEL\?\.EXAM\?\.status==='awaiting-48-edital'\)notice\('48º EOU: edital previsto para 21/09/2026; calendário oficial pode ser ajustado se a OAB alterar as datas\.'\);\}\nbootstrap\(\);"
+          new="""async function hydrateQuestionBank(){
+  try{
+    const imported=await getAllQuestions();
+    const map=new Map(BUILTIN.map(q=>[q.id,q]));
+    imported.forEach(q=>map.set(q.id,q));
+    QUESTIONS=[...map.values()];
+    renderQuestionSelectors();
+    renderAll();
+  }catch(e){
+    console.warn('Banco ampliado indisponível; usando base local.',e);
+    QUESTIONS=[...BUILTIN];
+  }
+}
+function bootstrap(){
+  // A interface precisa funcionar antes de qualquer chamada de rede/IndexedDB/Firebase.
+  renderQuestionSelectors();
+  bind();
+  renderAll();
+  if(INTEL?.EXAM?.status==='awaiting-48-edital') notice('48º EOU: edital previsto para 21/09/2026; calendário oficial pode ser ajustado se a OAB alterar as datas.');
+  hydrateQuestionBank();
+}
+bootstrap();"""
+          ns,n=re.subn(old,new,s,count=1)
+          if n!=1:
+            raise SystemExit(f'bootstrap patch failed: {n}')
+          p.write_text(ns,encoding='utf-8')
+          PY
+          node --check app.js
+          rm -f .github/workflows/fix-immediate-nav.yml
+      - name: Commit fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'fix immediate panel navigation'
+          git push
