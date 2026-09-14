@@ -5,6 +5,22 @@ const $=id=>document.getElementById(id);
 const norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 
+// Manifesto estático dos 20 pontos de entrada principais. Mantém a validação de integridade
+// independente do catálogo rico carregado em drive-materials-catalog.js.
+const VALIDATION_FOLDER_MANIFEST=[
+  {folder:'1zggrCHwAWbXX8VRddDo1cEeLZ0eQ1Lxn'},{folder:'1Kb40-5LKaSe6Nm0gNzQOoRFYJvCeywQZ'},
+  {folder:'1vcxzJl33UdtuN3gUAUEXF4nnLM6Y6t_p'},{folder:'1Vaekb_CPAA5clvUZmIbt6HcgWbW0gayN'},
+  {folder:'1gsD3dlCEgb6XDzagj4eJYuTOrAa-vTOQ'},{folder:'1QcoigD_ZflMvNLnV9fMmOeH_RPErVHKo'},
+  {folder:'1Z--8_wdCXfQR2wtMu5JREuLijUdzw89M'},{folder:'1seZBGDcygVpOMajsEsDXHph7yW7hFAwm'},
+  {folder:'1xoo1EvALJVpdS9ddlT1aba3vKN2NwKrD'},{folder:'14YC1A3Une_hDi9MRpQHVJAoubR1aaR31'},
+  {folder:'1EriKe3UOfeesBQcHGZnSxdmGj5C0wwWa'},{folder:'1CqmhsZ6qH4IVLIrzczdS9dq0tHew-WI3'},
+  {folder:'1qiPDOI8BrjYUsYAF_vMOqYFnI1R-ZbI7'},{folder:'13GnLrqqOOsVePMB4xBqYu4dL2ySXmYAy'},
+  {folder:'1klZb0EE5LircioBlYjb1DwcS5zq2rpTL'},{folder:'1BYmsbeSziOuR8ESpxwZdGs0iwNPP-VTB'},
+  {folder:'1yF9TTVthp0yVFiPWSTAuUblw_IC_n8OC'},{folder:'1DSCyD1riojezakflHtEONUDF5dmKUEEB'},
+  {folder:'1FrPblXlznLaht2rqvG1QyC55ZltRmlxj'},{folder:'1m5G-g-MG8YCF3Ki9CFiTpwR6vcSZ6H7A'}
+];
+const DRIVE_FOLDER_BASE='https://drive.google.com/drive/folders/';
+
 const FALLBACK_NAMES={
   etica:'Ética Profissional',constitucional:'Direito Constitucional',penal:'Direito Penal','processo-penal':'Processo Penal',
   tributario:'Direito Tributário',administrativo:'Direito Administrativo',civil:'Direito Civil','processo-civil':'Processo Civil',
@@ -15,7 +31,7 @@ const FALLBACK_NAMES={
 
 function key(id){return id.replace(/-/g,'_');}
 function topicsFor(id){return (MATERIALS.topicCatalog?.[key(id)]?.items||[]).map(x=>x.label);}
-function driveUrl(id){return `https://drive.google.com/drive/folders/${encodeURIComponent(id)}?usp=drive_link`;}
+function driveUrl(id){return `${DRIVE_FOLDER_BASE}${encodeURIComponent(id)}?usp=drive_link`;}
 function resourceLabel(kind){return ({curso:'Curso',aula:'Aulas',resumo:'Resumo',mapa:'Mapa mental',legislacao:'Caderno legislativo',pdf:'PDF',acervo:'Acervo'}[kind]||'Material');}
 function resourceClass(kind){return ['curso','aula'].includes(kind)?'btn primary':'btn secondary';}
 function subjectEntries(){
