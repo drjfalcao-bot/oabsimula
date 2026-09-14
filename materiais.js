@@ -1,63 +1,80 @@
 const SUBJECTS=window.OAB_SUBJECTS||[];
 const MATERIALS=window.OAB_LEARNING_MATERIALS||{};
+const CATALOG=window.OAB_DRIVE_CATALOG||{subjects:{},collections:[]};
 const $=id=>document.getElementById(id);
 const norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 
-// Pastas verificadas no acervo conectado. O site não tenta embutir pastas privadas:
-// o embeddedfolderview do Drive é inconsistente para conteúdo compartilhado.
-const folders=[
-{id:'etica',name:'Ética Profissional',folder:'12gZ_cpUGbYPyTjdeWPPztPT58NAkn1yf'},
-{id:'constitucional',name:'Direito Constitucional',folder:'1VevNLk8p4IbZVhad0Sn3E1vacyfLUy88'},
-{id:'penal',name:'Direito Penal',folder:'1LeOIYkHy_eA1gCbBfdfTO3BZVAZ2v_RG'},
-{id:'processo-penal',name:'Processo Penal',folder:'1HL2bJYDYasK6PHtDpVx7fnzy5ZBZmJnK'},
-{id:'tributario',name:'Direito Tributário',folder:'1Rhaf8D_AVeOFfI7t8bSv1ZCrdfIlt69W'},
-{id:'administrativo',name:'Direito Administrativo',folder:'1NadCZPuyxG1mqK3mAn125TkbU2q3V0bs'},
-{id:'civil',name:'Direito Civil',folder:'1b3YUByQF6jlv-24QZf7cBOz9OKic_gmd'},
-{id:'processo-civil',name:'Processo Civil',folder:'1UOqqi1fKeUZ9MzhXYHTxt1XfMyJRFsLg'},
-{id:'empresarial',name:'Direito Empresarial',folder:'1nHtUO3cl2z8efUcciQnUjB_F-ujL4CdX'},
-{id:'trabalho',name:'Direito do Trabalho',folder:'1MTxd1Fi6smCUdUwU3nkVIlAfSD1GbFGd'},
-{id:'processo-trabalho',name:'Processo do Trabalho',folder:'1U-6S3edyUee8CsH6EnWT131bGm1g-4Ct'},
-{id:'eleitoral',name:'Direito Eleitoral',folder:'1vszlAw7jCcXlnDhJlXQxRNhjWPLSwhwK'},
-{id:'financeiro',name:'Direito Financeiro',folder:'1raf-ScZwcP6WIwZDu3_DTxt8QscWNI_E'},
-{id:'humanos',name:'Direitos Humanos',folder:'1Q1cDEMXkiMFsdR-V3bV80iyASPvw8DCi'},
-{id:'eca',name:'ECA',folder:'1O-gGBQ49R0Qa2ihzcUF1-L5pEhIakAnq'},
-{id:'consumidor',name:'Direito do Consumidor',folder:'16MbGX7E1qKCot-8lGYSv3jBLcJh0FSus'},
-{id:'ambiental',name:'Direito Ambiental',folder:'1DSCyD1riojezakflHtEONUDF5dmKUEEB'},
-{id:'internacional',name:'Direito Internacional',folder:'1FrPblXlznLaht2rqvG1QyC55ZltRmlxj'},
-{id:'previdenciario',name:'Direito Previdenciário',folder:'1i6xg4u46CfMQJO1aAPOZpMtJ1kbvVeXO'},
-{id:'filosofia',name:'Filosofia do Direito',folder:'1m5G-g-MG8YCF3Ki9CFiTpwR6vcSZ6H7A'}
-];
+const FALLBACK_NAMES={
+  etica:'Ética Profissional',constitucional:'Direito Constitucional',penal:'Direito Penal','processo-penal':'Processo Penal',
+  tributario:'Direito Tributário',administrativo:'Direito Administrativo',civil:'Direito Civil','processo-civil':'Processo Civil',
+  empresarial:'Direito Empresarial',trabalho:'Direito do Trabalho','processo-trabalho':'Processo do Trabalho',eleitoral:'Direito Eleitoral',
+  financeiro:'Direito Financeiro',humanos:'Direitos Humanos',eca:'ECA',consumidor:'Direito do Consumidor',previdenciario:'Direito Previdenciário',
+  ambiental:'Direito Ambiental',internacional:'Direito Internacional',filosofia:'Filosofia do Direito'
+};
 
 function key(id){return id.replace(/-/g,'_');}
-function topicsFor(id){return (MATERIALS.topicCatalog?.[key(id)]?.items||[]).slice(0,8).map(x=>x.label);}
-function driveUrl(f){return `https://drive.google.com/drive/folders/${encodeURIComponent(f.folder)}?usp=drive_link`;}
+function topicsFor(id){return (MATERIALS.topicCatalog?.[key(id)]?.items||[]).map(x=>x.label);}
+function driveUrl(id){return `https://drive.google.com/drive/folders/${encodeURIComponent(id)}?usp=drive_link`;}
+function resourceLabel(kind){return ({curso:'Curso',aula:'Aulas',resumo:'Resumo',mapa:'Mapa mental',legislacao:'Caderno legislativo',pdf:'PDF',acervo:'Acervo'}[kind]||'Material');}
+function resourceClass(kind){return ['curso','aula'].includes(kind)?'btn primary':'btn secondary';}
+function subjectEntries(){
+  const catalogRows=Object.entries(CATALOG.subjects||{}).map(([id,row])=>({id,name:row.name||FALLBACK_NAMES[id]||id,resources:row.resources||[]}));
+  const known=new Set(catalogRows.map(x=>x.id));
+  SUBJECTS.forEach(s=>{if(!known.has(s.id)&&FALLBACK_NAMES[s.id])catalogRows.push({id:s.id,name:s.name||FALLBACK_NAMES[s.id],resources:[]});});
+  return catalogRows.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+}
+
+const folders=subjectEntries();
 
 function populate(){
   const params=new URLSearchParams(location.search);
   const sel=$('subjectFilter');
-  sel.innerHTML='<option value="all">Todas as matérias</option>'+folders.map(f=>`<option value="${f.id}">${f.name}</option>`).join('');
+  sel.innerHTML='<option value="all">Todas as matérias</option>'+folders.map(f=>`<option value="${esc(f.id)}">${esc(f.name)}</option>`).join('');
   const requested=params.get('subject');
   if(requested&&folders.some(f=>f.id===requested))sel.value=requested;
   const q=params.get('q');
   if(q)$('search').value=q;
 }
 
+function renderCollections(){
+  const box=$('collections');
+  if(!box)return;
+  const rows=CATALOG.collections||[];
+  box.innerHTML=rows.map(r=>`<a class="collection" target="_blank" rel="noopener noreferrer" href="${driveUrl(r.id)}">
+    <span>${esc(r.source)}</span><strong>${esc(r.label)}</strong><small>${esc(r.note||'Abrir no Drive')}</small>
+  </a>`).join('');
+}
+
+function studyPrescription(resources){
+  const kinds=new Set(resources.map(r=>r.kind));
+  if(kinds.has('resumo')&&kinds.has('mapa')&&kinds.has('legislacao'))return 'Use aula quando houver lacuna; resumo/mapa para consolidar; caderno legislativo para fechar a regra na fonte.';
+  if(kinds.has('curso')&&kinds.has('pdf'))return 'Curso para aprender; apostila/mapa para consolidar; depois volte às questões sem consulta.';
+  if(kinds.has('curso'))return 'Abra o curso somente quando a questão revelar lacuna de conteúdo; depois retorne imediatamente ao treino.';
+  return 'Use o material como apoio pontual e volte às questões para validar retenção.';
+}
+
 function render(){
   const q=norm($('search').value),subject=$('subjectFilter').value;
-  // Se uma matéria veio definida pelo treino/erro, ela sempre deve aparecer.
-  // O nome do conceito pode diferir do título da aula e não pode bloquear acesso à pasta.
-  const rows=folders.filter(f=>subject!=='all'?f.id===subject:(!q||norm(`${f.name} ${topicsFor(f.id).join(' ')}`).includes(q)));
+  const rows=folders.filter(f=>{
+    if(subject!=='all')return f.id===subject;
+    const hay=norm(`${f.name} ${topicsFor(f.id).join(' ')} ${(f.resources||[]).map(r=>`${r.label} ${r.source}`).join(' ')}`);
+    return !q||hay.includes(q);
+  });
   $('library').innerHTML=rows.length?rows.map(f=>{
-    const topics=topicsFor(f.id),url=driveUrl(f);
+    const topics=topicsFor(f.id).slice(0,10),resources=f.resources||[];
     return `<article class="course">
-      <div><p class="eyebrow">VIDEOAULAS</p><h3>${f.name}</h3><p>Pasta original do Google Drive. Abre diretamente no Drive para evitar falhas do visualizador embutido.</p></div>
-      <div class="tags">${topics.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
-      <div class="course-actions"><a class="btn primary" target="_blank" rel="noopener noreferrer" href="${url}">Abrir aulas no Drive</a></div>
+      <div class="course-head"><div><p class="eyebrow">${esc(resources.length?`${resources.length} ROTAS DE ESTUDO`:'ACERVO')}</p><h3>${esc(f.name)}</h3></div><span class="source-count">${resources.length||'—'}</span></div>
+      <p>${esc(studyPrescription(resources))}</p>
+      ${topics.length?`<div class="tags">${topics.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>`:''}
+      <div class="resource-list">${resources.map(r=>`<div class="resource-row"><div><small>${esc(r.source)}</small><strong>${esc(r.label)}</strong></div><a class="${resourceClass(r.kind)} compact" target="_blank" rel="noopener noreferrer" href="${driveUrl(r.id)}">${esc(resourceLabel(r.kind))}</a></div>`).join('')||'<div class="muted">Material específico ainda não indexado no backup atual.</div>'}</div>
+      <div class="course-actions"><a class="text-btn" href="questao-guiada.html?subject=${encodeURIComponent(f.id)}">Treinar esta matéria →</a></div>
     </article>`;
-  }).join(''):'<div class="empty">Nenhuma matéria corresponde ao filtro.</div>';
+  }).join(''):'<div class="empty">Nenhuma matéria ou tema corresponde ao filtro.</div>';
 }
 
 populate();
+renderCollections();
 $('search').oninput=render;
 $('subjectFilter').onchange=render;
 render();
