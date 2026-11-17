@@ -8,12 +8,12 @@
     .toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
 
   const EXAM = {
-    target: 48,
-    examName: '48º Exame de Ordem Unificado',
-    examDate: '2027-01-10',
-    editalExpected: '2026-09-21',
-    status: 'awaiting-48-edital',
-    statusLabel: 'Estratégia provisória até a publicação do edital do 48º EOU',
+    target: null,
+    examName: 'Exame de Ordem Unificado',
+    examDate: null,
+    editalExpected: null,
+    status: 'continuous-preparation',
+    statusLabel: 'Preparação contínua; edital e prova-alvo configuráveis',
     totalQuestions: 80,
     passingScore: 40,
     safeTarget: 45,
@@ -21,7 +21,7 @@
     minimumCombinedEthicsHumanPhilosophyPct: 0.15,
     distributionBasis: 'Distribuição operacional baseada no 47º EOU; incidência temática calculada sobre OAB 32–47.',
     methodologyVersion: 1,
-    lastCalibrated: '2026-09-11'
+    lastCalibrated: '2026-11-17'
   };
 
   const SUBJECTS = {
