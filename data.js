@@ -1,6 +1,6 @@
 window.OAB_CONFIG = {
-  examName: '48º Exame de Ordem Unificado',
-  examDate: '2027-01-10',
+  examName: 'Exame de Ordem Unificado',
+  examDate: null,
   totalQuestions: 80,
   passingScore: 40,
   safeTarget: 45,
