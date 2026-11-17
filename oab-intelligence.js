@@ -21,7 +21,7 @@
     minimumCombinedEthicsHumanPhilosophyPct: 0.15,
     distributionBasis: 'Distribuição operacional baseada no 47º EOU; incidência temática calculada sobre OAB 32–47.',
     methodologyVersion: 1,
-    lastCalibrated: '2026-11-17'
+    lastCalibrated: '2026-09-11'
   };
 
   const SUBJECTS = {
