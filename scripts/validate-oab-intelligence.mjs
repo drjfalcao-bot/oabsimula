@@ -20,8 +20,19 @@ const total=Object.values(I.SUBJECTS).reduce((n,s)=>n+s.q,0);
 const core=Object.values(I.SUBJECTS).filter(s=>s.core).reduce((n,s)=>n+s.q,0);
 if(total!==80)throw new Error(`Distribuição da prova inválida: ${total}/80.`);
 if(core!==62)throw new Error(`Núcleo estratégico inválido: ${core}/62.`);
-if(I.EXAM.examDate!=='2027-01-10')throw new Error(`Data da 1ª fase divergente: ${I.EXAM.examDate}`);
-if(I.EXAM.editalExpected!=='2026-09-21')throw new Error(`Data esperada do edital divergente: ${I.EXAM.editalExpected}`);
+if(I.EXAM.examDate!==null || I.EXAM.target!==null)throw new Error('Preparação deve começar sem edição/data fixa.');
+if(I.EXAM.status!=='continuous-preparation')throw new Error('A estratégia deve ser permanente.');
+const examSource=fs.readFileSync(new URL('../historical-exams.js',import.meta.url),'utf8');
+const keyMatch=examSource.match(/key:'([^']+)'/);
+const key47=keyMatch?.[1]?.split(' ');
+if(key47?.length!==80 || key47[46]!=='*' || key47.filter(x=>x==='*').length!==1 ||
+ key47.some(x=>!['A','B','C','D','*'].includes(x)))throw new Error('Gabarito oficial do 47º EOU inconsistente.');
+const examPage=fs.readFileSync(new URL('../provas.html',import.meta.url),'utf8');
+const mainPage=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
+if(!mainPage.includes('href="provas.html"') || !examPage.includes('provas.js'))
+ throw new Error('Navegação para provas históricas ausente.');
+if(/48º Exame|2027-01-10/.test(mainPage))throw new Error('Página principal não pode depender de edição fixa.');
+
 
 const coreSubjects=Object.entries(I.SUBJECTS).filter(([,s])=>s.core).map(([id])=>id);
 for(const id of coreSubjects){
