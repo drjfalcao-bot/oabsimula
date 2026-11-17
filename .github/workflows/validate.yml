@@ -28,6 +28,8 @@ jobs:
           node --check fgv-bank.js
           node --check expanded-bank.js
           node --check official-fgv-bank.js
+          node --check historical-exams.js
+          node --check provas.js
           node --check questao-guiada.js
           node --check second-phase-data.js
           node --check segunda-fase.js
